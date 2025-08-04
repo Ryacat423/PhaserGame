@@ -14,7 +14,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       d: Phaser.Input.Keyboard.KeyCodes.D
     });
 
-    this.setScale(0.15)
+    this.setScale(0.15);
     this.setCollideWorldBounds(true);
   }
 

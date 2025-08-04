@@ -17,6 +17,16 @@ export class UIManager {
         scene.load.image('btn-info', 'assets/global/ui/button-help.png');
         scene.load.image('btn-close', 'assets/global/ui/close.png');
         scene.load.image('btn-next', 'assets/global/ui/next.png');
+        scene.load.image('btn-home', 'assets/global/ui/home.png');
+        scene.load.image('btn-reset', 'assets/global/ui/reset.png');
+        scene.load.image('btn-settings', 'assets/global/ui/settings.png');
+        
+        //Food Images
+        scene.load.image('food1', 'assets/global/food/fish.png');
+        scene.load.image('food2', 'assets/global/food/tuna.png');
+        scene.load.image('food3', 'assets/global/food/sushi.png');
+        scene.load.image('food4', 'assets/global/food/pack.png');
+        scene.load.image('food5', 'assets/global/food/bowl.png');
 
         // Sounds
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
