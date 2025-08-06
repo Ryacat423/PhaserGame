@@ -153,4 +153,12 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
     private triggerGameOverForCat(): void {
         this.meow.play();
     }
+
+    public playBark(): void {
+        this.bark.play();
+    }
+
+    public stopBark(): void {
+        this.bark.stop();
+    }
 }

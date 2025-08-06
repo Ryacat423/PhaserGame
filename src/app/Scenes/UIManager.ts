@@ -14,12 +14,19 @@ export class UIManager {
 
     static preloadAssets(scene: Phaser.Scene): void {
         // UI images
+        //  General
         scene.load.image('btn-info', 'assets/global/ui/button-help.png');
         scene.load.image('btn-close', 'assets/global/ui/close.png');
         scene.load.image('btn-next', 'assets/global/ui/next.png');
+        //  Actions
         scene.load.image('btn-home', 'assets/global/ui/home.png');
         scene.load.image('btn-reset', 'assets/global/ui/reset.png');
         scene.load.image('btn-settings', 'assets/global/ui/settings.png');
+        scene.load.image('btn-pause', 'assets/global/ui/pause.png');
+        // Game Images
+        scene.load.image('box-open', 'assets/global/bg/box_open.png');
+        scene.load.image('box-cat', 'assets/global/bg/box_open2.png');
+        scene.load.image('tree', 'assets/global/bg/tree.png');
         
         //Food Images
         scene.load.image('food1', 'assets/global/food/fish.png');
@@ -78,7 +85,7 @@ export class UIManager {
         this.scene.anims.create({
             key: 'cat_walk',
             frames: this.scene.anims.generateFrameNumbers('cat', { start: 33, end: 47 }),
-            frameRate: 12,
+            frameRate: 24,
             repeat: -1
         });
     }

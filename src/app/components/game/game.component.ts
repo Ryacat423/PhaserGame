@@ -2,6 +2,10 @@ import Phaser from 'phaser';
 import { Component, OnInit } from '@angular/core';
 import { WelcomeScene } from '../../Scenes/welcome.scene';
 import { TutorialScene } from '../../Scenes/tutorial.scene';
+import { LevelsScene } from '../../Scenes/levels.scene';
+import { InformationScene } from '../../Scenes/information.scene';
+import { SettingScene } from '../../Scenes/settings.scene';
+import { PauseScene } from '../../Scenes/pause.scene';
 
 @Component({
   selector: 'app-game',
@@ -21,7 +25,9 @@ export class GameComponent implements OnInit {
       width: 1000,
       scene: [ 
         WelcomeScene,
-        TutorialScene
+        TutorialScene,
+        LevelsScene,
+        InformationScene
       ],
       parent: 'game',
       backgroundColor: "#000000ff",

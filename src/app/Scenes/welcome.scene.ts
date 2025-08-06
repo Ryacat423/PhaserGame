@@ -50,17 +50,10 @@ export class WelcomeScene extends Phaser.Scene {
         const title = this.add.image(500, 150, 'title')
             .setDisplaySize(700, 380);
 
-        this.start = this.add.image(500, 250, 'btn-start')
-            .setScale(0.2)
-            .setInteractive();
+        this.start = this.add.image(500, 250, 'btn-start').setScale(0.2)
+        this.tutorial = this.add.image(500, 310, 'btn-tutorial').setScale(0.2)
+        this.help = this.add.image(950, 50, 'btn-info').setScale(.5)
 
-        this.tutorial = this.add.image(500, 310, 'btn-tutorial')
-            .setScale(0.2)
-            .setInteractive();
-        
-        this.help = this.add.image(950, 50, 'btn-info')
-            .setScale(.5)
-            .setInteractive();
 
         this.tweens.add({
             targets: title,
@@ -99,7 +92,7 @@ export class WelcomeScene extends Phaser.Scene {
             this.time.delayedCall(150, () => {
                 this.cleanUp();
                 this.scene.sleep();
-                this.scene.start('cat_info');
+                this.scene.start('information');
             });
         });
     
