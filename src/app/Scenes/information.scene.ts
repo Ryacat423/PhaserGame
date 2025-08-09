@@ -16,6 +16,9 @@ export class InformationScene extends Phaser.Scene {
 
     click!: Phaser.Sound.BaseSound;
 
+    meow!: Phaser.Sound.BaseSound;
+    bark!: Phaser.Sound.BaseSound;
+
     preload(): void {
         this.load.image('cat_info', 'assets/scene/information/cat_frame.png');
         this.load.image('dog_info', 'assets/scene/information/dog_frame.png');
@@ -24,6 +27,8 @@ export class InformationScene extends Phaser.Scene {
 
     create(): void  {
         this.click = this.sound.add('click');
+        this.meow = this.sound.add('meow');
+        this.bark = this.sound.add('bark-once');
 
         this.add.image(0, 0, 'information_bg')
             .setOrigin(0, 0)
@@ -74,18 +79,20 @@ export class InformationScene extends Phaser.Scene {
         if (index === 0) {
             this.cat = this.add.sprite(340, 240, 'cat')
                 .setScale(.4)
-                .play('cat_walk');
+                .play('cat_walk')
+                .setInteractive();
 
             this.cat.on('pointerdown', () => {
-
+                this.meow.play();
             });
             
         } else {
             this.dog = this.add.sprite(340, 240, 'dog')
                 .setScale(.2)
-                .play('dog_idle');
+                .play('dog_idle')
+                .setInteractive();
             this.dog.on('pointerdown', () => {
-
+                this.bark.play();
             });
         }
     }

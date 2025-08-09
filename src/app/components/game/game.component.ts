@@ -6,6 +6,8 @@ import { LevelsScene } from '../../Scenes/levels.scene';
 import { InformationScene } from '../../Scenes/information.scene';
 import { SettingScene } from '../../Scenes/settings.scene';
 import { PauseScene } from '../../Scenes/pause.scene';
+import { Level1Scene } from '../../Scenes/levels/level_1.scene';
+import { GameUI } from '../ui/GameUI';
 
 @Component({
   selector: 'app-game',
@@ -27,7 +29,9 @@ export class GameComponent implements OnInit {
         WelcomeScene,
         TutorialScene,
         LevelsScene,
-        InformationScene
+        InformationScene,
+        Level1Scene,
+        GameUI,
       ],
       parent: 'game',
       backgroundColor: "#000000ff",

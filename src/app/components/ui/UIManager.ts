@@ -18,15 +18,21 @@ export class UIManager {
         scene.load.image('btn-info', 'assets/global/ui/button-help.png');
         scene.load.image('btn-close', 'assets/global/ui/close.png');
         scene.load.image('btn-next', 'assets/global/ui/next.png');
-        //  Actions
+        //  Gameplay UI
+
         scene.load.image('btn-home', 'assets/global/ui/home.png');
         scene.load.image('btn-reset', 'assets/global/ui/reset.png');
         scene.load.image('btn-settings', 'assets/global/ui/settings.png');
         scene.load.image('btn-pause', 'assets/global/ui/pause.png');
+        scene.load.image('game_frame', 'assets/scene/tutorial/frame.png');
+        scene.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
+        
         // Game Images
         scene.load.image('box-open', 'assets/global/bg/box_open.png');
         scene.load.image('box-cat', 'assets/global/bg/box_open2.png');
         scene.load.image('tree', 'assets/global/bg/tree.png');
+        scene.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.png');
+        scene.load.image('btn-hide', 'assets/global/ui/btn-hide.png');
         
         //Food Images
         scene.load.image('food1', 'assets/global/food/fish.png');
@@ -40,6 +46,7 @@ export class UIManager {
         scene.load.audio('click', 'assets/global/audio/ui_click.ogg');
         scene.load.audio('bark', 'assets/global/audio/dog_bark.mp3');
         scene.load.audio('meow', 'assets/global/audio/meow.mp3');
+        scene.load.audio('bark-once', 'assets/global/audio/bark_once.wav');
         
         // Global Sprites
         scene.load.spritesheet('dog', 'assets/sprites/dog_sprite.png', {

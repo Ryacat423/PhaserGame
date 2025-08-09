@@ -1,4 +1,4 @@
-import { UIManager } from "./UIManager";
+import { UIManager } from "../components/ui/UIManager";
 
 export class WelcomeScene extends Phaser.Scene {
     private uiManager: UIManager = new UIManager(this);
@@ -71,7 +71,7 @@ export class WelcomeScene extends Phaser.Scene {
             this.time.delayedCall(150, () => {
                 this.cleanUp();
                 this.scene.sleep();
-                this.scene.start('levels');
+                this.scene.start('lvl-1');
             });
         });
      

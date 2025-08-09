@@ -1,40 +1,35 @@
 import { Player } from "../objects/Player";
 import { Dog } from "../objects/Dog";
 import { Food } from "../objects/Food";
+import { GameMap } from "../objects/GameMap";
+import { LevelConfig } from "../interfaces/game.interfaces";
 
 export class TutorialScene extends Phaser.Scene {
     private player!: Player;
     private dog!: Dog;
-    private foods: Food[] = [];
-    private uiCamera!: Phaser.Cameras.Scene2D.Camera;
-    private uiElements: Phaser.GameObjects.GameObject[] = [];
-    private gameTheme!: Phaser.Sound.BaseSound;
 
-    // Buttons
-    private home!: Phaser.GameObjects.Image;
-    private reset!: Phaser.GameObjects.Image;
-    private settings!: Phaser.GameObjects.Image;
-    private pause!: Phaser.GameObjects.Image;
-    private help!: Phaser.GameObjects.Image;
+    private dog2!: Dog;;
+    private foods: Food[] = [];
+    private gameMap!: GameMap;
+    private gameTheme!: Phaser.Sound.BaseSound;
 
     constructor() {
         super({ key: 'tutorial' });
     }
 
     preload(): void {
-        this.load.image('game_frame', 'assets/scene/tutorial/frame.png');
-        this.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
         this.load.image('game_tutorial_map', 'assets/scene/tutorial/tutorial_map.png');
         this.load.audio('game_theme', 'assets/global/audio/gameplay.ogg');
     }
 
     create(): void {
-        this.gameTheme = this.sound.add('game_theme');
-        if (!this.gameTheme.isPlaying) {
-            this.gameTheme.play();
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
         }
 
-        // === World Camera (Main) ===
+        this.gameTheme = this.sound.add('game_theme');
+        this.gameTheme.play();
+
         const background = this.add.image(0, 0, 'game_tutorial_map')
             .setOrigin(0)
             .setDepth(0);
@@ -42,67 +37,75 @@ export class TutorialScene extends Phaser.Scene {
         this.player = new Player(this, 500, 300);
         this.add.existing(this.player);
 
-        this.dog = new Dog(this, 300, 300, this.player);
-        this.add.existing(this.dog);
-        this.createFoodItems();
+        const house = this.physics.add
+            .image(280, 290, 'dog_house')
+            .setDepth(0)
+            .setFlipX(true)
+            .setScale(0.3)
+            .setImmovable(true)
+            .setSize(200, 190)
+            .setOffset(120, 120);
 
-        this.makeTrees();
+        house.body?.setAllowGravity(false);
+        this.physics.add.collider(this.player, house);
+
+        this.dog = new Dog(this, 300, 300, this.player);
+        this.dog.setState(Dog.SLEEP);
+
+        this.dog2 = new Dog(this, 500, 500, this.player);
+        this.dog2.setState(Dog.ROAM);
+        this.dog2.setTint(0xffcccc);
+
+        this.add.existing(this.dog);
+        this.gameMap = new GameMap(this, this.player);
+        
+        const levelConfig: LevelConfig = {
+            playerSpawn: { x: 500, y: 300 },
+            dogSpawn: { x: 300, y: 300 },
+            manualObstacles: [
+                { type: 'tree', x: 150, y: 150, scale: 0.25 },
+                { type: 'tree', x: 700, y: 200, scale: 0.3 },
+                { type: 'tree', x: 400, y: 500, scale: 0.28 },
+            ],
+            randomObstacleZones: [
+                { zone: { x: 0, y: 0, width: background.width, height: 120 }, type: 'tree', count: 6, minDistance: 80 },
+                { zone: { x: 0, y: background.height - 120, width: background.width, height: 120 }, type: 'tree', count: 6, minDistance: 80 },
+                { zone: { x: 0, y: 120, width: 100, height: background.height - 240 }, type: 'tree', count: 4, minDistance: 70 },
+                { zone: { x: background.width - 100, y: 120, width: 100, height: background.height - 240 }, type: 'tree', count: 4, minDistance: 70 }
+            ],
+            foodCount: 10,
+            mapTexture: 'game_tutorial_map',
+            backgroundMusic: 'game_theme'
+        };
+        
+        this.gameMap.setup(levelConfig);
+        this.createFoodItems();
 
         const mainCam = this.cameras.main;
         mainCam.setBounds(0, 0, background.width, background.height);
         mainCam.startFollow(this.player);
         mainCam.setZoom(1.5);
 
-        // === UI Elements ===
-        const frame = this.add.image(0, 0, 'game_frame')
-            .setOrigin(0)
-            .setScrollFactor(0)
-            .setDepth(100)
-            .setDisplaySize(this.scale.width, this.scale.height); 
-            
-        const assetKeys: string[] = ['btn-home', 'btn-settings', 'btn-reset'];
-        const uiButtons = this.setupUIButtons(assetKeys);
-
-        this.home = uiButtons[0];
-        this.settings = uiButtons[1];
-        this.reset = uiButtons[2];
-        this.help = this.add.image(900, 40, 'btn-info')
-            .setScale(0.5)
-            .setInteractive()
-            .setDepth(101);
-            
-        this.setupHelpModal();
-        this.uiElements.push(frame, ...uiButtons, this.help);
-        
-        // === UI Camera ===
-        this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
-        this.uiCamera.ignore([...this.foods]);
-        this.uiCamera.ignore([background, this.player, this.dog]);
-        mainCam.ignore(this.uiElements);
+        this.game.events.on('returnToWelcome', () => {
+            this.cleanupBeforeExit();
+            this.scene.stop('UIScene');
+            this.dog.stopBark();
+            this.scene.start('welcome');
+        });
     }
 
-    private setupHelpModal(): void {
-        let help_modal: Phaser.GameObjects.Image;
-        let close: Phaser.GameObjects.Image;
+    private cleanupBeforeExit() {
+        if (this.gameTheme && this.gameTheme.isPlaying) {
+            this.gameTheme.stop();
+        }
 
-        this.help.on('pointerdown', () => {
-            help_modal = this.add.image(500, 300, 'movement_modal')
-                .setDepth(200)
-                .setScrollFactor(0);
-            close = this.add.image(800, 130, 'btn-close')
-                .setDepth(201)
-                .setScrollFactor(0)
-                .setScale(0.5)
-                .setInteractive();
-            this.uiElements.push(help_modal, close);
-            this.uiCamera.ignore(this.uiElements);
+        this.tweens.getTweens().forEach(tween => tween.stop());
 
-            close.on('pointerdown', () => {
-                help_modal.destroy();
-                close.destroy();
-                // this.uiElements = this.uiElements.filter(e => e !== help_modal && e !== close);
-            });
-        });
+        if (this.dog) {
+            this.dog.stopBark();
+        }
+
+        this.children.removeAll();
     }
 
     private createFoodItems(): void {
@@ -111,20 +114,39 @@ export class TutorialScene extends Phaser.Scene {
 
         for (let i = 0; i < foodCount; i++) {
             const texture = foodTextures[Phaser.Math.Between(0, foodTextures.length - 1)];
-            const x = Phaser.Math.Between(100, this.scale.width - 100);
-            const y = Phaser.Math.Between(100, this.scale.height - 100);
-            
+            let x, y;
+            let attempts = 0;
+
+            do {
+                x = Phaser.Math.Between(100, this.scale.width - 100);
+                y = Phaser.Math.Between(100, this.scale.height - 100);
+                attempts++;
+            } while (
+                attempts < 50 && (
+                    Math.sqrt((500 - x) ** 2 + (300 - y) ** 2) < 80 ||
+                    Math.sqrt((300 - x) ** 2 + (300 - y) ** 2) < 80 ||
+                    Math.sqrt((280 - x) ** 2 + (290 - y) ** 2) < 80 || 
+                    this.isTooCloseToObstacles(x, y, 60)
+                )
+            );
+
             const food = new Food(this, x, y, texture);
-            this.foods.push(food);  
-            
+            this.foods.push(food);
+
             this.physics.add.overlap(
-                this.player, 
-                food, 
-                (player, food) => this.collectFood(food as Food), 
-                undefined, 
+                this.player,
+                food,
+                (player, food) => this.collectFood(food as Food),
+                undefined,
                 this
             );
         }
+    }
+
+    private isTooCloseToObstacles(x: number, y: number, minDistance: number): boolean {
+        return this.gameMap.getObstacles().some(obstacle =>
+            Math.sqrt((obstacle.x - x) ** 2 + (obstacle.y - y) ** 2) < minDistance
+        );
     }
 
     private collectFood(food: Food): void {
@@ -132,77 +154,13 @@ export class TutorialScene extends Phaser.Scene {
         if (index !== -1) {
             this.foods.splice(index, 1);
         }
-        
+
         food.destroy();
     }
-    
-    private setupUIButtons(assetKeys: string[]): Phaser.GameObjects.Image[] {
-        const buttons: Phaser.GameObjects.Image[] = [];
-        const startX = 60;
-        const endY = 40;
 
-        assetKeys.forEach((key, i) => {
-            const button = this.add.image(startX * (i + 1), endY, key)
-                .setScale(0.23)
-                .setInteractive()
-                .setDepth(101);
-
-            button.on('pointerover', () => {
-                this.tweens.add({
-                    targets: button,
-                    scale: 0.26,
-                    duration: 100,
-                    ease: 'Power1'
-                });
-            });
-
-            button.on('pointerout', () => {
-                this.tweens.add({
-                    targets: button,
-                    scale: 0.23,
-                    duration: 100,
-                    ease: 'Power1'
-                });
-            });
-
-            button.on('pointerdown', () => {
-                this.handleButtonAction(key);
-            });
-
-            buttons.push(button);
-        });
-
-        return buttons;
-    }
-
-    private handleButtonAction(key: string): void {
-        this.scene.stop();
-        this.gameTheme.stop();
-        this.dog.stopBark();
-
-        switch (key) {
-            case 'btn-home':
-                this.scene.start('welcome');
-                break;
-            case 'btn-settings':
-                this.scene.start('settings');
-                break;
-            case 'btn-reset':
-                this.scene.start('tutorial');
-                break;
-            default:
-                break;
-        }
-    }
-
-    private makeTrees(): void {
-        this.add.image(40, 80, 'tree')
-            .setScale(0.5)
-            .setAngle(-5);
-    }
-
-    override update(): void {
+    override update(time: number, delta: number): void {
         this.player.update();
-        this.dog.update(1, 1);
+        this.dog.update(time, delta);
+        this.dog2.update(time, delta);
     }
 }

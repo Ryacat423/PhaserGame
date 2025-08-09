@@ -19,6 +19,7 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
     private currentState: BoxState = Box.AVAILABLE
     private boxSound!: Phaser.Sound.BaseSound;
     private nearPlayer: boolean = false;
+    private detectionRadius = 100;
 
     private box!: Phaser.GameObjects.Image;
 
@@ -56,5 +57,10 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
 
     private generateRandom(): number {
         return Math.floor(Math.random() * 740);
+    }
+
+    private hideAvailable(): boolean {
+        const distance = Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y);
+        return distance < this.detectionRadius;
     }
 }
