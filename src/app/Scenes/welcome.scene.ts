@@ -71,7 +71,7 @@ export class WelcomeScene extends Phaser.Scene {
             this.time.delayedCall(150, () => {
                 this.cleanUp();
                 this.scene.sleep();
-                this.scene.start('lvl-1');
+                this.scene.start('levels');
             });
         });
      
