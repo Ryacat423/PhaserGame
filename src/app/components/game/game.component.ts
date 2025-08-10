@@ -4,8 +4,6 @@ import { WelcomeScene } from '../../Scenes/welcome.scene';
 import { TutorialScene } from '../../Scenes/tutorial.scene';
 import { LevelsScene } from '../../Scenes/levels.scene';
 import { InformationScene } from '../../Scenes/information.scene';
-import { SettingScene } from '../../Scenes/settings.scene';
-import { PauseScene } from '../../Scenes/pause.scene';
 import { Level1Scene } from '../../Scenes/levels/level_1.scene';
 import { GameUI } from '../ui/GameUI';
 
@@ -39,7 +37,7 @@ export class GameComponent implements OnInit {
       physics: {
         default: 'arcade',
         arcade: {
-          debug: true,
+          // debug: true,
           y: 0,
           x: 0
         }

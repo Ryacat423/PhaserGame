@@ -3,9 +3,11 @@ export class GameUI extends Phaser.Scene {
     private home!: Phaser.GameObjects.Image;
     private reset!: Phaser.GameObjects.Image;
     private settings!: Phaser.GameObjects.Image;
+    private pause!: Phaser.GameObjects.Image;
     private help!: Phaser.GameObjects.Image;
     private hideButton!: Phaser.GameObjects.Image;
     private isHideButtonEnabled: boolean = false;
+    private isPaused: boolean = false;
 
     constructor() {
         super({ key: 'UIScene' });
@@ -16,6 +18,11 @@ export class GameUI extends Phaser.Scene {
         this.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
         this.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.png');
         this.load.image('btn-hide', 'assets/global/ui/btn-hide.png');
+        
+        this.load.image('pause-overlay', 'assets/global/ui/pause-overlay.png');
+        this.load.image('act-btn-resume', 'assets/global/ui/act-btn-resume.png');
+        this.load.image('act-btn-settings', 'assets/global/ui/act-btn-settings.png');
+        this.load.image('act-btn-mainmenu', 'assets/global/ui/act-btn-mainmenu.png');
     }
 
     create() {
@@ -24,7 +31,7 @@ export class GameUI extends Phaser.Scene {
             .setDisplaySize(this.scale.width, this.scale.height)
             .setDepth(100);
 
-        const assetKeys: string[] = ['btn-home', 'btn-settings', 'btn-reset'];
+        const assetKeys: string[] = ['btn-home', 'btn-settings', 'btn-reset', 'btn-pause'];
         this.setupUIButtons(assetKeys);
         
         this.help = this.add.image(900, 40, 'btn-info')
@@ -161,6 +168,7 @@ export class GameUI extends Phaser.Scene {
             if (key === 'btn-home') this.home = button;
             if (key === 'btn-settings') this.settings = button;
             if (key === 'btn-reset') this.reset = button;
+            if (key === 'btn-pause') this.pause = button;
         });
     }
 
@@ -170,11 +178,124 @@ export class GameUI extends Phaser.Scene {
                 this.game.events.emit('returnToWelcome');
                 break;
             case 'btn-settings':
-                this.scene.start('settings');
+                this.pauseGame();
+                this.scene.launch('settings');
                 break;
             case 'btn-reset':
                 this.resetCurrentLevel();
                 break;
+            case 'btn-pause':
+                this.togglePause();
+                break;
+        }
+    }
+
+    private togglePause() {
+        if (this.isPaused) {
+            this.resumeGame();
+        } else {
+            this.pauseGame();
+            this.showPauseOverlay();
+        }
+    }
+
+    private pauseGame() {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene) {
+            if (gameScene.physics && gameScene.physics.world) {
+                gameScene.physics.world.pause();
+            }
+            if (gameScene.tweens) {
+                gameScene.tweens.pauseAll();
+            }
+            if (gameScene.anims) {
+                gameScene.anims.pauseAll();
+            }
+            
+            this.isPaused = true;
+        }
+    }
+
+    private resumeGame() {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene) {
+            if (gameScene.physics && gameScene.physics.world) {
+                gameScene.physics.world.resume();
+            }
+            if (gameScene.tweens) {
+                gameScene.tweens.resumeAll();
+            }
+            if (gameScene.anims) {
+                gameScene.anims.resumeAll();
+            }
+            
+            this.isPaused = false;
+            this.hidePauseOverlay();
+        }
+    }
+
+    private showPauseOverlay() {
+        const overlay = this.add.rectangle(
+            this.scale.width / 2, 
+            this.scale.height / 2, 
+            this.scale.width, 
+            this.scale.height, 
+            0x000000, 
+            0.7
+        ).setDepth(150);
+
+        const pausePanel = this.add.image(500, 300, 'pause-overlay')
+            .setDepth(151);
+
+        const resumeBtn = this.add.image(500, 230, 'act-btn-resume')
+            .setOrigin(0.5)
+            .setDepth(152)
+            .setScale(.7)
+            .setInteractive();
+
+        const settingsBtn = this.add.image(500, 320, 'act-btn-settings')
+            .setOrigin(0.5)
+            .setDepth(152)
+            .setScale(.7)
+            .setInteractive();
+
+        const mainMenuBtn = this.add.image(500, 400, 'act-btn-mainmenu')
+            .setOrigin(0.5)
+            .setDepth(152)
+            .setScale(.7)
+            .setInteractive();
+
+        this.data.set('pauseOverlay', [overlay, pausePanel, resumeBtn, settingsBtn, mainMenuBtn]);
+        resumeBtn.on('pointerdown', () => {
+            this.resumeGame();
+        });
+
+        settingsBtn.on('pointerdown', () => {
+            this.scene.launch('settings');
+        });
+
+        mainMenuBtn.on('pointerdown', () => {
+            this.resumeGame();
+            this.game.events.emit('returnToWelcome');
+        });
+
+        [resumeBtn, settingsBtn, mainMenuBtn].forEach(btn => {
+            btn.on('pointerover', () => {
+                btn.setScale(.9);
+            });
+            btn.on('pointerout', () => {
+                btn.setScale(.7);
+            });
+        });
+    }
+
+    private hidePauseOverlay() {
+        const pauseOverlay = this.data.get('pauseOverlay');
+        if (pauseOverlay) {
+            pauseOverlay.forEach((element: Phaser.GameObjects.GameObject) => {
+                element.destroy();
+            });
+            this.data.remove('pauseOverlay');
         }
     }
 
@@ -182,7 +303,7 @@ export class GameUI extends Phaser.Scene {
         const gameScenes = this.scene.manager.scenes.filter(
             scene => scene.scene.key !== 'UIScene' && 
                     scene.scene.key !== 'welcome' && 
-                    scene.scene.key !== 'settings' && 
+                    scene.scene.key !== 'settings' &&
                     scene.scene.isActive()
         );
         
@@ -196,6 +317,10 @@ export class GameUI extends Phaser.Scene {
             const sceneKey = currentScene.scene.key;
             
             console.log(`Resetting scene: ${sceneKey}`);
+            
+            if (this.isPaused) {
+                this.resumeGame();
+            }
             
             this.setHideButtonEnabled(false);
             currentScene.sound.stopAll();
