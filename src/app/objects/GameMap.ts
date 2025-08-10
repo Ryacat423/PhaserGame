@@ -1,4 +1,5 @@
 import { Obstacle } from "../objects/Obstacle";
+import { Box } from "../objects/Box";
 import { ManualObstacleData, RandomObstacleZone, LevelConfig } from "../interfaces/game.interfaces";
 import { Scene } from "phaser";
 import { Player } from "./Player";
@@ -7,6 +8,7 @@ export class GameMap {
     private scene: Scene;
     private player: Player;
     private obstacles: Obstacle[] = [];
+    private boxes: Box[] = [];
 
     constructor(scene: Scene, player: Player) {
         this.scene = scene;
@@ -16,7 +18,15 @@ export class GameMap {
     public setup(levelConfig: LevelConfig): void {
         this.setupManualObstacles(levelConfig.manualObstacles);
         this.setupRandomObstacles(levelConfig.randomObstacleZones);
+        this.setupBoxes(levelConfig.boxes || []);
         this.scene.physics.add.collider(this.player, this.obstacles);
+    }
+
+    public setupDogColliders(dogs: Phaser.Physics.Arcade.Sprite[]): void {
+        dogs.forEach(dog => {
+            this.scene.physics.add.collider(dog, this.obstacles);
+            this.scene.physics.add.collider(dog, this.boxes);
+        });
     }
 
     private setupManualObstacles(manualObstacles: ManualObstacleData[]): void {
@@ -76,9 +86,28 @@ export class GameMap {
                 i++;
             }
         }
-    }    
+    }
+
+    private setupBoxes(boxPositions: { x: number; y: number }[]): void {
+        boxPositions.forEach(pos => {
+            const box = new Box(this.scene, pos.x, pos.y, this.player);
+            this.boxes.push(box);
+        });
+    }
+
+    public update(): void {
+        this.boxes.forEach(box => box.update());
+    }
     
     public getObstacles(): Obstacle[] {
         return this.obstacles;
+    }
+
+    public getBoxes(): Box[] {
+        return this.boxes;
+    }
+    
+    public getAllInteractiveObjects(): (Obstacle | Box)[] {
+        return [...this.obstacles, ...this.boxes];
     }
 }

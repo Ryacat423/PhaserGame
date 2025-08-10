@@ -27,11 +27,17 @@ export interface SpawnPoint {
     y: number;
 }
 
+export interface BoxPosition {
+    x: number;
+    y: number;
+}
+
 export interface LevelConfig {
     playerSpawn: SpawnPoint;
     dogSpawn: SpawnPoint;
     manualObstacles: ManualObstacleData[];
     randomObstacleZones: RandomObstacleZone[];
+    boxes?: BoxPosition[];
     foodCount: number;
     mapTexture: string;
     backgroundMusic?: string;

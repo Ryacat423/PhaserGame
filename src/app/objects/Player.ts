@@ -1,5 +1,7 @@
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursor: any;
+  hideKey: Phaser.Input.Keyboard.Key;
+  private isHiding: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'cat');
@@ -14,14 +16,33 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       d: Phaser.Input.Keyboard.KeyCodes.D
     });
 
+    this.hideKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
     this.setScale(0.15);
     this.setCollideWorldBounds(true);
     this.body?.setSize(220, 220);
     this.body?.setOffset(110, 180);
+    this.setDepth(1);
+  }
+
+  public setHiding(hiding: boolean): void {
+    this.isHiding = hiding;
+  }
+
+  public getIsHiding(): boolean {
+    return this.isHiding;
   }
 
   override update() {
     if (!this.active) return;
+
+    if (this.isHiding || (this.body && !this.body.enable)) {
+      if (this.body) {
+        this.disableBody(false, false);
+      }
+      this.setVelocity(0, 0);
+      return;
+    }
 
     const speed = 70;
     let x = 0;

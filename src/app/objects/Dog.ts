@@ -1,297 +1,322 @@
 import { Player } from "./Player";
 
-export type DogState = 'SLEEP' | 'CHASE' | 'ROAM' | 'IDLE' | 'RETURN_HOME';
+export type DogState = 'SLEEP' | 'CHASE' | 'ROAM' | 'RETURN_HOME';
 
 export class Dog extends Phaser.Physics.Arcade.Sprite {
     public static readonly SLEEP: DogState = 'SLEEP';
     public static readonly CHASE: DogState = 'CHASE';
     public static readonly ROAM: DogState = 'ROAM';
-    public static readonly IDLE: DogState = 'IDLE';
     public static readonly RETURN_HOME: DogState = 'RETURN_HOME';
 
     private currentState: DogState;
-    private previousState: DogState;
     private player: Player;
-    private stateTimer: number;
     private moveDirection: Phaser.Math.Vector2;
-    private detectionRadius = 100;
-    private chaseSpeed = 50;
-    private roamSpeed = 30;
-    private returnHomeSpeed = 40;
-    private roamDuration = 15000;
-    private sleepDuration = 3000;
+    
+    private detectionRadius = 200;
+    private chaseSpeed = 60;
+    private roamSpeed = 40;
+    private returnHomeSpeed = 50;
     private maxRoamDistance = 500;
-
-    private chaseDuration = 5000;
-    private chaseTimer: number = 0;
-
+    
     private spawnPoint: Phaser.Math.Vector2;
-    private roamStartPoint: Phaser.Math.Vector2;
 
     private bark!: Phaser.Sound.BaseSound;    
     private meow!: Phaser.Sound.BaseSound;
     
+    private isPlayerHidden: boolean = false;
     private isBarking: boolean = false;
-    private hasPlayedMeow: boolean = false;
+    private behaviorType: 'SLEEPER' | 'ROAMER';
+    
+    private directionChangeTimer: number = 0;
+    private directionChangeCooldown: number = 1500;
 
-    private primaryBehavior: 'SLEEPER' | 'ROAMER';
-
-    constructor(scene: Phaser.Scene, x: number, y: number, player: Player) {
+    constructor(scene: Phaser.Scene, x: number, y: number, player: Player, initialState: DogState = Dog.SLEEP) {
         super(scene, x, y, 'dog');
+        
         this.player = player;
-        this.currentState = Dog.SLEEP;
-        this.previousState = Dog.SLEEP;
-        this.stateTimer = 0;
+        this.currentState = initialState;
         this.moveDirection = new Phaser.Math.Vector2();
         
         this.spawnPoint = new Phaser.Math.Vector2(x, y);
-        this.roamStartPoint = new Phaser.Math.Vector2(x, y);
-
-        this.primaryBehavior = 'SLEEPER';
         
-        scene.add.existing(this as Phaser.GameObjects.GameObject);
-        scene.physics.add.existing(this as Phaser.GameObjects.GameObject);
-        this.setScale(0.09);
-        this.setCollideWorldBounds(true);
-
-        this.bark = scene.sound.add('bark');
-        this.meow = scene.sound.add('meow');
-
-        this.setState(Dog.SLEEP);
-        this.updateMoveDirection();
-
-        this.body?.setSize(500, 400);
-        this.body?.setOffset(300, 500);
+        this.behaviorType = initialState === Dog.SLEEP ? 'SLEEPER' : 'ROAMER';
+        
+        this.setupPhysics(scene);
+        this.setupAudio(scene);
+        this.setupEventListeners(scene);
+        
+        if (this.currentState === Dog.ROAM) {
+            this.generateNewDirection();
+        }
     }
 
-    public setPrimaryBehavior(behavior: 'SLEEPER' | 'ROAMER'): void {
-        this.primaryBehavior = behavior;
+    private setupPhysics(scene: Phaser.Scene): void {
+        scene.add.existing(this as Phaser.GameObjects.GameObject);
+        scene.physics.add.existing(this as Phaser.GameObjects.GameObject);
+        
+        this.setScale(0.09);
+        this.setDepth(2);
+        this.setCollideWorldBounds(true);
+        
+        this.body?.setSize(400, 300);
+        this.body?.setOffset(350, 550);
+    
+        if (this.body && this.body instanceof Phaser.Physics.Arcade.Body) {
+            this.body.setBounce(0.1, 0.1);
+        }
+
+        this.playInitialAnimation();
+    }
+    
+    private playInitialAnimation(): void {
+        console.log(`Playing initial animation for state: ${this.currentState}`);
+        
+        switch (this.currentState) {
+            case Dog.SLEEP:
+                this.play('dog_sleep', true);
+                this.setVelocity(0, 0);
+                break;
+            case Dog.ROAM:
+                this.play('dog_run', true);
+                break;
+            default:
+                this.play('dog_idle', true);
+                break;
+        }
+    }
+
+    private setupAudio(scene: Phaser.Scene): void {
+        this.bark = scene.sound.add('bark', { volume: 0.6 });
+        this.meow = scene.sound.add('meow', { volume: 0.4 });
+    }
+
+    private setupEventListeners(scene: Phaser.Scene): void {
+        scene.events.on('playerHidden', () => this.onPlayerHidden());
+        scene.events.on('playerVisible', () => this.onPlayerVisible());
+    }
+
+    public onCollideWithPlayer(): void {
+        if (this.currentState === Dog.CHASE) {
+            this.stopBark();
+            if (this.behaviorType === 'SLEEPER') {
+                this.setState(Dog.RETURN_HOME);
+            } else {
+                this.setState(Dog.ROAM);
+            }
+        }
+    }
+
+    private onPlayerHidden(): void {
+        this.isPlayerHidden = true;
+        if (this.currentState === Dog.CHASE) {
+            if (this.behaviorType === 'SLEEPER') {
+                this.setState(Dog.RETURN_HOME);
+            } else {
+                this.setState(Dog.ROAM);
+            }
+        }
+    }
+
+    private onPlayerVisible(): void {
+        this.isPlayerHidden = false;
+        if (this.shouldChasePlayer() && this.currentState !== Dog.CHASE) {
+            this.setState(Dog.CHASE);
+        }
     }
 
     public override setState(newState: DogState): this {
         if (this.currentState === newState) return this;
-
-        if (this.currentState !== Dog.CHASE && this.currentState !== Dog.IDLE) {
-            this.previousState = this.currentState;
-        }
-
-        if (this.currentState === Dog.IDLE) {
-            this.hasPlayedMeow = false;
-        }
-
+        this.cleanupCurrentState();
+        const previousState = this.currentState;
         this.currentState = newState;
-        this.stateTimer = 0;
-
-        switch (this.currentState) {
-            case Dog.SLEEP:
-                this.play('dog_sleep');
-                this.setVelocity(0, 0);
-                break;
-            case Dog.CHASE:
-                this.play('dog_run');
-                this.isBarking = true; 
-                this.playBark();
-                break;
-            case Dog.ROAM:
-                this.play('dog_run');
-                this.roamStartPoint.set(this.x, this.y);
-                this.updateMoveDirection();
-                break;
-            case Dog.RETURN_HOME:
-                this.play('dog_run');
-                break;
-            case Dog.IDLE:
-                this.play('dog_idle');
-                this.setVelocity(0, 0);
-                this.hasPlayedMeow = false;
-                break;
-        }
+        this.initializeNewState();
         return this;
     }
 
-    private updateMoveDirection(): void {
-        const distanceFromRoamStart = Phaser.Math.Distance.Between(
-            this.x, this.y, 
-            this.roamStartPoint.x, this.roamStartPoint.y
+    private cleanupCurrentState(): void {
+        switch (this.currentState) {
+            case Dog.CHASE:
+                this.stopBark();
+                break;
+        }
+    }
+
+    private initializeNewState(): void {
+        console.log(`Dog initializing state: ${this.currentState}`);
+        
+        switch (this.currentState) {
+            case Dog.SLEEP:
+                console.log('Playing dog_sleep animation');
+                this.play('dog_sleep', true);
+                this.setVelocity(0, 0);
+                break;
+                
+            case Dog.CHASE:
+                console.log('Playing dog_run animation for chase');
+                this.play('dog_run', true);
+                this.startBark();
+                break;
+                
+            case Dog.ROAM:
+                console.log('Playing dog_run animation for roam');
+                this.play('dog_run', true);
+                this.generateNewDirection();
+                break;
+                
+            case Dog.RETURN_HOME:
+                console.log('Playing dog_run animation for return home');
+                this.play('dog_run', true);
+                break;
+        }
+    }
+
+    private generateNewDirection(): void {
+        const distanceFromSpawn = Phaser.Math.Distance.Between(
+            this.x, this.y, this.spawnPoint.x, this.spawnPoint.y
         );
 
         let angle: number;
-        
-        if (distanceFromRoamStart > this.maxRoamDistance * 0.8) {
-            const angleToRoamStart = Phaser.Math.Angle.Between(
-                this.x, this.y,
-                this.roamStartPoint.x, this.roamStartPoint.y
+        if (distanceFromSpawn > this.maxRoamDistance * 0.8) {
+            const angleToSpawn = Phaser.Math.Angle.Between(
+                this.x, this.y, this.spawnPoint.x, this.spawnPoint.y
             );
-            angle = angleToRoamStart + Phaser.Math.FloatBetween(-Math.PI/3, Math.PI/3);
+            angle = angleToSpawn + Phaser.Math.FloatBetween(-Math.PI/4, Math.PI/4);
         } else {
             angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
         }
         
         this.moveDirection.set(Math.cos(angle), Math.sin(angle)).normalize();
+        this.directionChangeTimer = 0;
     }
 
     private shouldChasePlayer(): boolean {
+        if (this.isPlayerHidden) return false;
+        
         const distance = Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y);
         return distance < this.detectionRadius;
     }
 
     private isAtSpawnPoint(): boolean {
         const distance = Phaser.Math.Distance.Between(this.x, this.y, this.spawnPoint.x, this.spawnPoint.y);
-        return distance < 20;
+        return distance < 30;
     }
 
-    private shouldReturnHome(): boolean {
-        const distanceFromSpawn = Phaser.Math.Distance.Between(
-            this.x, this.y, 
-            this.spawnPoint.x, this.spawnPoint.y
-        );
-        return distanceFromSpawn > this.maxRoamDistance;
-    }
-
-    private getNextStateAfterChase(): DogState {
-        if (this.shouldReturnHome()) {
-            return Dog.RETURN_HOME;
-        }
-        switch (this.previousState) {
-            case Dog.ROAM:
-                return Dog.ROAM;
-            case Dog.SLEEP:
-                return Dog.SLEEP;
-            case Dog.RETURN_HOME:
-                return Dog.RETURN_HOME;
-            default:
-                return this.primaryBehavior === 'ROAMER' ? Dog.ROAM : Dog.SLEEP;
+    private startBark(): void {
+        if (!this.isBarking) {
+            this.isBarking = true;
+            this.bark.play();
         }
     }
 
-    private getNextStateAfterIdle(): DogState {
-        if (this.shouldReturnHome()) {
-            return Dog.RETURN_HOME;
-        }
-
-        return this.getNextStateAfterChase();
-    }
-
-    private checkPlayerInteraction(): void {
-        const distanceToPlayer = Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y);
-
-        if (distanceToPlayer < 30 && this.currentState === Dog.IDLE && !this.hasPlayedMeow) {
-            this.meow.play();
-            this.hasPlayedMeow = true;
+    public stopBark(): void {
+        if (this.isBarking) {
+            this.isBarking = false;
+            this.bark.stop();
         }
     }
 
     public playBark(): void {
-        this.bark.play();
-    }
-
-    public stopBark(): void {
-        this.bark.stop();
+        this.startBark();
     }
 
     override update(_time: number, delta: number): void {
-        this.stateTimer += delta;
-        this.checkPlayerInteraction();
-
+        if (!this.body || !this.active) return;
         if (this.shouldChasePlayer() && this.currentState !== Dog.CHASE) {
             this.setState(Dog.CHASE);
+            return;
         }
+        this.handleCurrentState(delta);
+    }
 
+    private handleCurrentState(delta: number): void {
         switch (this.currentState) {
             case Dog.SLEEP:
-                if (this.anims.currentAnim?.key !== 'dog_sleep') {
-                    this.play('dog_sleep');
-                    this.setVelocity(0, 0);
-                }
-
-                if (this.stateTimer >= this.sleepDuration) {
-                    if (this.primaryBehavior === 'SLEEPER' && Math.random() > 0.3) {
-                        this.stateTimer = 0;
-                    } else {
-                        this.setState(Dog.ROAM);
-                    }
-                }
                 break;
-
             case Dog.CHASE:
-                this.chaseTimer += delta; // Increment the chase timer
-
-                if (!this.shouldChasePlayer() || this.chaseTimer >= this.chaseDuration) {
-                    this.setState(this.getNextStateAfterChase());
-                    this.chaseTimer = 0; // Reset the chase timer
-                } else {
-                    this.scene.physics.moveToObject(this as Phaser.GameObjects.GameObject, this.player as Phaser.GameObjects.GameObject, this.chaseSpeed);
-                    this.setFlipX(this.player.x < this.x);
-
-                    const distanceToPlayer = Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y);
-                    if (distanceToPlayer < 15) { 
-                        this.setState(Dog.IDLE);
-                        this.stopBark();
-                    }
-                }
+                this.handleChaseState();
                 break;
-
-            case Dog.IDLE:
-                if (this.anims.currentAnim?.key !== 'dog_idle') {
-                    this.play('dog_idle');
-                    this.setVelocity(0, 0);
-                }
-                if (this.stateTimer >= 2000) { 
-                    this.setState(this.getNextStateAfterIdle());
-                }
-                break;
-
             case Dog.ROAM:
-                if (this.shouldReturnHome()) {
-                    this.setState(Dog.RETURN_HOME);
-                    break;
-                }
-
-                if (this.stateTimer >= this.roamDuration) {
-                    const continueRoaming = this.primaryBehavior === 'ROAMER' ? 0.7 : 0.3;
-                    
-                    if (Math.random() < continueRoaming) {
-                        this.updateMoveDirection();
-                        this.stateTimer = 0;
-                    } else {
-                        if (this.primaryBehavior === 'SLEEPER' && !this.shouldReturnHome() && Math.random() > 0.5) {
-                            this.setState(Dog.SLEEP);
-                        } else {
-                            this.setState(Dog.RETURN_HOME);
-                        }
-                    }
-                } else {
-                    this.setVelocity(
-                        this.moveDirection.x * this.roamSpeed,
-                        this.moveDirection.y * this.roamSpeed
-                    );
-                    this.setFlipX(this.moveDirection.x < 0);
-                    if (this.stateTimer % 1000 < delta) {
-                        this.updateMoveDirection();
-                    }
-                }
+                this.handleRoamState(delta);
                 break;
-
             case Dog.RETURN_HOME:
-                if (this.isAtSpawnPoint()) {
-                    if (this.primaryBehavior === 'SLEEPER') {
-                        this.setState(Dog.SLEEP);
-                    } else {
-                        this.setState(Math.random() > 0.6 ? Dog.SLEEP : Dog.ROAM);
-                    }
-                } else {
-                    const directionToSpawn = new Phaser.Math.Vector2(
-                        this.spawnPoint.x - this.x,
-                        this.spawnPoint.y - this.y
-                    ).normalize();
-
-                    this.setVelocity(
-                        directionToSpawn.x * this.returnHomeSpeed,
-                        directionToSpawn.y * this.returnHomeSpeed
-                    );
-                    this.setFlipX(directionToSpawn.x < 0);
-                }
+                this.handleReturnHomeState();
                 break;
         }
+    }
+
+    private handleChaseState(): void {
+        if (!this.body || !this.active) return;
+        
+        if (this.isPlayerHidden) {
+            if (this.behaviorType === 'SLEEPER') {
+                this.setState(Dog.RETURN_HOME);
+            } else {
+                this.setState(Dog.ROAM);
+            }
+        } else if (!this.shouldChasePlayer()) {
+            if (this.behaviorType === 'SLEEPER') {
+                this.setState(Dog.RETURN_HOME);
+            } else {
+                this.setState(Dog.ROAM);
+            }
+        } else {
+            this.scene.physics.moveToObject(
+                this as Phaser.GameObjects.GameObject, 
+                this.player as Phaser.GameObjects.GameObject, 
+                this.chaseSpeed
+            );
+            this.setFlipX(this.player.x < this.x);
+        }
+    }
+
+    private handleRoamState(delta: number): void {
+        if (!this.body || !this.active) return;
+        this.setVelocity(
+            this.moveDirection.x * this.roamSpeed,
+            this.moveDirection.y * this.roamSpeed
+        );
+        this.setFlipX(this.moveDirection.x < 0);
+        this.directionChangeTimer += delta;
+        if (this.directionChangeTimer > this.directionChangeCooldown) {
+            this.generateNewDirection();
+        }
+    }
+
+    private handleReturnHomeState(): void {
+        if (!this.body || !this.active) return;
+        
+        if (this.isAtSpawnPoint()) {
+            this.setState(Dog.SLEEP);
+        } else {
+            const directionToSpawn = new Phaser.Math.Vector2(
+                this.spawnPoint.x - this.x,
+                this.spawnPoint.y - this.y
+            ).normalize();
+
+            this.setVelocity(
+                directionToSpawn.x * this.returnHomeSpeed,
+                directionToSpawn.y * this.returnHomeSpeed
+            );
+            this.setFlipX(directionToSpawn.x < 0);
+        }
+    }
+
+    public override destroy(fromScene?: boolean): void {
+        this.stopBark();
+        if (this.bark) this.bark.destroy();
+        if (this.meow) this.meow.destroy();
+        super.destroy(fromScene);
+    }
+
+    public getCurrentState(): DogState {
+        return this.currentState;
+    }
+
+    public getBehaviorType(): 'SLEEPER' | 'ROAMER' {
+        return this.behaviorType;
+    }
+
+    public isChasing(): boolean {
+        return this.currentState === Dog.CHASE;
     }
 }

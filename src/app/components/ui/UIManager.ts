@@ -31,8 +31,6 @@ export class UIManager {
         scene.load.image('box-open', 'assets/global/bg/box_open.png');
         scene.load.image('box-cat', 'assets/global/bg/box_open2.png');
         scene.load.image('tree', 'assets/global/bg/tree.png');
-        scene.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.png');
-        scene.load.image('btn-hide', 'assets/global/ui/btn-hide.png');
         
         //Food Images
         scene.load.image('food1', 'assets/global/food/fish.png');

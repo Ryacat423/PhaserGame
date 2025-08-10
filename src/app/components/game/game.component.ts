@@ -31,7 +31,7 @@ export class GameComponent implements OnInit {
         LevelsScene,
         InformationScene,
         Level1Scene,
-        GameUI,
+        GameUI
       ],
       parent: 'game',
       backgroundColor: "#000000ff",
@@ -39,7 +39,7 @@ export class GameComponent implements OnInit {
       physics: {
         default: 'arcade',
         arcade: {
-          // debug: true,
+          debug: true,
           y: 0,
           x: 0
         }

@@ -4,6 +4,8 @@ export class GameUI extends Phaser.Scene {
     private reset!: Phaser.GameObjects.Image;
     private settings!: Phaser.GameObjects.Image;
     private help!: Phaser.GameObjects.Image;
+    private hideButton!: Phaser.GameObjects.Image;
+    private isHideButtonEnabled: boolean = false;
 
     constructor() {
         super({ key: 'UIScene' });
@@ -12,6 +14,8 @@ export class GameUI extends Phaser.Scene {
     preload() {
         this.load.image('game_frame', 'assets/scene/tutorial/frame.png');
         this.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
+        this.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.png');
+        this.load.image('btn-hide', 'assets/global/ui/btn-hide.png');
     }
 
     create() {
@@ -27,10 +31,79 @@ export class GameUI extends Phaser.Scene {
             .setScale(0.5)
             .setInteractive()
             .setDepth(101);
+
+        this.hideButton = this.add.image(this.scale.width - 60, this.scale.height - 60, 'btn-hide-disabled')
+            .setScale(0.1)
+            .setDepth(101)
+            .setAlpha(0.5)
+            .setInteractive();
             
-        this.uiElements.push(frame, this.home, this.settings, this.reset, this.help);
+        this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);
 
         this.setupHelpModal();
+        this.setupHideButton();
+        this.setupEventListeners();
+    }
+
+    private setupHideButton() {        
+        this.hideButton.on('pointerdown', () => {
+            if (this.isHideButtonEnabled) {
+                const gameScene = this.getActiveGameScene();
+                if (gameScene) {
+                    gameScene.events.emit('hideButtonPressed');
+                }
+            }
+        });
+
+        this.hideButton.on('pointerover', () => {
+            if (this.isHideButtonEnabled) {
+                this.tweens.add({
+                    targets: this.hideButton,
+                    scale: 0.12,
+                    duration: 100,
+                    ease: 'Power1'
+                });
+            }
+        });
+
+        this.hideButton.on('pointerout', () => {
+            if (this.isHideButtonEnabled) {
+                this.tweens.add({
+                    targets: this.hideButton,
+                    scale: 0.1,
+                    duration: 100,
+                    ease: 'Power1'
+                });
+            }
+        });
+    }
+
+    private setupEventListeners() {
+        this.events.on('playerNearBox', (isNear: boolean) => {
+            this.setHideButtonEnabled(isNear);
+        });
+    }
+
+    private setHideButtonEnabled(enabled: boolean) {
+        this.isHideButtonEnabled = enabled;
+        
+        if (enabled) {
+            this.hideButton.setTexture('btn-hide');
+            this.hideButton.setAlpha(1);
+
+            this.tweens.add({
+                targets: this.hideButton,
+                alpha: 0.7,
+                duration: 800,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        } else {
+            this.hideButton.setTexture('btn-hide-disabled');
+            this.hideButton.setAlpha(0.5);
+            this.tweens.killTweensOf(this.hideButton);
+        }
     }
 
     private setupHelpModal() {
@@ -105,18 +178,31 @@ export class GameUI extends Phaser.Scene {
         }
     }
 
-    private resetCurrentLevel() {
+    private getActiveGameScene(): Phaser.Scene | null {
         const gameScenes = this.scene.manager.scenes.filter(
-            scene => scene.scene.key !== 'UIScene' && scene.scene.isActive()
+            scene => scene.scene.key !== 'UIScene' && 
+                    scene.scene.key !== 'welcome' && 
+                    scene.scene.key !== 'settings' && 
+                    scene.scene.isActive()
         );
         
-        if (gameScenes.length > 0) {
-            const currentScene = gameScenes[0];
+        return gameScenes.length > 0 ? gameScenes[0] : null;
+    }
+
+    private resetCurrentLevel() {
+        const currentScene = this.getActiveGameScene();
+        
+        if (currentScene) {
             const sceneKey = currentScene.scene.key;
             
-            // Stop and restart the current game scene
-            this.scene.stop(sceneKey);
-            this.scene.start(sceneKey);
+            console.log(`Resetting scene: ${sceneKey}`);
+            
+            this.setHideButtonEnabled(false);
+            currentScene.sound.stopAll();
+            this.time.delayedCall(100, () => {
+                this.scene.stop(sceneKey);
+                this.scene.start(sceneKey);
+            });
         }
     }
 }
