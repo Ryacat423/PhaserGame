@@ -10,6 +10,7 @@ export class TutorialScene extends Phaser.Scene {
     private foods: Food[] = [];
     private gameMap!: GameMap;
     private gameTheme!: Phaser.Sound.BaseSound;
+    private eat!: Phaser.Sound.BaseSound;
 
     constructor() {
         super({ key: 'tutorial' });
@@ -29,7 +30,8 @@ export class TutorialScene extends Phaser.Scene {
             this.gameTheme.stop();
         }
         
-        this.gameTheme = this.sound.add('game_theme', { loop: true });
+        this.gameTheme = this.sound.add('game_theme', { loop: true }).setVolume(0.2);
+        this.eat = this.sound.add('eat').setVolume(0.5);
         this.gameTheme.play();
 
         const background = this.add.image(0, 0, 'game_tutorial_map')
@@ -49,7 +51,6 @@ export class TutorialScene extends Phaser.Scene {
             .setOffset(120, 120);
         house.body?.setAllowGravity(false);
         this.physics.add.collider(this.player, house);
-
         const dog1 = new Dog(this, 300, 300, this.player, Dog.SLEEP);
         const dog2 = new Dog(this, 500, 500, this.player, Dog.ROAM);
         dog2.setTint(0xffcccc);
@@ -57,8 +58,10 @@ export class TutorialScene extends Phaser.Scene {
         this.add.existing(dog1);
         this.add.existing(dog2);
 
+        this.physics.add.collider(dog1, dog2);
         this.dogs.push(dog1, dog2);
         this.dogs.forEach(dog => {
+            this.physics.add.collider(dog, house);
             this.physics.add.collider(this.player, dog, () => dog.onCollideWithPlayer());
         });
 
@@ -191,7 +194,17 @@ export class TutorialScene extends Phaser.Scene {
 
     private collectFood(food: Food): void {
         Phaser.Utils.Array.Remove(this.foods, food);
+        this.eat.play();
         food.destroy();
+    }
+
+    public getDogs(): Dog[] {
+        return this.dogs;
+    }
+    
+    public destroyDogs(): void {
+        this.dogs.forEach(dog => dog.destroy());
+        this.dogs = [];
     }
 
     override update(time: number, delta: number): void {

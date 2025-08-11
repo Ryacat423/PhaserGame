@@ -122,23 +122,25 @@ export class WelcomeScene extends Phaser.Scene {
     }
 
     createAnimations(): void {
-        this.anims.create({
-            key: 'idle',
-            frames: this.anims.generateFrameNumbers('cat_idle', {
-                frames: [1, 1, 1, 2, 2, 3, 3, 3]
-            }),
-            frameRate: 12,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'blink',
-            frames: this.anims.generateFrameNumbers('cat_idle', {
-                frames: [4, 5, 6, 7, 8, 5, 4]
-            }),
-            frameRate: 12,
-            repeat: 0
-        });
+        if(!this.anims.exists('idle')){
+            this.anims.create({
+                key: 'idle',
+                frames: this.anims.generateFrameNumbers('cat_idle', {
+                    frames: [1, 1, 1, 2, 2, 3, 3, 3]
+                }),
+                frameRate: 12,
+                repeat: -1
+            });
+    
+            this.anims.create({
+                key: 'blink',
+                frames: this.anims.generateFrameNumbers('cat_idle', {
+                    frames: [4, 5, 6, 7, 8, 5, 4]
+                }),
+                frameRate: 12,
+                repeat: 0
+            });
+        }
     }
 
     catIdleSprite(): void {

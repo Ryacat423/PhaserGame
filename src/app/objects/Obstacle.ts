@@ -37,7 +37,7 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
             this.setAngle(Phaser.Math.Between(config.rotation.min, config.rotation.max));
         }
 
-        this.setDepth(config.depth || 2);
+        this.setDepth(config.depth || 4);
 
         this.setImmovable(true);
         

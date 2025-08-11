@@ -44,6 +44,7 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
         this.setupPhysics(scene);
         this.setupAudio(scene);
         this.setupEventListeners(scene);
+        this.setDepth(3);
         
         if (this.currentState === Dog.ROAM) {
             this.generateNewDirection();

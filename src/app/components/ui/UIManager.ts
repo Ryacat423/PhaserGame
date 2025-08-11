@@ -45,6 +45,9 @@ export class UIManager {
         scene.load.audio('bark', 'assets/global/audio/dog_bark.mp3');
         scene.load.audio('meow', 'assets/global/audio/meow.mp3');
         scene.load.audio('bark-once', 'assets/global/audio/bark_once.wav');
+        scene.load.audio('footsteps', 'assets/global/audio/footsteps.wav');
+        scene.load.audio('eat', 'assets/global/audio/eat_v1.wav');
+        scene.load.audio('meow_2', 'assets/global/audio/meow_2.wav');
         
         // Global Sprites
         scene.load.spritesheet('dog', 'assets/sprites/dog_sprite.png', {
@@ -59,44 +62,46 @@ export class UIManager {
     }
 
     createAnimations(): void {
-        this.scene.anims.create({
-            key: 'dog_idle',
-            frames: this.scene.anims.generateFrameNumbers('dog', { start: 40, end: 60 }),
-            frameRate: 24,
-            repeat: -1
-        });
-
-        this.scene.anims.create({
-            key: 'dog_sleep',
-            frames: this.scene.anims.generateFrameNumbers('dog', { start: 16, end: 39 }),
-            frameRate: 24,
-            repeat: -1
-        });
-
-        this.scene.anims.create({
-            key: 'dog_run',
-            frames: this.scene.anims.generateFrameNumbers('dog', { start: 0, end: 12 }),
-            frameRate: 24,
-            repeat: -1
-        })
-
-        this.scene.anims.create({
-            key: 'cat_idle',
-            frames: this.scene.anims.generateFrameNumbers('cat', { start: 0, end: 19 }),
-            frameRate: 6,
-            repeat: -1
-        });
-
-        this.scene.anims.create({
-            key: 'cat_walk',
-            frames: this.scene.anims.generateFrameNumbers('cat', { start: 33, end: 47 }),
-            frameRate: 24,
-            repeat: -1
-        });
+        if (!this.scene.anims.exists('cat_idle')) {
+            this.scene.anims.create({
+                key: 'dog_idle',
+                frames: this.scene.anims.generateFrameNumbers('dog', { start: 40, end: 60 }),
+                frameRate: 24,
+                repeat: -1
+            });
+    
+            this.scene.anims.create({
+                key: 'dog_sleep',
+                frames: this.scene.anims.generateFrameNumbers('dog', { start: 16, end: 39 }),
+                frameRate: 24,
+                repeat: -1
+            });
+    
+            this.scene.anims.create({
+                key: 'dog_run',
+                frames: this.scene.anims.generateFrameNumbers('dog', { start: 0, end: 12 }),
+                frameRate: 24,
+                repeat: -1
+            })
+    
+            this.scene.anims.create({
+                key: 'cat_idle',
+                frames: this.scene.anims.generateFrameNumbers('cat', { start: 0, end: 19 }),
+                frameRate: 6,
+                repeat: -1
+            });
+    
+            this.scene.anims.create({
+                key: 'cat_walk',
+                frames: this.scene.anims.generateFrameNumbers('cat', { start: 33, end: 47 }),
+                frameRate: 24,
+                repeat: -1
+            });
+        }
     }
 
     initSounds(): void {
-        this.theme = this.scene.sound.add('theme');
+        this.theme = this.scene.sound.add('theme', {loop: true});
         this.meow = this.scene.sound.add('meow');
         this.sounds.click = this.scene.sound.add('click', { volume: 0.3 });
 

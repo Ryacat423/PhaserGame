@@ -1,6 +1,9 @@
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursor: any;
   hideKey: Phaser.Input.Keyboard.Key;
+
+  moveSound!: Phaser.Sound.BaseSound;
+
   private isHiding: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -23,6 +26,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body?.setSize(220, 220);
     this.body?.setOffset(110, 180);
     this.setDepth(1);
+
+    this.moveSound = scene.sound.add('footsteps');
   }
 
   public setHiding(hiding: boolean): void {
@@ -55,8 +60,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.anims.currentAnim?.key !== 'cat_idle') {
         this.play('cat_idle');
       }
+
+      if (this.moveSound && this.moveSound.isPlaying) {
+        this.moveSound.stop();
+      }
       this.setVelocity(0, 0);
     } else {
+      if (!this.moveSound.isPlaying) {
+        this.moveSound.play({ loop: true });
+      }
+
+      if(this.isHiding) {
+        this.moveSound.pause();
+      } else {
+        this.moveSound.resume();
+      }
+        
       if (this.anims.currentAnim?.key !== 'cat_walk') {
         this.play('cat_walk');
       }

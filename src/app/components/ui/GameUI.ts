@@ -115,9 +115,18 @@ export class GameUI extends Phaser.Scene {
 
     private setupHelpModal() {
         this.help.on('pointerdown', () => {
+            const overlay = this.add.rectangle(
+                this.scale.width / 2, 
+                this.scale.height / 2, 
+                this.scale.width, 
+                this.scale.height, 
+                0x000000, 
+                0.7
+            ).setDepth(150);
+
             const helpModal = this.add.image(500, 300, 'movement_modal')
-                .setDepth(200);
-                
+                .setDepth(151);
+
             const closeBtn = this.add.image(800, 130, 'btn-close')
                 .setDepth(201)
                 .setScale(0.5)
@@ -128,6 +137,7 @@ export class GameUI extends Phaser.Scene {
             closeBtn.on('pointerdown', () => {
                 helpModal.destroy();
                 closeBtn.destroy();
+                overlay.destroy();
                 this.uiElements = this.uiElements.filter(e => e !== helpModal && e !== closeBtn);
             });
         });
@@ -312,22 +322,23 @@ export class GameUI extends Phaser.Scene {
 
     private resetCurrentLevel() {
         const currentScene = this.getActiveGameScene();
-        
+
         if (currentScene) {
             const sceneKey = currentScene.scene.key;
-            
             console.log(`Resetting scene: ${sceneKey}`);
-            
+
             if (this.isPaused) {
                 this.resumeGame();
             }
-            
+
             this.setHideButtonEnabled(false);
             currentScene.sound.stopAll();
+
             this.time.delayedCall(100, () => {
                 this.scene.stop(sceneKey);
                 this.scene.start(sceneKey);
             });
         }
     }
+
 }
