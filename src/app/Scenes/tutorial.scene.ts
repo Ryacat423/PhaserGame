@@ -1,16 +1,16 @@
 import { Player } from "../objects/Player";
 import { Dog } from "../objects/Dog";
-import { Food } from "../objects/Food";
 import { GameMap } from "../objects/GameMap";
-import { LevelConfig } from "../interfaces/game.interfaces";
+import { ItemSystem } from "../objects/ItemSystem";
+
+import { ItemSpawnConfig, LevelConfig } from "../interfaces/game.interfaces";
 
 export class TutorialScene extends Phaser.Scene {
     private player!: Player;
     private dogs: Dog[] = [];
-    private foods: Food[] = [];
     private gameMap!: GameMap;
+    private itemSystem!: ItemSystem;
     private gameTheme!: Phaser.Sound.BaseSound;
-    private eat!: Phaser.Sound.BaseSound;
 
     constructor() {
         super({ key: 'tutorial' });
@@ -18,7 +18,6 @@ export class TutorialScene extends Phaser.Scene {
 
     preload(): void {
         this.load.image('game_tutorial_map', 'assets/scene/tutorial/tutorial_map.png');
-        this.load.audio('game_theme', 'assets/global/audio/gameplay.ogg');
     }
 
     create(): void {
@@ -31,7 +30,6 @@ export class TutorialScene extends Phaser.Scene {
         }
         
         this.gameTheme = this.sound.add('game_theme', { loop: true }).setVolume(0.2);
-        this.eat = this.sound.add('eat').setVolume(0.5);
         this.gameTheme.play();
 
         const background = this.add.image(0, 0, 'game_tutorial_map')
@@ -40,6 +38,7 @@ export class TutorialScene extends Phaser.Scene {
 
         this.player = new Player(this, 500, 300);
         this.add.existing(this.player);
+        
         // Dog house
         const house = this.physics.add
             .image(280, 290, 'dog_house')
@@ -51,6 +50,7 @@ export class TutorialScene extends Phaser.Scene {
             .setOffset(120, 120);
         house.body?.setAllowGravity(false);
         this.physics.add.collider(this.player, house);
+        
         const dog1 = new Dog(this, 300, 300, this.player, Dog.SLEEP);
         const dog2 = new Dog(this, 500, 500, this.player, Dog.ROAM);
         dog2.setTint(0xffcccc);
@@ -94,10 +94,25 @@ export class TutorialScene extends Phaser.Scene {
         this.gameMap.setup(levelConfig);
         this.gameMap.setupDogColliders(this.dogs);
 
-        // Food
-        this.createFoodItems();
-
-        // UI event hooks
+        this.itemSystem = new ItemSystem(this, this.player, this.gameMap);
+        
+        const itemConfig: ItemSpawnConfig = {
+            foodCount: 8,
+            poisonCount: 4,
+            minItemDistance: 60,
+            minObstacleDistance: 50,
+            minBoxDistance: 70,
+            minPlayerDistance: 80,
+            mapWidth: background.width,
+            mapHeight: background.height,
+            playerSpawn: { x: 500, y: 300 },
+            dogSpawns: [
+                { x: 300, y: 300 },
+                { x: 500, y: 500 }
+            ]
+        };
+        
+        this.itemSystem.spawnItems(itemConfig);
         this.setupBoxEventListeners();
 
         // Camera
@@ -105,6 +120,10 @@ export class TutorialScene extends Phaser.Scene {
         mainCam.setBounds(0, 0, background.width, background.height);
         mainCam.startFollow(this.player);
         mainCam.setZoom(1.5);
+
+        this.events.on('beforeSceneRestart', () => {
+            this.cleanupBeforeRestart();
+        });
 
         this.game.events.on('returnToWelcome', () => {
             this.cleanupBeforeExit();
@@ -134,6 +153,22 @@ export class TutorialScene extends Phaser.Scene {
         }
     }
 
+    private cleanupBeforeRestart(): void {
+        this.gameMap.getBoxes().forEach(box => {
+            if (typeof box.forceStopHiding === 'function') {
+                box.forceStopHiding();
+            }
+        });
+    
+        this.dogs.forEach(dog => {
+            dog.stopBark();
+        });
+    
+        if (this.itemSystem) {
+            this.itemSystem.clearAllItems();
+        }
+    }
+
     private cleanupBeforeExit(): void {
         if (this.gameTheme?.isPlaying) {
             this.gameTheme.stop();
@@ -146,56 +181,19 @@ export class TutorialScene extends Phaser.Scene {
             dog.stopBark();
         });
         this.tweens.getTweens().forEach(tween => tween.stop());
-        this.gameMap.getBoxes().forEach(box => box.forceStopHiding());
+        
+        if (this.itemSystem) {
+            this.itemSystem.clearAllItems();
+        }
+        
+        this.gameMap.getBoxes().forEach(box => {
+            if (typeof box.forceStopHiding === 'function') {
+                box.forceStopHiding();
+            }
+        });
+        
         this.children.removeAll();
         this.sound.stopAll();
-    }
-
-    private createFoodItems(): void {
-        const foodTextures = ['food1', 'food2', 'food3', 'food4', 'food5'];
-        const foodCount = 10;
-
-        for (let i = 0; i < foodCount; i++) {
-            const texture = Phaser.Utils.Array.GetRandom(foodTextures);
-            let x, y, attempts = 0;
-
-            do {
-                x = Phaser.Math.Between(100, this.scale.width - 100);
-                y = Phaser.Math.Between(100, this.scale.height - 100);
-                attempts++;
-            } while (
-                attempts < 50 && (
-                    Phaser.Math.Distance.Between(500, 300, x, y) < 80 ||
-                    Phaser.Math.Distance.Between(300, 300, x, y) < 80 ||
-                    Phaser.Math.Distance.Between(280, 290, x, y) < 80 || 
-                    this.isTooCloseToObstacles(x, y, 60) ||
-                    this.isTooCloseToBoxes(x, y, 80)
-                )
-            );
-
-            const food = new Food(this, x, y, texture);
-            this.foods.push(food);
-
-            this.physics.add.overlap(this.player, food, (_, f) => this.collectFood(f as Food));
-        }
-    }
-
-    private isTooCloseToObstacles(x: number, y: number, minDistance: number): boolean {
-        return this.gameMap.getObstacles().some(obstacle =>
-            Phaser.Math.Distance.Between(obstacle.x, obstacle.y, x, y) < minDistance
-        );
-    }
-
-    private isTooCloseToBoxes(x: number, y: number, minDistance: number): boolean {
-        return this.gameMap.getBoxes().some(box =>
-            Phaser.Math.Distance.Between(box.x, box.y, x, y) < minDistance
-        );
-    }
-
-    private collectFood(food: Food): void {
-        Phaser.Utils.Array.Remove(this.foods, food);
-        this.eat.play();
-        food.destroy();
     }
 
     public getDogs(): Dog[] {
@@ -207,8 +205,12 @@ export class TutorialScene extends Phaser.Scene {
         this.dogs = [];
     }
 
+    public getItemSystem(): ItemSystem {
+        return this.itemSystem;
+    }
+
     override update(time: number, delta: number): void {
-        this.player.update();
+        this.player.update(time, delta);
         this.dogs.forEach(dog => dog.update(time, delta));
         this.gameMap.update();
     }

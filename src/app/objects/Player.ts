@@ -3,8 +3,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   hideKey: Phaser.Input.Keyboard.Key;
 
   moveSound!: Phaser.Sound.BaseSound;
+  hurtSound!: Phaser.Sound.BaseSound;
 
   private isHiding: boolean = false;
+  private baseSpeed: number = 70;
+  private currentSpeed: number = 70;
+  private isPoisoned: boolean = false;
+  private poisonTimer: number = 0;
+  private poisonDuration: number = 5000;
+  private invulnerable: boolean = false;
+  private invulnerabilityDuration: number = 1000;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'cat');
@@ -28,6 +36,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(1);
 
     this.moveSound = scene.sound.add('footsteps');
+    this.hurtSound = scene.sound.add('hurt');
   }
 
   public setHiding(hiding: boolean): void {
@@ -38,8 +47,70 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.isHiding;
   }
 
-  override update() {
+  public takeDamage(): void {
+    if (this.invulnerable) return;
+    this.invulnerable = true;
+    this.setTint(0xff6666);
+    this.hurtSound.play();
+    this.scene.events.emit('playerHitByDog');
+    
+    this.scene.time.delayedCall(this.invulnerabilityDuration, () => {
+      this.invulnerable = false;
+      if (!this.isPoisoned) {
+        this.clearTint();
+      } else {
+        this.setTint(0xaa44aa);
+      }
+    });
+  }
+
+  public applyPoison(): void {
+    if (this.isPoisoned) return;
+    
+    this.isPoisoned = true;
+    this.poisonTimer = this.poisonDuration;
+    
+    this.currentSpeed = this.baseSpeed * 0.5;
+    
+    this.setTint(0xaa44aa);
+  }
+
+  private updatePoisonEffect(delta: number): void {
+    if (!this.isPoisoned) return;
+    
+    this.poisonTimer -= delta;
+    
+    if (this.poisonTimer <= 0) {
+      this.curePoison();
+    }
+  }
+
+  private curePoison(): void {
+    if (!this.isPoisoned) return;
+    
+    this.isPoisoned = false;
+    this.poisonTimer = 0;
+    this.currentSpeed = this.baseSpeed;
+    if (!this.invulnerable) {
+      this.clearTint();
+    }
+    
+    console.log('Poison cured! Speed restored.');
+  }
+
+  public getIsPoisoned(): boolean {
+    return this.isPoisoned;
+  }
+
+  public getIsInvulnerable(): boolean {
+    return this.invulnerable;
+  }
+
+  override update(time?: number, delta?: number) {
     if (!this.active) return;
+    if (delta) {
+      this.updatePoisonEffect(delta);
+    }
 
     if (this.isHiding || (this.body && !this.body.enable)) {
       if (this.body) {
@@ -49,7 +120,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    const speed = 70;
     let x = 0;
     let y = 0;
 
@@ -93,7 +163,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (w.isDown) y = -1;
       if (s.isDown) y = 1;
 
-      this.setVelocity(speed * x, speed * y);
+      this.setVelocity(this.currentSpeed * x, this.currentSpeed * y);
     }
   }
 }

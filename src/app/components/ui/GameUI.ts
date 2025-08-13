@@ -8,6 +8,9 @@ export class GameUI extends Phaser.Scene {
     private hideButton!: Phaser.GameObjects.Image;
     private isHideButtonEnabled: boolean = false;
     private isPaused: boolean = false;
+    
+    private playerLives: number = 3;
+    private lifeIcons: Phaser.GameObjects.Image[] = [];
 
     constructor() {
         super({ key: 'UIScene' });
@@ -23,6 +26,8 @@ export class GameUI extends Phaser.Scene {
         this.load.image('act-btn-resume', 'assets/global/ui/act-btn-resume.png');
         this.load.image('act-btn-settings', 'assets/global/ui/act-btn-settings.png');
         this.load.image('act-btn-mainmenu', 'assets/global/ui/act-btn-mainmenu.png');
+
+        this.load.image('life', 'assets/global/ui/heart_life.png');
     }
 
     create() {
@@ -47,9 +52,56 @@ export class GameUI extends Phaser.Scene {
             
         this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);
 
+        this.setupLifeSystem();
         this.setupHelpModal();
         this.setupHideButton();
         this.setupEventListeners();
+    }
+
+    private setupLifeSystem(): void {
+        const startX = 440;
+        const spacing = 70;
+
+        for (let i = 0; i < this.playerLives; i++) {
+            const lifeIcon = this.add.image(startX + (i * spacing), 40, 'life')
+                .setScale(0.19)
+                .setDepth(102);
+            
+            this.lifeIcons.push(lifeIcon);
+            this.uiElements.push(lifeIcon);
+        }
+    }
+
+    private updateLifeDisplay(): void {
+        this.lifeIcons.forEach((icon, index) => {
+            if (index < this.playerLives) {
+                icon.setAlpha(1);
+            } else {
+                icon.setAlpha(0.3);
+            }
+        });
+    }
+
+    public loseLife(): void {
+        console.log(this.playerLives)
+        if (this.playerLives > 0) {
+            this.playerLives--;
+            this.updateLifeDisplay();
+            
+            if (this.playerLives <= 0) {
+                this.onGameOver();
+            }
+        }
+    }
+
+    private onGameOver(): void {
+        console.log('Game Over!');
+        this.resetCurrentLevel();
+    }
+
+    public resetLives(): void {
+        this.playerLives = 3;
+        this.updateLifeDisplay();
     }
 
     private setupHideButton() {        
@@ -88,6 +140,10 @@ export class GameUI extends Phaser.Scene {
     private setupEventListeners() {
         this.events.on('playerNearBox', (isNear: boolean) => {
             this.setHideButtonEnabled(isNear);
+        });
+
+        this.events.on('playerHitByDog', () => {
+            this.loseLife();
         });
     }
 
@@ -331,7 +387,11 @@ export class GameUI extends Phaser.Scene {
                 this.resumeGame();
             }
 
+            this.resetLives();
             this.setHideButtonEnabled(false);
+            
+            currentScene.events.emit('beforeSceneRestart');
+            
             currentScene.sound.stopAll();
 
             this.time.delayedCall(100, () => {
@@ -340,5 +400,4 @@ export class GameUI extends Phaser.Scene {
             });
         }
     }
-
 }

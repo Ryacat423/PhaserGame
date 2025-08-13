@@ -1,144 +1,220 @@
+import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
+import { Dog } from "../../objects/Dog";
+import { GameMap } from "../../objects/GameMap";
+import { ItemSystem } from "../../objects/ItemSystem";
 import { Player } from "../../objects/Player";
 
 export class Level1Scene extends Phaser.Scene {
     private player!: Player;
-    private currentLevel: number = 1;
+    private dogs: Dog[] = [];
+    private gameMap!: GameMap;
+    private itemSystem!: ItemSystem;
+    private gameTheme!: Phaser.Sound.BaseSound;
 
-    // Define spawn points for each of the 4 levels (in world coordinates for isometric)
-    private spawnPoints = {
-        1: { x: 300, y: 200 },   // Top-left grass area
-        2: { x: 700, y: 200 },   // Top-right grass area  
-        3: { x: 300, y: 400 },   // Bottom-left grass area
-        4: { x: 700, y: 400 }    // Bottom-right grass area
-    };
-
-    constructor(level: number = 1) {
-        super({ key: `lvl-${level}` });
-        this.currentLevel = level;
+    constructor() {
+        super({ key: 'level1' });
     }
 
     preload(): void {
-        // Load the tileset image
-        this.load.image('tiles', 'assets/maps/tileset/tiles.png');
-        
-        // Load the tilemap JSON
-        this.load.tilemapTiledJSON('map', 'assets/maps/tilemap/tutorial_map.json');
-        
-        // Load player sprite/spritesheet
-        this.load.image('cat', 'assets/sprites/cat.png');
+
+        // this.load.image('level1_map', 'assets/scene/level1/level1_map.png');
+        // this.load.audio('level1_theme', 'assets/global/audio/level1.ogg');
     }
 
     create(): void {
-        // Create the tilemap
-        const map = this.make.tilemap({ key: 'map' });
-
-        // Add the tileset to the map
-        const tileset: any = map.addTilesetImage('tiles', 'tiles');
-
-        // Create the layers (order matters for isometric display)
-        const groundLayer: any = map.createLayer('ground', tileset, 0, 0);
-        const flowersLayer = map.createLayer('flowers', tileset, 0, 0);
-        const rocksLayer = map.createLayer('rocks', tileset, 0, 0);
-
-        // Calculate the actual rendered size of the isometric map
-        const mapWidth = map.widthInPixels;
-        const mapHeight = map.heightInPixels;
-
-        // For isometric maps, we need to account for the diamond shape
-        // The actual playable area might be larger than the initial canvas
-        const isoWidth = (map.width + map.height) * (map.tileWidth / 2);
-        const isoHeight = (map.width + map.height) * (map.tileHeight / 2);
-
-        // Set physics world bounds to cover the entire isometric area
-        this.physics.world.setBounds(
-            -isoWidth / 2, 
-            -isoHeight / 4, 
-            isoWidth, 
-            isoHeight
-        );
-
-        // Set collision for specific tile types
-        // Allow movement on grass (ID 2) and paths (ID 6, 13, etc.)
-        if (groundLayer) {
-            // Set collision on border tiles (ID 3, 1) and walls
-            groundLayer.setCollisionByExclusion([0, 2, 6, 9, 13, 17, 18, 5]); 
-        }
-        
-        // Set collision for flower borders
-        if (flowersLayer) {
-            flowersLayer.setCollision([26, 20]); // Border flower tiles
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
         }
 
-        // Set collision for rocks
-        if (rocksLayer) {
-            rocksLayer.setCollision([1]); // Rock tiles
-        }
-
-        // Get spawn point for current level
-        const spawnPoint = this.spawnPoints[this.currentLevel as keyof typeof this.spawnPoints] || this.spawnPoints[1];
-        
-        // Instantiate the player at the spawn point
-        this.player = new Player(this, spawnPoint.x, spawnPoint.y);
-
-        // IMPORTANT: Disable world bounds collision for the player so they can move freely
-        this.player.setCollideWorldBounds(false);
-
-        // Set up camera to follow the player
-        this.cameras.main.startFollow(this.player);
-        
-        // Set camera bounds to be larger to accommodate isometric view
-        this.cameras.main.setBounds(
-            -isoWidth / 2, 
-            -isoHeight / 4, 
-            isoWidth, 
-            isoHeight
-        );
-        
-        // Smooth camera movement
-        this.cameras.main.setLerp(0.08, 0.08);
-
-        // Set up collision between player and layers with proper tile checking
-        if (groundLayer) {
-            this.physics.add.collider(this.player, groundLayer);
+        if (this.gameTheme && this.gameTheme.isPlaying) {
+            this.gameTheme.stop();
         }
         
-        if (flowersLayer) {
-            this.physics.add.collider(this.player, flowersLayer);
-        }
+        const themeKey = this.cache.audio.exists('level1_theme') ? 'level1_theme' : 'game_theme';
+        this.gameTheme = this.sound.add(themeKey, { loop: true }).setVolume(0.2);
+        this.gameTheme.play();
+
+        const mapKey = this.textures.exists('level1_map') ? 'level1_map' : 'game_tutorial_map';
+        const background = this.add.image(0, 0, mapKey)
+            .setOrigin(0)
+            .setDepth(0);
+
+        this.player = new Player(this, 100, 100);
+        this.add.existing(this.player);
         
-        if (rocksLayer) {
-            this.physics.add.collider(this.player, rocksLayer);
-        }
+        const dog1 = new Dog(this, 200, 200, this.player, Dog.ROAM);
+        const dog2 = new Dog(this, 800, 400, this.player, Dog.ROAM);
+        const dog3 = new Dog(this, 400, 600, this.player, Dog.SLEEP); 
+        
+        dog1.setTint(0xffaaaa);
+        dog2.setTint(0xaaffaa);
+        dog3.setTint(0xaaaaff);
 
-        // Add level transition logic (optional)
-        this.setupLevelTransitions();
+        this.add.existing(dog1);
+        this.add.existing(dog2);
+        this.add.existing(dog3);
 
-        // Center the camera on the map initially
-        this.cameras.main.centerOn(mapWidth / 2, mapHeight / 2);
+        this.physics.add.collider(dog1, dog2);
+        this.physics.add.collider(dog1, dog3);
+        this.physics.add.collider(dog2, dog3);
+        
+        this.dogs.push(dog1, dog2, dog3);
+        this.dogs.forEach(dog => {
+            this.physics.add.collider(this.player, dog, () => dog.onCollideWithPlayer());
+        });
+
+        this.gameMap = new GameMap(this, this.player);
+
+        const levelConfig: LevelConfig = {
+            playerSpawn: { x: 100, y: 100 },
+            dogSpawn: { x: 200, y: 200 },
+            manualObstacles: [
+                { type: 'tree', x: 300, y: 150, scale: 0.3 },
+                { type: 'tree', x: 500, y: 250, scale: 0.25 },
+                { type: 'tree', x: 700, y: 150, scale: 0.35 },
+                { type: 'tree', x: 200, y: 400, scale: 0.28 },
+                { type: 'tree', x: 600, y: 500, scale: 0.32 },
+                { type: 'tree', x: 450, y: 350, scale: 0.25 },
+            ],
+            randomObstacleZones: [
+                { zone: { x: 0, y: 0, width: background.width, height: 100 }, type: 'tree', count: 8, minDistance: 60 },
+                { zone: { x: 0, y: background.height - 100, width: background.width, height: 100 }, type: 'tree', count: 8, minDistance: 60 },
+                { zone: { x: 0, y: 100, width: 80, height: background.height - 200 }, type: 'tree', count: 5, minDistance: 60 },
+                { zone: { x: background.width - 80, y: 100, width: 80, height: background.height - 200 }, type: 'tree', count: 5, minDistance: 60 },
+                { zone: { x: 300, y: 200, width: 200, height: 200 }, type: 'tree', count: 3, minDistance: 80 }
+            ],
+            boxes: [
+                { x: 150, y: 300 },
+                { x: 450, y: 200 },
+                { x: 750, y: 350 },
+                { x: 300, y: 550 },
+                { x: 650, y: 150 }
+            ],
+            foodCount: 12, 
+            mapTexture: mapKey,
+            backgroundMusic: themeKey
+        };
+
+        this.gameMap.setup(levelConfig);
+        this.gameMap.setupDogColliders(this.dogs);
+
+        this.itemSystem = new ItemSystem(this, this.player, this.gameMap);
+        
+        const itemConfig: ItemSpawnConfig = {
+            foodCount: 10,
+            poisonCount: 6,
+            minItemDistance: 50,
+            minObstacleDistance: 45,
+            minBoxDistance: 60,
+            minPlayerDistance: 100,
+            mapWidth: background.width,
+            mapHeight: background.height,
+            playerSpawn: { x: 100, y: 100 },
+            dogSpawns: [
+                { x: 200, y: 200 },
+                { x: 800, y: 400 },
+                { x: 400, y: 600 }
+            ]
+        };
+        
+        this.itemSystem.spawnItems(itemConfig)
+        this.setupBoxEventListeners();
+
+        const mainCam = this.cameras.main;
+        mainCam.setBounds(0, 0, background.width, background.height);
+        mainCam.startFollow(this.player);
+        mainCam.setZoom(1.5);
+
+        this.events.on('beforeSceneRestart', () => {
+            this.cleanupBeforeRestart();
+        });
+
+        this.game.events.on('returnToWelcome', () => {
+            this.cleanupBeforeExit();
+            this.scene.stop('UIScene');
+            this.scene.start('welcome');
+        });
+        
+        this.events.once('shutdown', () => {
+            this.cleanupBeforeExit();
+        });
     }
 
-    override update(): void {
-        this.player.update();
+    private setupBoxEventListeners(): void {
+        this.events.on('playerNearBox', (isNear: boolean) => {
+            const uiScene = this.scene.get('UIScene');
+            uiScene.events.emit('playerNearBox', isNear);
+        });
+        this.events.on('hideButtonPressed', () => {
+            this.handleHideAction();
+        });
     }
 
-    // Optional: Set up areas for level transitions
-    private setupLevelTransitions(): void {
-        // Add keyboard input for manual level switching (for testing)
-        const keys: any = this.input.keyboard?.addKeys('ONE,TWO,THREE,FOUR');
+    private handleHideAction(): void {
+        const nearbyBox = this.gameMap.getBoxes().find(box => box.getIsPlayerNearby());
+        if (nearbyBox && nearbyBox.getIsPlayerHiding()) {
+            nearbyBox.forceStopHiding();
+        }
+    }
+
+    private cleanupBeforeRestart(): void {
+        this.gameMap.getBoxes().forEach(box => {
+            if (typeof box.forceStopHiding === 'function') {
+                box.forceStopHiding();
+            }
+        });
+        this.dogs.forEach(dog => {
+            dog.stopBark();
+        });
         
-        if (keys) {
-            keys.ONE.on('down', () => this.switchToLevel(1));
-            keys.TWO.on('down', () => this.switchToLevel(2));
-            keys.THREE.on('down', () => this.switchToLevel(3));
-            keys.FOUR.on('down', () => this.switchToLevel(4));
+        if (this.itemSystem) {
+            this.itemSystem.clearAllItems();
         }
     }
 
-    private switchToLevel(level: number): void {
-        if (level >= 1 && level <= 4) {
-            const spawnPoint = this.spawnPoints[level as keyof typeof this.spawnPoints];
-            this.player.setPosition(spawnPoint.x, spawnPoint.y);
-            this.currentLevel = level;
+    private cleanupBeforeExit(): void {
+        if (this.gameTheme?.isPlaying) {
+            this.gameTheme.stop();
         }
+        if (this.gameTheme) {
+            this.gameTheme.destroy();
+        }
+        
+        this.dogs.forEach(dog => {
+            dog.stopBark();
+        });
+        this.tweens.getTweens().forEach(tween => tween.stop());
+        
+        if (this.itemSystem) {
+            this.itemSystem.clearAllItems();
+        }
+        
+        this.gameMap.getBoxes().forEach(box => {
+            if (typeof box.forceStopHiding === 'function') {
+                box.forceStopHiding();
+            }
+        });
+        
+        this.children.removeAll();
+        this.sound.stopAll();
+    }
+
+    public getDogs(): Dog[] {
+        return this.dogs;
+    }
+    
+    public destroyDogs(): void {
+        this.dogs.forEach(dog => dog.destroy());
+        this.dogs = [];
+    }
+
+    public getItemSystem(): ItemSystem {
+        return this.itemSystem;
+    }
+
+    override update(time: number, delta: number): void {
+        this.player.update(time, delta);
+        this.dogs.forEach(dog => dog.update(time, delta));
+        this.gameMap.update();
     }
 }

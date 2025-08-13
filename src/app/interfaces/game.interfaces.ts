@@ -32,6 +32,19 @@ export interface BoxPosition {
     y: number;
 }
 
+export interface ItemSpawnConfig {
+    foodCount: number;
+    poisonCount: number;
+    minItemDistance: number;
+    minObstacleDistance: number;
+    minBoxDistance: number;
+    minPlayerDistance: number;
+    mapWidth: number;
+    mapHeight: number;
+    playerSpawn: { x: number, y: number };
+    dogSpawns: { x: number, y: number }[];
+}
+
 export interface LevelConfig {
     playerSpawn: SpawnPoint;
     dogSpawn: SpawnPoint;

@@ -18,14 +18,12 @@ export class UIManager {
         scene.load.image('btn-info', 'assets/global/ui/button-help.png');
         scene.load.image('btn-close', 'assets/global/ui/close.png');
         scene.load.image('btn-next', 'assets/global/ui/next.png');
+        
         //  Gameplay UI
-
         scene.load.image('btn-home', 'assets/global/ui/home.png');
         scene.load.image('btn-reset', 'assets/global/ui/reset.png');
         scene.load.image('btn-settings', 'assets/global/ui/settings.png');
         scene.load.image('btn-pause', 'assets/global/ui/pause.png');
-        scene.load.image('game_frame', 'assets/scene/tutorial/frame.png');
-        scene.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
         
         // Game Images
         scene.load.image('box-open', 'assets/global/bg/box_open.png');
@@ -39,8 +37,13 @@ export class UIManager {
         scene.load.image('food4', 'assets/global/food/pack.png');
         scene.load.image('food5', 'assets/global/food/bowl.png');
 
+        scene.load.image('poison1', 'assets/global/food/poison.png');
+        scene.load.image('poison2', 'assets/global/food/mushroom.png');
+        scene.load.image('poison3', 'assets/global/food/poison_apple.png');
+
         // Sounds
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
+        scene.load.audio('game_theme', 'assets/global/audio/gameplay.ogg');
         scene.load.audio('click', 'assets/global/audio/ui_click.ogg');
         scene.load.audio('bark', 'assets/global/audio/dog_bark.mp3');
         scene.load.audio('meow', 'assets/global/audio/meow.mp3');
@@ -48,6 +51,8 @@ export class UIManager {
         scene.load.audio('footsteps', 'assets/global/audio/footsteps.wav');
         scene.load.audio('eat', 'assets/global/audio/eat_v1.wav');
         scene.load.audio('meow_2', 'assets/global/audio/meow_2.wav');
+        scene.load.audio('slow', 'assets/global/audio/slow.mp3');
+        scene.load.audio('hurt', 'assets/global/audio/hurt.wav');
         
         // Global Sprites
         scene.load.spritesheet('dog', 'assets/sprites/dog_sprite.png', {

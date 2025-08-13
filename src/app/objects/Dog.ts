@@ -98,6 +98,10 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
 
     public onCollideWithPlayer(): void {
         if (this.currentState === Dog.CHASE) {
+            if (!this.player.getIsInvulnerable()) {
+                this.player.takeDamage();
+            }
+            
             this.stopBark();
             if (this.behaviorType === 'SLEEPER') {
                 this.setState(Dog.RETURN_HOME);
