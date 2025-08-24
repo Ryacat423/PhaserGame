@@ -13,6 +13,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private poisonDuration: number = 5000;
   private invulnerable: boolean = false;
   private invulnerabilityDuration: number = 1000;
+  
+  private slowedText?: Phaser.GameObjects.Text;
+  private slowedTextTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'cat');
@@ -33,10 +36,102 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.body?.setSize(220, 220);
     this.body?.setOffset(110, 180);
-    this.setDepth(1);
+    this.setDepth(3);
 
     this.moveSound = scene.sound.add('footsteps');
     this.hurtSound = scene.sound.add('hurt');
+  }
+
+  private createSlowedText(): void {
+    if (this.slowedText) {
+      this.destroySlowedText();
+    }
+    this.slowedText = this.scene.add.text(0, 0, 'SLOWED', {
+      fontSize: '12px',
+      fontFamily: 'Arial Black, Arial',
+      color: '#ffffff',
+      stroke: '#880088',
+      strokeThickness: 2,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 1,
+        fill: true
+      }
+    }).setOrigin(0.5);
+
+    this.scene.tweens.add({
+      targets: this.slowedText,
+      scale: 1,
+      alpha: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.startSlowedTextPulse();
+      }
+    });
+
+    this.scene.tweens.add({
+      targets: this.slowedText,
+      y: this.y - 60,
+      duration: 300,
+      ease: 'Power2.easeOut'
+    });
+  }
+
+  private startSlowedTextPulse(): void {
+    if (!this.slowedText) return;
+    this.slowedTextTween = this.scene.tweens.add({
+      targets: this.slowedText,
+      scale: 1.1,
+      alpha: 0.8,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  private updateSlowedTextPosition(): void {
+    if (this.slowedText) {
+      this.slowedText.x = this.x;
+      this.slowedText.y = this.y - (this.anims.currentAnim?.key !== 'cat_idle' ? 30 : 50);
+    }
+  }
+
+  private destroySlowedText(): void {
+    if (this.slowedTextTween) {
+      this.slowedTextTween.destroy();
+      this.slowedTextTween = undefined;
+    }
+
+    if (this.slowedText) {
+      this.scene.tweens.add({
+        targets: this.slowedText,
+        scale: 0,
+        alpha: 0,
+        y: this.slowedText.y - 20,
+        duration: 250,
+        ease: 'Back.easeIn',
+        onComplete: () => {
+          if (this.slowedText) {
+            this.slowedText.destroy();
+            this.slowedText = undefined;
+          }
+        }
+      });
+    }
+    
+    this.slowedText = undefined;
+  }
+
+  public showSlowedText(scene: Phaser.Scene, show: boolean = false): void {
+    if (show) {
+      this.createSlowedText();
+    } else {
+      this.destroySlowedText();
+    }
   }
 
   public setHiding(hiding: boolean): void {
@@ -71,15 +166,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.poisonTimer = this.poisonDuration;
     
     this.currentSpeed = this.baseSpeed * 0.5;
-    
+  
     this.setTint(0xaa44aa);
+    this.showSlowedText(this.scene, true);
   }
 
   private updatePoisonEffect(delta: number): void {
     if (!this.isPoisoned) return;
     
     this.poisonTimer -= delta;
-    
     if (this.poisonTimer <= 0) {
       this.curePoison();
     }
@@ -91,11 +186,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isPoisoned = false;
     this.poisonTimer = 0;
     this.currentSpeed = this.baseSpeed;
+    this.showSlowedText(this.scene, false);
+    
     if (!this.invulnerable) {
       this.clearTint();
     }
-    
-    console.log('Poison cured! Speed restored.');
   }
 
   public getIsPoisoned(): boolean {
@@ -108,8 +203,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   override update(time?: number, delta?: number) {
     if (!this.active) return;
+    
     if (delta) {
       this.updatePoisonEffect(delta);
+    }
+
+    if (this.isPoisoned) {
+      this.updateSlowedTextPosition();
     }
 
     if (this.isHiding || (this.body && !this.body.enable)) {

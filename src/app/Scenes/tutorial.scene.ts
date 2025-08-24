@@ -29,7 +29,7 @@ export class TutorialScene extends Phaser.Scene {
             this.gameTheme.stop();
         }
         
-        this.gameTheme = this.sound.add('game_theme', { loop: true }).setVolume(0.2);
+        this.gameTheme = this.sound.add('game_theme', { loop: true }).setVolume(0.8);
         this.gameTheme.play();
 
         const background = this.add.image(0, 0, 'game_tutorial_map')
@@ -38,8 +38,7 @@ export class TutorialScene extends Phaser.Scene {
 
         this.player = new Player(this, 500, 300);
         this.add.existing(this.player);
-        
-        // Dog house
+
         const house = this.physics.add
             .image(280, 290, 'dog_house')
             .setDepth(0)
@@ -113,6 +112,8 @@ export class TutorialScene extends Phaser.Scene {
         };
         
         this.itemSystem.spawnItems(itemConfig);
+
+        console.log(this.itemSystem)
         this.setupBoxEventListeners();
 
         // Camera

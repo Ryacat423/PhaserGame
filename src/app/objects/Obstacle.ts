@@ -37,7 +37,7 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
             this.setAngle(Phaser.Math.Between(config.rotation.min, config.rotation.max));
         }
 
-        this.setDepth(config.depth || 4);
+        this.setDepth(config.depth || 10);
 
         this.setImmovable(true);
         
@@ -88,16 +88,16 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
             tree: {
                 type: 'tree',
                 texture: 'tree',
-                scale: { min: 0.18, max: 0.3 },
+                scale: { min: 0.13, max: 0.23 },
                 rotation: { min: -15, max: 15 },
-                depth: 1
+                depth: 5
             },
             rock: {
                 type: 'rock',
                 texture: 'rock',
                 scale: { min: 0.2, max: 0.4 },
                 rotation: { min: 0, max: 360 },
-                depth: 1
+                depth: 5
             }
         };
         

@@ -11,8 +11,7 @@ export class Food extends Phaser.Physics.Arcade.Sprite {
         this.setScale(0.3);
         this.setCollideWorldBounds(true);
         this.setDepth(1);
-        
-        // Add subtle bobbing animation
+    
         this.bobEffect = scene.tweens.add({
             targets: this,
             y: y - 5,
@@ -22,7 +21,6 @@ export class Food extends Phaser.Physics.Arcade.Sprite {
             ease: 'Sine.easeInOut'
         });
 
-        // Add sparkle effect
         this.sparkleEffect = scene.tweens.add({
             targets: this,
             alpha: 0.8,

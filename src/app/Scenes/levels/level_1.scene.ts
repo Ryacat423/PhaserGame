@@ -16,9 +16,8 @@ export class Level1Scene extends Phaser.Scene {
     }
 
     preload(): void {
-
-        // this.load.image('level1_map', 'assets/scene/level1/level1_map.png');
-        // this.load.audio('level1_theme', 'assets/global/audio/level1.ogg');
+        this.load.image('level1_map', 'assets/scene/levels/1/map.png');
+        this.load.audio('level1_theme', 'assets/global/audio/gameplay.ogg');
     }
 
     create(): void {
@@ -30,21 +29,19 @@ export class Level1Scene extends Phaser.Scene {
             this.gameTheme.stop();
         }
         
-        const themeKey = this.cache.audio.exists('level1_theme') ? 'level1_theme' : 'game_theme';
-        this.gameTheme = this.sound.add(themeKey, { loop: true }).setVolume(0.2);
-        this.gameTheme.play();
+        this.gameTheme = this.sound.add('level1_theme', { loop: true }).setVolume(0.8);
+        this.gameTheme.play({loop: true});
 
-        const mapKey = this.textures.exists('level1_map') ? 'level1_map' : 'game_tutorial_map';
-        const background = this.add.image(0, 0, mapKey)
+        const background = this.add.image(0, 0, 'level1_map')
             .setOrigin(0)
             .setDepth(0);
 
-        this.player = new Player(this, 100, 100);
+        this.player = new Player(this, 300, 100);
         this.add.existing(this.player);
         
-        const dog1 = new Dog(this, 200, 200, this.player, Dog.ROAM);
+        const dog1 = new Dog(this, 200, 200, this.player, Dog.SLEEP);
         const dog2 = new Dog(this, 800, 400, this.player, Dog.ROAM);
-        const dog3 = new Dog(this, 400, 600, this.player, Dog.SLEEP); 
+        const dog3 = new Dog(this, 500, 500, this.player, Dog.SLEEP); 
         
         dog1.setTint(0xffaaaa);
         dog2.setTint(0xaaffaa);
@@ -69,12 +66,12 @@ export class Level1Scene extends Phaser.Scene {
             playerSpawn: { x: 100, y: 100 },
             dogSpawn: { x: 200, y: 200 },
             manualObstacles: [
-                { type: 'tree', x: 300, y: 150, scale: 0.3 },
-                { type: 'tree', x: 500, y: 250, scale: 0.25 },
-                { type: 'tree', x: 700, y: 150, scale: 0.35 },
-                { type: 'tree', x: 200, y: 400, scale: 0.28 },
-                { type: 'tree', x: 600, y: 500, scale: 0.32 },
-                { type: 'tree', x: 450, y: 350, scale: 0.25 },
+                { type: 'tree', x: 300, y: 150, scale: 0.2 },
+                { type: 'tree', x: 500, y: 250, scale: 0.15 },
+                { type: 'tree', x: 700, y: 150, scale: 0.20 },
+                { type: 'tree', x: 200, y: 400, scale: 0.21 },
+                { type: 'tree', x: 600, y: 500, scale: 0.19 },
+                { type: 'tree', x: 450, y: 350, scale: 0.14 },
             ],
             randomObstacleZones: [
                 { zone: { x: 0, y: 0, width: background.width, height: 100 }, type: 'tree', count: 8, minDistance: 60 },
@@ -87,12 +84,11 @@ export class Level1Scene extends Phaser.Scene {
                 { x: 150, y: 300 },
                 { x: 450, y: 200 },
                 { x: 750, y: 350 },
-                { x: 300, y: 550 },
                 { x: 650, y: 150 }
             ],
             foodCount: 12, 
-            mapTexture: mapKey,
-            backgroundMusic: themeKey
+            mapTexture: 'level1_map',
+            backgroundMusic: 'level1_theme'
         };
 
         this.gameMap.setup(levelConfig);
@@ -113,7 +109,7 @@ export class Level1Scene extends Phaser.Scene {
             dogSpawns: [
                 { x: 200, y: 200 },
                 { x: 800, y: 400 },
-                { x: 400, y: 600 }
+                { x: 400, y: 500 }
             ]
         };
         
@@ -123,7 +119,7 @@ export class Level1Scene extends Phaser.Scene {
         const mainCam = this.cameras.main;
         mainCam.setBounds(0, 0, background.width, background.height);
         mainCam.startFollow(this.player);
-        mainCam.setZoom(1.5);
+        // mainCam.setZoom(1.5);
 
         this.events.on('beforeSceneRestart', () => {
             this.cleanupBeforeRestart();
@@ -138,13 +134,25 @@ export class Level1Scene extends Phaser.Scene {
         this.events.once('shutdown', () => {
             this.cleanupBeforeExit();
         });
+        this.notifyUISceneStarted();
+    }
+
+    private notifyUISceneStarted(): void {
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene && uiScene.scene.isActive()) {
+            uiScene.events.emit('sceneStarted');
+        }
+        this.game.events.emit('levelStarted');
     }
 
     private setupBoxEventListeners(): void {
         this.events.on('playerNearBox', (isNear: boolean) => {
             const uiScene = this.scene.get('UIScene');
-            uiScene.events.emit('playerNearBox', isNear);
+            if (uiScene && uiScene.scene.isActive()) {
+                uiScene.events.emit('playerNearBox', isNear);
+            }
         });
+        
         this.events.on('hideButtonPressed', () => {
             this.handleHideAction();
         });

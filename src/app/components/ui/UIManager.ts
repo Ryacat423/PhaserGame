@@ -27,7 +27,7 @@ export class UIManager {
         
         // Game Images
         scene.load.image('box-open', 'assets/global/bg/box_open.png');
-        scene.load.image('box-cat', 'assets/global/bg/box_open2.png');
+        scene.load.image('box-cat', 'assets/global/bg/box.png');
         scene.load.image('tree', 'assets/global/bg/tree.png');
         
         //Food Images
@@ -43,7 +43,7 @@ export class UIManager {
 
         // Sounds
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
-        scene.load.audio('game_theme', 'assets/global/audio/gameplay.ogg');
+        scene.load.audio('game_theme', 'assets/global/audio/lvl-1-theme.mp3');
         scene.load.audio('click', 'assets/global/audio/ui_click.ogg');
         scene.load.audio('bark', 'assets/global/audio/dog_bark.mp3');
         scene.load.audio('meow', 'assets/global/audio/meow.mp3');
@@ -53,6 +53,7 @@ export class UIManager {
         scene.load.audio('meow_2', 'assets/global/audio/meow_2.wav');
         scene.load.audio('slow', 'assets/global/audio/slow.mp3');
         scene.load.audio('hurt', 'assets/global/audio/hurt.wav');
+        scene.load.audio('lvl-complete', 'assets/global/audio/lvl-complete.wav');
         
         // Global Sprites
         scene.load.spritesheet('dog', 'assets/sprites/dog_sprite.png', {

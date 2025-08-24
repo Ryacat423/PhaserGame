@@ -9,14 +9,22 @@ export class GameUI extends Phaser.Scene {
     private isHideButtonEnabled: boolean = false;
     private isPaused: boolean = false;
     
-    private playerLives: number = 3;
-    private lifeIcons: Phaser.GameObjects.Image[] = [];
+    private avatarSprite!: Phaser.GameObjects.Sprite;
+    private avatarFrame!: Phaser.GameObjects.Image;
+    private maxLives: number = 9;
+    private playerLives: number = 9;
+    private livesText!: Phaser.GameObjects.Text;
+    private livesIcon!: Phaser.GameObjects.Image;
+    private avatarTintTween?: Phaser.Tweens.Tween;
+
+    private foodCounterText!: Phaser.GameObjects.Text;
 
     constructor() {
         super({ key: 'UIScene' });
     }
 
     preload() {
+        this.load.image('avatar_frame', 'assets/global/ui/avatar-frame.png');
         this.load.image('game_frame', 'assets/scene/tutorial/frame.png');
         this.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
         this.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.png');
@@ -31,6 +39,15 @@ export class GameUI extends Phaser.Scene {
     }
 
     create() {
+        this.avatarFrame = this.add.image(-10, -10, 'avatar_frame')
+            .setOrigin(0)
+            .setDepth(101);
+
+        this.avatarSprite = this.add.sprite(30, 40, 'cat')
+            .setScale(.3)
+            .setDepth(102)
+            .play('cat_idle');
+        
         const frame = this.add.image(0, 0, 'game_frame')
             .setOrigin(0)
             .setDisplaySize(this.scale.width, this.scale.height)
@@ -39,10 +56,10 @@ export class GameUI extends Phaser.Scene {
         const assetKeys: string[] = ['btn-home', 'btn-settings', 'btn-reset', 'btn-pause'];
         this.setupUIButtons(assetKeys);
         
-        this.help = this.add.image(900, 40, 'btn-info')
-            .setScale(0.5)
-            .setInteractive()
-            .setDepth(101);
+        // this.help = this.add.image(900, 40, 'btn-info')
+        //     .setScale(0.5)
+        //     .setInteractive()
+        //     .setDepth(101);
 
         this.hideButton = this.add.image(this.scale.width - 60, this.scale.height - 60, 'btn-hide-disabled')
             .setScale(0.1)
@@ -51,57 +68,77 @@ export class GameUI extends Phaser.Scene {
             .setInteractive();
             
         this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);
-
-        this.setupLifeSystem();
-        this.setupHelpModal();
+        // this.setupHelpModal();
+        this.setupLivesDisplay();
+        this.setupFoodDisplay();
         this.setupHideButton();
-        this.setupEventListeners();
+        this.setupEventListeners();        
+        this.initializeLives();
     }
 
-    private setupLifeSystem(): void {
-        const startX = 440;
-        const spacing = 70;
+    private setupLivesDisplay(): void {
+        this.livesIcon = this.add.image(130, 40, 'life')
+            .setScale(0.15)
+            .setDepth(102);
 
-        for (let i = 0; i < this.playerLives; i++) {
-            const lifeIcon = this.add.image(startX + (i * spacing), 40, 'life')
-                .setScale(0.19)
-                .setDepth(102);
-            
-            this.lifeIcons.push(lifeIcon);
-            this.uiElements.push(lifeIcon);
+        this.livesText = this.add.text(150, 32, `${this.playerLives}`, {
+            fontSize: '20px',
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setDepth(102);
+    }
+
+    private initializeLives(): void {
+        this.playerLives = this.maxLives;
+        this.updateLivesDisplay();
+    }
+
+    private updateLivesDisplay(): void {
+        if (!this.livesText || !this.livesText.active) {
+            return;
+        }
+
+        this.livesText.setText(`${this.playerLives}`);
+
+        if (this.playerLives <= 3) {
+            this.livesText.setColor('#ff4444');
+        } else if (this.playerLives <= 5) {
+            this.livesText.setColor('#ffaa44');
+        } else {
+            this.livesText.setColor('#ffffff');
         }
     }
 
-    private updateLifeDisplay(): void {
-        this.lifeIcons.forEach((icon, index) => {
-            if (index < this.playerLives) {
-                icon.setAlpha(1);
-            } else {
-                icon.setAlpha(0.3);
-            }
-        });
-    }
-
     public loseLife(): void {
-        console.log(this.playerLives)
         if (this.playerLives > 0) {
             this.playerLives--;
-            this.updateLifeDisplay();
-            
+            this.updateLivesDisplay();            
             if (this.playerLives <= 0) {
+                alert('gameover')
                 this.onGameOver();
             }
         }
     }
 
     private onGameOver(): void {
-        console.log('Game Over!');
         this.resetCurrentLevel();
     }
 
     public resetLives(): void {
-        this.playerLives = 3;
-        this.updateLifeDisplay();
+        this.playerLives = this.maxLives;
+        this.updateLivesDisplay();
+    }
+
+    public onSceneStart(): void {
+        this.time.delayedCall(10, () => {
+            this.resetLives();
+        });
+
+        this.time.delayedCall(50, () => {
+            this.setHideButtonEnabled(false);
+        });
     }
 
     private setupHideButton() {        
@@ -138,6 +175,14 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupEventListeners() {
+        this.events.off('playerNearBox');
+        this.events.off('playerHitByDog');
+        this.events.off('sceneStarted');
+        this.game.events.off('levelStarted');
+        this.game.events.off('levelReset');
+        this.game.events.off('foodCollected');
+        this.game.events.off('levelCompleted');
+
         this.events.on('playerNearBox', (isNear: boolean) => {
             this.setHideButtonEnabled(isNear);
         });
@@ -145,10 +190,36 @@ export class GameUI extends Phaser.Scene {
         this.events.on('playerHitByDog', () => {
             this.loseLife();
         });
+
+        this.events.on('sceneStarted', () => {
+            this.onSceneStart();
+        });
+
+        this.game.events.on('levelStarted', () => {
+            this.onSceneStart();
+            this.setupFoodCounter();
+        });
+
+        this.game.events.on('levelReset', () => {
+            this.onSceneStart();
+            this.setupFoodCounter();
+        });
+
+        this.game.events.on('foodCollected', (collected: number, total: number) => {
+            this.updateFoodCounter(collected, total);
+        });
+
+        this.game.events.on('levelCompleted', () => {
+            this.foodCounterText.setText("All foods collected!");
+            this.foodCounterText.setColor('#00ff00');
+        });
     }
+
 
     private setHideButtonEnabled(enabled: boolean) {
         this.isHideButtonEnabled = enabled;
+        
+        if (!this.hideButton || !this.tweens) return;
         
         if (enabled) {
             this.hideButton.setTexture('btn-hide');
@@ -200,11 +271,14 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupUIButtons(assetKeys: string[]) {
-        const startX = 60;
-        const endY = 40;
+        const spacing = 60;      
+        const endY = 40;           
+        const screenWidth = this.scale.width;
 
         assetKeys.forEach((key, i) => {
-            const button = this.add.image(startX * (i + 1), endY, key)
+            const x = screenWidth - (spacing * (i + 1));
+
+            const button = this.add.image(x, endY, key)
                 .setScale(0.23)
                 .setInteractive()
                 .setDepth(101);
@@ -381,18 +455,14 @@ export class GameUI extends Phaser.Scene {
 
         if (currentScene) {
             const sceneKey = currentScene.scene.key;
-            console.log(`Resetting scene: ${sceneKey}`);
 
             if (this.isPaused) {
                 this.resumeGame();
             }
-
-            this.resetLives();
-            this.setHideButtonEnabled(false);
             
             currentScene.events.emit('beforeSceneRestart');
-            
             currentScene.sound.stopAll();
+            this.game.events.emit('levelReset');
 
             this.time.delayedCall(100, () => {
                 this.scene.stop(sceneKey);
@@ -400,4 +470,53 @@ export class GameUI extends Phaser.Scene {
             });
         }
     }
+
+    private setupFoodDisplay() {
+        this.foodCounterText = this.add.text(300, 32, `Foods: 0/${this.getTotalFoodCount()}`, {
+            fontSize: "20px",
+            color: "#ffffff",
+            fontFamily: "Arial",
+            stroke: "#000000",
+            strokeThickness: 2
+        }).setDepth(102);
+    }
+
+    private setupFoodCounter(): void {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene && (gameScene as any).getItemSystem) {
+            const itemSystem = (gameScene as any).getItemSystem();
+            const collectedFoods = 0; 
+            this.updateFoodCounter(collectedFoods, this.getTotalFoodCount());
+            this.foodCounterText.setColor('#ffffff');
+        } else {
+            this.time.delayedCall(100, () => {
+                this.setupFoodCounter();
+            });
+        }
+    }
+
+    private getTotalFoodCount(): number {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene && (gameScene as any).getItemSystem) {
+            const itemSystem = (gameScene as any).getItemSystem();
+            const totalFoods = itemSystem.getFoods().length;
+
+            return totalFoods;
+        } 
+
+        return 0;
+    }
+
+    private updateFoodCounter(collected: number, total: number): void {
+        this.foodCounterText.setText(`Foods: ${collected}/${total}`);
+        const progress = collected / total;
+        if (progress >= 1) {
+            this.foodCounterText.setColor('#00ff00');
+        } else if (progress >= 0.7) {
+            this.foodCounterText.setColor('#ffff00');
+        } else {
+            this.foodCounterText.setColor('#ffffff');
+        }
+    }
+
 }

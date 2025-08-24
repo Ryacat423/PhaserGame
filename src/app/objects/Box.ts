@@ -20,7 +20,7 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
 
         scene.add.existing(this);
         
-        this.setScale(0.15);
+        this.setScale(0.3);
         this.setDepth(1);
         this.setOrigin(0.5, 0.5);
 
@@ -145,15 +145,13 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
 
         this.onPlayerHide.emit('playerHidden', this.player);
         this.emitSafely('playerHidden', this.player);
-
-        console.log('Player is now hiding behind the box!');
     }
 
     private stopHiding(): void {
         if (this.isDestroyed || !this.isPlayerHiding) return;
 
         this.isPlayerHiding = false;
-        this.player.setDepth(2);
+        this.player.setDepth(3);
         this.player.setAlpha(1);
         
         if (this.player.body && this.player.body instanceof Phaser.Physics.Arcade.Body) {
@@ -164,15 +162,13 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         this.player.setHiding(false);
         this.onPlayerShow.emit('playerVisible', this.player);
         this.emitSafely('playerVisible', this.player);
-
-        console.log('Player is no longer hiding!');
     }
 
     private stopHidingSilently(): void {
         if (!this.isPlayerHiding) return;
 
         this.isPlayerHiding = false;
-        this.player.setDepth(2);
+        this.player.setDepth(3);
         this.player.setAlpha(1);
         
         if (this.player.body && this.player.body instanceof Phaser.Physics.Arcade.Body) {

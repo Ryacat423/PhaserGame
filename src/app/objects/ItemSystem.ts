@@ -12,7 +12,10 @@ export class ItemSystem {
     private poisons: Poison[] = [];
     private eatSound: Phaser.Sound.BaseSound;
     private poisonSound!: Phaser.Sound.BaseSound;
+    private lvlComplete!: Phaser.Sound.BaseSound;
 
+    private totalFoodCount: number = 0; 
+    
     constructor(scene: Phaser.Scene, player: Player, gameMap: GameMap) {
         this.scene = scene;
         this.player = player;
@@ -20,6 +23,7 @@ export class ItemSystem {
         
         this.eatSound = scene.sound.add('eat', { volume: 0.5 });
         this.poisonSound = scene.sound.add('slow', { volume: 1}); 
+        this.lvlComplete = scene.sound.add('lvl-complete').setVolume(0.8);
     }
 
     public spawnItems(config: ItemSpawnConfig): void {
@@ -32,6 +36,7 @@ export class ItemSystem {
 
         occupiedPositions.push(config.playerSpawn);
         occupiedPositions.push(...config.dogSpawns);
+        this.totalFoodCount = config.foodCount;
 
         for (let i = 0; i < config.foodCount; i++) {
             const position = this.findValidSpawnPosition(config, occupiedPositions);
@@ -55,9 +60,8 @@ export class ItemSystem {
                 this.scene.physics.add.overlap(this.player, poison, (_, p) => this.collectPoison(p as Poison));
             }
         }
-
-        console.log(`Spawned ${this.foods.length} food items and ${this.poisons.length} poison items`);
     }
+
 
     private findValidSpawnPosition(config: ItemSpawnConfig, occupiedPositions: { x: number, y: number }[]): { x: number, y: number } | null {
         const maxAttempts = 100;
@@ -122,7 +126,15 @@ export class ItemSystem {
         Phaser.Utils.Array.Remove(this.foods, food);
         this.eatSound.play();
         food.destroy();
-        console.log('Food collected!');
+
+        const collected = this.totalFoodCount - this.foods.length;
+        this.scene.game.events.emit('foodCollected', collected, this.totalFoodCount);
+
+        if(this.foods.length === 0) {
+            this.lvlComplete.play();
+            this.scene.game.events.emit('levelCompleted');
+            alert('round completed!');
+        }
     }
 
     private collectPoison(poison: Poison): void {
@@ -130,7 +142,6 @@ export class ItemSystem {
         this.poisonSound.play();
         this.player.applyPoison();
         poison.destroy();
-        console.log('Poison collected!');
     }
 
     public clearAllItems(): void {
@@ -150,6 +161,14 @@ export class ItemSystem {
 
     public getRemainingFoodCount(): number {
         return this.foods.length;
+    }
+
+    public getTotalFoodCount(): number {
+        return this.totalFoodCount;
+    }
+
+    public getCollectedFoodCount(): number {
+        return this.totalFoodCount - this.foods.length;
     }
 
     public getRemainingPoisonCount(): number {
