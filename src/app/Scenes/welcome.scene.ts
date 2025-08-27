@@ -41,7 +41,7 @@ export class WelcomeScene extends Phaser.Scene {
         this.add.image(0,0, 'welcome-bg')
             .setOrigin(0, 0)
             .setDisplaySize(this.scale.width, this.scale.height);
-
+            
         this.add.image(240, 370, 'dog_house')
             .setDepth(0)
             .setFlipX(true)

@@ -7,6 +7,8 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
     private hideKey: Phaser.Input.Keyboard.Key;
     private interactionRadius: number = 60;
     private isDestroyed: boolean = false;
+    private originalTexture: string = 'box-cat';
+    private hideTexture: string = 'cat';
 
     public onPlayerHide: Phaser.Events.EventEmitter;
     public onPlayerShow: Phaser.Events.EventEmitter;
@@ -124,10 +126,9 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         if (this.isDestroyed || !this.isPlayerNearby || this.isPlayerHiding) return;
 
         this.isPlayerHiding = true;
-
+        this.player.setVisible(false);
         this.player.setDepth(-1);
-        this.player.setAlpha(0.3);
-    
+
         this.player.setPosition(this.x, this.y + 20);
     
         if (this.player.body && this.player.body instanceof Phaser.Physics.Arcade.Body) {
@@ -136,11 +137,15 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         }
         this.player.setVelocity(0, 0);
         this.player.setHiding(true);
-    
-        if (this.player.anims.exists('cat_hide')) {
-            this.player.play('cat_hide');
-        } else {
-            this.player.play('cat_idle');
+
+        const originalX = this.x;
+        const originalY = this.y;
+
+        this.setTexture(this.hideTexture, 0);
+        this.setPosition(originalX, originalY);
+        this.setOrigin(0.46, 0.75);
+        if (this.scene.anims.exists('cat_hide')) {
+            this.play('cat_hide');
         }
 
         this.onPlayerHide.emit('playerHidden', this.player);
@@ -151,6 +156,10 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         if (this.isDestroyed || !this.isPlayerHiding) return;
 
         this.isPlayerHiding = false;
+        const currentX = this.x;
+        const currentY = this.y;
+
+        this.player.setVisible(true);
         this.player.setDepth(3);
         this.player.setAlpha(1);
         
@@ -160,6 +169,12 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         }
         
         this.player.setHiding(false);
+        this.setTexture(this.originalTexture, 0);
+        this.stop();
+        
+        this.setOrigin(0.5, 0.5);
+        this.setPosition(currentX, currentY);
+        
         this.onPlayerShow.emit('playerVisible', this.player);
         this.emitSafely('playerVisible', this.player);
     }
@@ -168,6 +183,8 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         if (!this.isPlayerHiding) return;
 
         this.isPlayerHiding = false;
+        
+        this.player.setVisible(true);
         this.player.setDepth(3);
         this.player.setAlpha(1);
         
@@ -177,6 +194,8 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         }
         
         this.player.setHiding(false);
+        this.setTexture(this.originalTexture, 0);
+        this.stop();
     }
 
     public forceStopHiding(): void {

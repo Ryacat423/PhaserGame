@@ -36,17 +36,25 @@ export class Level1Scene extends Phaser.Scene {
             .setOrigin(0)
             .setDepth(0);
 
+        const house = this.physics.add
+            .image(180, 200, 'dog_house')
+            .setDepth(0)
+            .setFlipX(true)
+            .setScale(0.3)
+            .setImmovable(true)
+            .setSize(200, 190)
+            .setOffset(120, 120);
+        
         this.player = new Player(this, 300, 100);
         this.add.existing(this.player);
+            
+        house.body?.setAllowGravity(false);
+        this.physics.add.collider(this.player, house);
         
         const dog1 = new Dog(this, 200, 200, this.player, Dog.SLEEP);
         const dog2 = new Dog(this, 800, 400, this.player, Dog.ROAM);
         const dog3 = new Dog(this, 500, 500, this.player, Dog.SLEEP); 
         
-        dog1.setTint(0xffaaaa);
-        dog2.setTint(0xaaffaa);
-        dog3.setTint(0xaaaaff);
-
         this.add.existing(dog1);
         this.add.existing(dog2);
         this.add.existing(dog3);
@@ -99,9 +107,9 @@ export class Level1Scene extends Phaser.Scene {
         const itemConfig: ItemSpawnConfig = {
             foodCount: 10,
             poisonCount: 6,
-            minItemDistance: 50,
+            minItemDistance: 70,
             minObstacleDistance: 45,
-            minBoxDistance: 60,
+            minBoxDistance: 70,
             minPlayerDistance: 100,
             mapWidth: background.width,
             mapHeight: background.height,
@@ -119,7 +127,7 @@ export class Level1Scene extends Phaser.Scene {
         const mainCam = this.cameras.main;
         mainCam.setBounds(0, 0, background.width, background.height);
         mainCam.startFollow(this.player);
-        // mainCam.setZoom(1.5);
+        mainCam.setZoom(1.5);
 
         this.events.on('beforeSceneRestart', () => {
             this.cleanupBeforeRestart();

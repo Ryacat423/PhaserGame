@@ -29,6 +29,7 @@ export class UIManager {
         scene.load.image('box-open', 'assets/global/bg/box_open.png');
         scene.load.image('box-cat', 'assets/global/bg/box.png');
         scene.load.image('tree', 'assets/global/bg/tree.png');
+        scene.load.image('bush', 'assets/scene/levels/2/bush_snow.png');
         
         //Food Images
         scene.load.image('food1', 'assets/global/food/fish.png');
@@ -64,6 +65,16 @@ export class UIManager {
         scene.load.spritesheet('cat', 'assets/sprites/cat_sprite.png', {
             frameWidth: 480,
             frameHeight: 480
+        });
+
+        scene.load.spritesheet('snow', 'assets/sprites/snow.png', {
+            frameWidth: 1000,
+            frameHeight: 600
+        });
+
+        scene.load.spritesheet('fire', 'assets/sprites/bonfire.png', {
+            frameWidth: 392,
+            frameHeight: 626
         });
     }
 
@@ -101,6 +112,27 @@ export class UIManager {
                 key: 'cat_walk',
                 frames: this.scene.anims.generateFrameNumbers('cat', { start: 33, end: 47 }),
                 frameRate: 24,
+                repeat: -1
+            });
+
+            this.scene.anims.create({
+                key: 'cat_hide',
+                frames: this.scene.anims.generateFrameNumbers('cat', {start: 55, end: 82 }),
+                frameRate: 18,
+                repeat: -1
+            });
+
+            this.scene.anims.create({
+                key: 'blow',
+                frames: this.scene.anims.generateFrameNumbers('snow', {start: 0, end: 100}),
+                frameRate: 64,
+                repeat: -1
+            });
+
+            this.scene.anims.create({
+                key: 'sway',
+                frames: this.scene.anims.generateFrameNumbers('fire', {start: 0, end: 105}),
+                frameRate: 64,
                 repeat: -1
             });
         }

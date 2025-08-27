@@ -1,6 +1,6 @@
 export class Level3Scene extends Phaser.Scene {
     constructor() {
-        super({key: 'lvl-3'});
+        super({key: 'level3'});
     }
 
     preload(): void {

@@ -14,8 +14,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private invulnerable: boolean = false;
   private invulnerabilityDuration: number = 1000;
   
+  private isCold: boolean = false;
+  private coldShiverTimer: number = 0;
+  private coldShiverInterval: number = 2000;
+  
   private slowedText?: Phaser.GameObjects.Text;
   private slowedTextTween?: Phaser.Tweens.Tween;
+  private coldText?: Phaser.GameObjects.Text;
+  private coldTextTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'cat');
@@ -126,6 +132,92 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.slowedText = undefined;
   }
 
+  private createColdText(): void {
+    if (this.coldText) {
+      this.destroyColdText();
+    }
+    
+    this.coldText = this.scene.add.text(0, 0, 'COLD', {
+      fontSize: '12px',
+      fontFamily: 'Arial Black, Arial',
+      color: '#87CEEB',
+      stroke: '#000080',
+      strokeThickness: 2,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 1,
+        fill: true
+      }
+    }).setOrigin(0.5);
+
+    this.scene.tweens.add({
+      targets: this.coldText,
+      scale: 1,
+      alpha: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.startColdTextPulse();
+      }
+    });
+
+    this.scene.tweens.add({
+      targets: this.coldText,
+      y: this.y - (this.isPoisoned ? 80 : 60),
+      duration: 300,
+      ease: 'Power2.easeOut'
+    });
+  }
+
+  private startColdTextPulse(): void {
+    if (!this.coldText) return;
+    this.coldTextTween = this.scene.tweens.add({
+      targets: this.coldText,
+      scale: 1.1,
+      alpha: 0.8,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  private updateColdTextPosition(): void {
+    if (this.coldText) {
+      this.coldText.x = this.x;
+      const baseY = this.y - (this.anims.currentAnim?.key !== 'cat_idle' ? 30 : 50);
+      this.coldText.y = baseY - (this.isPoisoned ? 20 : 0);
+    }
+  }
+
+  private destroyColdText(): void {
+    if (this.coldTextTween) {
+      this.coldTextTween.destroy();
+      this.coldTextTween = undefined;
+    }
+
+    if (this.coldText) {
+      this.scene.tweens.add({
+        targets: this.coldText,
+        scale: 0,
+        alpha: 0,
+        y: this.coldText.y - 20,
+        duration: 250,
+        ease: 'Back.easeIn',
+        onComplete: () => {
+          if (this.coldText) {
+            this.coldText.destroy();
+            this.coldText = undefined;
+          }
+        }
+      });
+    }
+    
+    this.coldText = undefined;
+  }
+
   public showSlowedText(scene: Phaser.Scene, show: boolean = false): void {
     if (show) {
       this.createSlowedText();
@@ -151,11 +243,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     this.scene.time.delayedCall(this.invulnerabilityDuration, () => {
       this.invulnerable = false;
-      if (!this.isPoisoned) {
-        this.clearTint();
-      } else {
-        this.setTint(0xaa44aa);
-      }
+      this.updateTint();
     });
   }
 
@@ -167,8 +255,50 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     this.currentSpeed = this.baseSpeed * 0.5;
   
-    this.setTint(0xaa44aa);
+    this.updateTint();
     this.showSlowedText(this.scene, true);
+  }
+
+  public applyCold(): void {
+    if (this.isCold) return;
+    
+    this.isCold = true;
+    this.coldShiverTimer = 0;
+    
+    this.currentSpeed = Math.min(this.currentSpeed, this.baseSpeed * 0.7);
+    
+    this.updateTint();
+    this.createColdText();
+  }
+
+  public cureCold(): void {
+    if (!this.isCold) return;
+    
+    this.isCold = false;
+    this.coldShiverTimer = 0;
+
+    if (this.isPoisoned) {
+      this.currentSpeed = this.baseSpeed * 0.5;
+    } else {
+      this.currentSpeed = this.baseSpeed;
+    }
+    
+    this.updateTint();
+    this.destroyColdText();
+  }
+
+  private updateTint(): void {
+    if (this.invulnerable) {
+      this.setTint(0xff6666);
+    } else if (this.isPoisoned && this.isCold) {
+      this.setTint(0x8844aa);
+    } else if (this.isPoisoned) {
+      this.setTint(0xaa44aa);
+    } else if (this.isCold) {
+      this.setTint(0x4488cc);
+    } else {
+      this.clearTint();
+    }
   }
 
   private updatePoisonEffect(delta: number): void {
@@ -180,21 +310,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  private updateColdEffect(delta: number): void {
+    if (!this.isCold) return;
+    
+    this.coldShiverTimer += delta;
+    if (this.coldShiverTimer >= this.coldShiverInterval) {
+      this.coldShiverTimer = 0;
+      this.performShiver();
+    }
+  }
+
+  private performShiver(): void {
+    const originalX = this.x;
+    this.scene.tweens.add({
+      targets: this,
+      x: originalX - 2,
+      duration: 50,
+      yoyo: true,
+      repeat: 3,
+      ease: 'Power1',
+      onComplete: () => {
+        this.x = originalX;
+      }
+    });
+  }
+
   private curePoison(): void {
     if (!this.isPoisoned) return;
     
     this.isPoisoned = false;
     this.poisonTimer = 0;
-    this.currentSpeed = this.baseSpeed;
-    this.showSlowedText(this.scene, false);
-    
-    if (!this.invulnerable) {
-      this.clearTint();
+
+    if (this.isCold) {
+      this.currentSpeed = this.baseSpeed * 0.7;
+    } else {
+      this.currentSpeed = this.baseSpeed;
     }
+    
+    this.showSlowedText(this.scene, false);
+    this.updateTint();
   }
 
   public getIsPoisoned(): boolean {
     return this.isPoisoned;
+  }
+
+  public getIsCold(): boolean {
+    return this.isCold;
   }
 
   public getIsInvulnerable(): boolean {
@@ -206,10 +368,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     if (delta) {
       this.updatePoisonEffect(delta);
+      this.updateColdEffect(delta);
     }
 
     if (this.isPoisoned) {
       this.updateSlowedTextPosition();
+    }
+    
+    if (this.isCold) {
+      this.updateColdTextPosition();
     }
 
     if (this.isHiding || (this.body && !this.body.enable)) {
@@ -234,6 +401,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.moveSound && this.moveSound.isPlaying) {
         this.moveSound.stop();
       }
+      
       this.setVelocity(0, 0);
     } else {
       if (!this.moveSound.isPlaying) {

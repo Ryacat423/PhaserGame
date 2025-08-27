@@ -7,15 +7,15 @@ export class Poison extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
         
-        this.setScale(0.25);
+        this.setScale(0.15);
         this.setCollideWorldBounds(true);
         this.setDepth(1);
         
         this.setTint(0x8B008B);
         this.pulseEffect = scene.tweens.add({
             targets: this,
-            scaleX: 0.3,
-            scaleY: 0.3,
+            scaleX: 0.2,
+            scaleY: 0.2,
             duration: 1000,
             yoyo: true,
             repeat: -1,

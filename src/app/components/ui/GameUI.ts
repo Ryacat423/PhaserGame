@@ -77,11 +77,11 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupLivesDisplay(): void {
-        this.livesIcon = this.add.image(130, 40, 'life')
+        this.livesIcon = this.add.image(100, 90, 'life')
             .setScale(0.15)
             .setDepth(102);
 
-        this.livesText = this.add.text(150, 32, `${this.playerLives}`, {
+        this.livesText = this.add.text(110, 93, `${this.playerLives}`, {
             fontSize: '20px',
             color: '#ffffff',
             fontFamily: 'Arial',
@@ -472,7 +472,7 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupFoodDisplay() {
-        this.foodCounterText = this.add.text(300, 32, `Foods: 0/${this.getTotalFoodCount()}`, {
+        this.foodCounterText = this.add.text(450, 16, `Foods: 0/${this.getTotalFoodCount()}`, {
             fontSize: "20px",
             color: "#ffffff",
             fontFamily: "Arial",

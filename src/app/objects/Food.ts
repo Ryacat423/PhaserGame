@@ -8,7 +8,7 @@ export class Food extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
         
-        this.setScale(0.3);
+        this.setScale(0.25);
         this.setCollideWorldBounds(true);
         this.setDepth(1);
     

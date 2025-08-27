@@ -2,6 +2,7 @@ export class LevelsScene extends Phaser.Scene {
 
     back!: Phaser.GameObjects.Image;
     level1!: Phaser.GameObjects.Image;
+    level2!: Phaser.GameObjects.Image;
 
     constructor() {
         super({key: 'levels'})
@@ -18,8 +19,10 @@ export class LevelsScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDisplaySize(this.scale.width, this.scale.height);
         
-        this.level1 = this.add.image(280, 320, 'level_1').setScale(0.45);
-        this.add.image(460, 320, 'level_2').setScale(0.45);
+        this.add.sprite(500, 330, 'snow').setScale(.164).play('blow').setDepth(10)
+        this.level1 = this.add.image(280, 320, 'level_1').setScale(0.58);
+        
+        this.level2 = this.add.image(500, 320, 'level_2').setScale(0.58);
         
         this.back = this.add.image(110, 340, 'btn-next').setScale(0.1).setFlipX(true);
 
@@ -35,6 +38,13 @@ export class LevelsScene extends Phaser.Scene {
             .once('pointerdown', () => {
                 this.scene.stop(); 
                 this.scene.start('level1');
+            });
+    
+        this.level2
+            .setInteractive()
+            .once('pointerdown', () => {
+                this.scene.stop(); 
+                this.scene.start('level2');
             });
     }
 }

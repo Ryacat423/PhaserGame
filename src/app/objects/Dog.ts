@@ -12,7 +12,7 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
     private player: Player;
     private moveDirection: Phaser.Math.Vector2;
     
-    private detectionRadius = 100;
+    private detectionRadius = 140;
     private chaseSpeed = 60;
     private roamSpeed = 50;
     private returnHomeSpeed = 50;
