@@ -30,6 +30,8 @@ export class UIManager {
         scene.load.image('box-cat', 'assets/global/bg/box.png');
         scene.load.image('tree', 'assets/global/bg/tree.png');
         scene.load.image('bush', 'assets/scene/levels/2/bush_snow.png');
+
+        scene.load.image('battery', 'assets/scene/levels/3/battery.png');
         
         //Food Images
         scene.load.image('food1', 'assets/global/food/fish.png');
