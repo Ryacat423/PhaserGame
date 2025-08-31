@@ -77,6 +77,11 @@ export class Level2UI extends Phaser.Scene {
     }
 
     private setupEventListeners(): void {
+        const resetColdness = () => {
+            if (this.scene.isActive('Level2UI')) {
+                this.resetColdness();
+            }
+        };
         this.events.on('playerNearFire', (isNear: boolean) => {
             this.isNearFire = isNear;
         });
@@ -84,14 +89,8 @@ export class Level2UI extends Phaser.Scene {
         this.events.on('playerOnFire', () => {
             this.handleFireDamage();
         });
-
-        this.game.events.on('levelStarted', () => {
-            this.resetColdness();
-        });
-
-        this.game.events.on('levelReset', () => {
-            this.resetColdness();
-        });
+        this.game.events.on('levelStarted', resetColdness);
+        this.game.events.on('levelReset', resetColdness);
     }
 
     private startColdnessSystem(): void {

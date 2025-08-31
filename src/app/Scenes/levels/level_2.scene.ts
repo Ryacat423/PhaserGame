@@ -357,7 +357,7 @@ export class Level2Scene extends Phaser.Scene {
             this.burnedSound.stop();
             this.burnedSound.destroy();
         }
-        
+
         this.dogs.forEach(dog => {
             dog.stopBark();
         });

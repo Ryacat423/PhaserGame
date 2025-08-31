@@ -35,6 +35,7 @@ export interface BoxPosition {
 export interface ItemSpawnConfig {
     foodCount: number;
     poisonCount: number;
+    batteryCount?: number;
     minItemDistance: number;
     minObstacleDistance: number;
     minBoxDistance: number;

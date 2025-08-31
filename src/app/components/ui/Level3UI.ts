@@ -32,7 +32,6 @@ export class Level3UI extends Phaser.Scene {
     }
 
     private setupBatteryBar(): void {
-        // Battery bar background
         this.batteryBarBg = this.add.graphics()
             .setDepth(102)
             .setScrollFactor(0);
@@ -45,12 +44,10 @@ export class Level3UI extends Phaser.Scene {
             3
         );
 
-        // Battery bar fill
         this.batteryBar = this.add.graphics()
             .setDepth(103)
             .setScrollFactor(0);
 
-        // Battery icon
         this.batteryIcon = this.add.graphics()
             .setDepth(102)
             .setScrollFactor(0);
@@ -58,8 +55,6 @@ export class Level3UI extends Phaser.Scene {
         this.batteryIcon.fillRect(this.batteryBarX - 18, this.batteryBarY + 2, 12, 16);
         this.batteryIcon.fillStyle(0xFFD700);
         this.batteryIcon.fillRect(this.batteryBarX - 16, this.batteryBarY - 1, 8, 3);
-
-        // Battery percentage text
         this.batteryText = this.add.text(
             this.batteryBarX + this.batteryBarWidth + 10, 
             this.batteryBarY + 2, 
@@ -72,7 +67,6 @@ export class Level3UI extends Phaser.Scene {
             }
         ).setDepth(102).setScrollFactor(0);
 
-        // Instructions text
         this.add.text(
             this.batteryBarX, 
             this.batteryBarY + 30, 
@@ -89,6 +83,11 @@ export class Level3UI extends Phaser.Scene {
     }
 
     private setupEventListeners(): void {
+        const resetBatteries = () => {
+            if (this.scene.isActive('Level2UI')) {
+                this.resetBattery();
+            }
+        };
         this.events.on('batteryCollected', (chargeAmount: number) => {
             this.chargeBattery(chargeAmount);
         });
@@ -98,13 +97,8 @@ export class Level3UI extends Phaser.Scene {
             this.updateBatteryBar();
         });
 
-        this.game.events.on('levelStarted', () => {
-            this.resetBattery();
-        });
-
-        this.game.events.on('levelReset', () => {
-            this.resetBattery();
-        });
+        this.game.events.on('levelStarted', resetBatteries);
+        this.game.events.on('levelReset', resetBatteries);
     }
 
     private updateBatteryBar(): void {
@@ -112,17 +106,15 @@ export class Level3UI extends Phaser.Scene {
         
         const fillPercentage = this.currentBattery / this.maxBattery;
         const fillWidth = this.batteryBarWidth * fillPercentage;
-        
-        // Dynamic battery bar color
         let barColor: number;
         if (fillPercentage > 0.6) {
-            barColor = 0x00FF00; // Green
+            barColor = 0x00FF00;
         } else if (fillPercentage > 0.3) {
-            barColor = 0xFFFF00; // Yellow
+            barColor = 0xFFFF00;
         } else if (fillPercentage > 0.15) {
-            barColor = 0xFF8800; // Orange
+            barColor = 0xFF8800;
         } else {
-            barColor = 0xFF0000; // Red
+            barColor = 0xFF0000;
         }
 
         this.batteryBar.fillStyle(barColor, 0.9);
@@ -133,12 +125,9 @@ export class Level3UI extends Phaser.Scene {
             this.batteryBarHeight, 
             2
         );
-
-        // Update percentage text
         const percentage = Math.floor(fillPercentage * 100);
         this.batteryText.setText(`${percentage}%`);
-        
-        // Update text color based on battery level
+
         if (percentage <= 10) {
             this.batteryText.setColor('#FF0000');
         } else if (percentage <= 30) {
@@ -147,7 +136,6 @@ export class Level3UI extends Phaser.Scene {
             this.batteryText.setColor('#FFD700');
         }
 
-        // Show/hide low battery warning
         if (percentage <= 20 && percentage > 0 && !this.lowBatteryWarning) {
             this.showLowBatteryWarning();
         } else if (percentage > 20 && this.lowBatteryWarning) {
@@ -183,7 +171,6 @@ export class Level3UI extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Play warning sound
         if (!this.lowBatterySound.isPlaying) {
             this.lowBatterySound.play();
         }
@@ -214,15 +201,11 @@ export class Level3UI extends Phaser.Scene {
 
     public chargeBattery(chargeAmount: number): void {
         this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
-        
-        // Hide low battery warning if battery is sufficiently charged
         if (this.currentBattery > 20) {
             this.hideLowBatteryWarning();
         }
         
         this.updateBatteryBar();
-        
-        // Battery charge visual feedback
         this.tweens.add({
             targets: this.batteryBar,
             scaleY: 1.3,
@@ -230,8 +213,6 @@ export class Level3UI extends Phaser.Scene {
             yoyo: true,
             ease: 'Power2'
         });
-
-        // Flash effect on battery icon
         this.tweens.add({
             targets: this.batteryIcon,
             alpha: 0.3,
@@ -243,7 +224,7 @@ export class Level3UI extends Phaser.Scene {
     }
 
     private resetBattery(): void {
-        this.currentBattery = 80; // Reset to 80% battery
+        this.currentBattery = 80;
         
         this.hideLowBatteryWarning();
         this.updateBatteryBar();

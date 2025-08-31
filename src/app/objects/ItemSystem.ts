@@ -10,11 +10,12 @@ export class ItemSystem {
     private gameMap: GameMap;
     private foods: Food[] = [];
     private poisons: Poison[] = [];
+    private batteries: any[] = []; // Battery objects for level 3
     private eatSound: Phaser.Sound.BaseSound;
     private poisonSound!: Phaser.Sound.BaseSound;
     private lvlComplete!: Phaser.Sound.BaseSound;
 
-    private totalFoodCount: number = 0; 
+    private totalFoodCount: number = 0;
     
     constructor(scene: Phaser.Scene, player: Player, gameMap: GameMap) {
         this.scene = scene;
@@ -38,6 +39,7 @@ export class ItemSystem {
         occupiedPositions.push(...config.dogSpawns);
         this.totalFoodCount = config.foodCount;
 
+        // Spawn food
         for (let i = 0; i < config.foodCount; i++) {
             const position = this.findValidSpawnPosition(config, occupiedPositions);
             if (position) {
@@ -49,6 +51,7 @@ export class ItemSystem {
             }
         }
 
+        // Spawn poison
         for (let i = 0; i < config.poisonCount; i++) {
             const position = this.findValidSpawnPosition(config, occupiedPositions);
             if (position) {
@@ -60,8 +63,90 @@ export class ItemSystem {
                 this.scene.physics.add.overlap(this.player, poison, (_, p) => this.collectPoison(p as Poison));
             }
         }
+
+        // Spawn batteries if specified (level 3 specific)
+        if (config.batteryCount && config.batteryCount > 0) {
+            console.log(config.batteryCount);
+            this.spawnBatteries(config, occupiedPositions);
+        }
     }
 
+    private spawnBatteries(config: ItemSpawnConfig, occupiedPositions: { x: number, y: number }[]): void {
+        // Predefined battery positions for better placement
+        const batteryPositions = [
+            { x: 400, y: 150 },
+            { x: 600, y: 300 },
+            { x: 250, y: 450 },
+            { x: 700, y: 200 },
+            { x: 350, y: 350 },
+            { x: 550, y: 450 },
+            { x: 800, y: 150 },
+            { x: 150, y: 200 }
+        ];
+
+        // Randomly select the specified number of positions
+        const selectedPositions = Phaser.Utils.Array.Shuffle(batteryPositions).slice(0, config.batteryCount);
+
+        selectedPositions.forEach(pos => {
+            // Check if position is clear of obstacles and other items
+            if (this.isValidSpawnPosition(pos.x, pos.y, config, occupiedPositions)) {
+                // Use a simple colored rectangle as battery placeholder
+                const batterySprite = this.scene.add.rectangle(pos.x, pos.y, 20, 30, 0xFFD700);
+                batterySprite.setDepth(1);
+                this.scene.physics.add.existing(batterySprite);
+                
+                // Add glow effect
+                this.scene.tweens.add({
+                    targets: batterySprite,
+                    alpha: 0.6,
+                    scaleX: 1.2,
+                    scaleY: 1.2,
+                    duration: 1500,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+
+                // Store as Battery-like object
+                const batteryObject = {
+                    sprite: batterySprite,
+                    x: pos.x,
+                    y: pos.y,
+                    getChargeValue: () => 25,
+                    destroy: () => {
+                        if (batterySprite && batterySprite.scene) {
+                            batterySprite.destroy();
+                        }
+                    }
+                };
+                
+                this.batteries.push(batteryObject);
+                occupiedPositions.push(pos);
+
+                // Setup collision with player
+                this.scene.physics.add.overlap(this.player, batterySprite, () => {
+                    this.collectBattery(batteryObject);
+                });
+            }
+        });
+    }
+
+    private collectBattery(battery: any): void {
+        const chargeAmount = battery.getChargeValue();
+        
+        // Emit battery collection event to the scene
+        this.scene.events.emit('batteryCollected', chargeAmount);
+
+        // Remove battery from array and destroy it
+        const index = this.batteries.indexOf(battery);
+        if (index > -1) {
+            this.batteries.splice(index, 1);
+        }
+        battery.destroy();
+
+        // Visual feedback - brief screen flash
+        this.scene.cameras.main.flash(200, 255, 255, 100);
+    }
 
     private findValidSpawnPosition(config: ItemSpawnConfig, occupiedPositions: { x: number, y: number }[]): { x: number, y: number } | null {
         const maxAttempts = 100;
@@ -147,8 +232,14 @@ export class ItemSystem {
     public clearAllItems(): void {
         this.foods.forEach(food => food.destroy());
         this.poisons.forEach(poison => poison.destroy());
+        this.batteries.forEach(battery => {
+            if (battery && battery.destroy) {
+                battery.destroy();
+            }
+        });
         this.foods = [];
         this.poisons = [];
+        this.batteries = [];
     }
 
     public getFoods(): Food[] {
@@ -157,6 +248,10 @@ export class ItemSystem {
 
     public getPoisons(): Poison[] {
         return this.poisons;
+    }
+
+    public getBatteries(): any[] {
+        return this.batteries;
     }
 
     public getRemainingFoodCount(): number {
@@ -173,6 +268,10 @@ export class ItemSystem {
 
     public getRemainingPoisonCount(): number {
         return this.poisons.length;
+    }
+
+    public getRemainingBatteryCount(): number {
+        return this.batteries.length;
     }
 
     public getAllItems(): (Food | Poison)[] {

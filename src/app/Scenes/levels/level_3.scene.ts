@@ -16,6 +16,11 @@ export class Level3Scene extends Phaser.Scene {
 
     private flashlightRadius: number = 100;
     private background!: Phaser.GameObjects.Image;
+    
+    private batteryDrainTimer!: Phaser.Time.TimerEvent;
+    private currentBattery: number = 80;
+    private maxBattery: number = 100;
+    private batteryDrainRate: number = 1;
 
     constructor() {
         super({ key: 'level3' });
@@ -24,45 +29,29 @@ export class Level3Scene extends Phaser.Scene {
     preload(): void {
         this.load.image('level3_map', 'assets/scene/levels/3/map.png');
         this.load.audio('level3_theme', 'assets/global/audio/night-theme.mp3');
-        
-        if (!this.textures.exists('dog_house')) {
-            this.load.image('dog_house', 'assets/objects/dog_house.png');
-        }
     }
 
     create(): void {
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }
+        if (!this.scene.isActive('Level3UI')) {
+            this.scene.launch('Level3UI');
+        }
 
         if (this.gameTheme && this.gameTheme.isPlaying) {
             this.gameTheme.stop();
         }
         
-        this.gameTheme = this.sound.add('level3_theme', { loop: true, volume: 0.8 });
+        this.gameTheme = this.sound.add('level3_theme', { loop: true, volume: 0.5 });
         this.gameTheme.play();
 
         this.background = this.add.image(0, 0, 'level3_map')
             .setOrigin(0)
             .setDepth(0);
 
-        const house = this.physics.add
-            .image(180, 200, 'dog_house')
-            .setDepth(0)
-            .setFlipX(true)
-            .setScale(0.3)
-            .setImmovable(true)
-            .setSize(200, 190)
-            .setOffset(120, 120);
-        
-        if (house.body) {
-            house.body.setAllowGravity(false);
-        }
-        
         this.player = new Player(this, 300, 100);
         this.add.existing(this.player);
-    
-        this.physics.add.collider(this.player, house);
 
         const dog1 = new Dog(this, 200, 200, this.player, Dog.SLEEP);
         const dog2 = new Dog(this, 800, 400, this.player, Dog.ROAM);
@@ -118,6 +107,7 @@ export class Level3Scene extends Phaser.Scene {
         const itemConfig: ItemSpawnConfig = {
             foodCount: 10,
             poisonCount: 6,
+            batteryCount: 5,
             minItemDistance: 70,
             minObstacleDistance: 45,
             minBoxDistance: 70,
@@ -133,6 +123,8 @@ export class Level3Scene extends Phaser.Scene {
         };
         
         this.itemSystem.spawnItems(itemConfig);
+        this.setupBatterySystem();
+        this.setupBatteryEventListeners();
 
         this.setupBoxEventListeners();
         const mainCam = this.cameras.main;
@@ -146,6 +138,7 @@ export class Level3Scene extends Phaser.Scene {
 
         this.game.events.on('returnToWelcome', () => {
             this.cleanupBeforeExit();
+            this.scene.stop('Level3UI');
             this.scene.stop('UIScene');
             this.scene.start('welcome');
         });
@@ -157,11 +150,66 @@ export class Level3Scene extends Phaser.Scene {
         this.notifyUISceneStarted();
     }
 
+    private setupBatterySystem(): void {
+        this.batteryDrainTimer = this.time.addEvent({
+            delay: 2000,
+            callback: this.drainBattery,
+            callbackScope: this,
+            loop: true
+        });
+
+        this.updateBatteryUI();
+    }
+
+    private setupBatteryEventListeners(): void {
+        this.events.on('batteryCollected', (chargeAmount: number) => {
+            this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
+            this.updateBatteryUI();
+            this.updateFlashlightRadius();
+            const level3UI = this.scene.get('Level3UI');
+            if (level3UI && level3UI.scene.isActive()) {
+                level3UI.events.emit('batteryCollected', chargeAmount);
+            }
+        });
+    }
+
+    private drainBattery(): void {
+        if (this.currentBattery > 0) {
+            this.currentBattery = Math.max(0, this.currentBattery - this.batteryDrainRate);
+            this.updateBatteryUI();
+            this.updateFlashlightRadius();
+        }
+    }
+
+    private updateBatteryUI(): void {
+        const level3UI = this.scene.get('Level3UI');
+        if (level3UI && level3UI.scene.isActive()) {
+            level3UI.events.emit('batteryLevelChanged', {
+                current: this.currentBattery,
+                max: this.maxBattery
+            });
+        }
+    }
+
+    private updateFlashlightRadius(): void {
+        const batteryPercentage = this.currentBattery / this.maxBattery;
+        
+        if (batteryPercentage <= 0) {
+            this.flashlightRadius = 0; 
+        } else if (batteryPercentage <= 0.1) {
+            this.flashlightRadius = 30;
+        } else if (batteryPercentage <= 0.3) {
+            this.flashlightRadius = 60;
+        } else {
+            this.flashlightRadius = 100;
+        }
+    }
+
     private createFlashlightSystem(width: number, height: number): void {
         this.lightMask = this.add.graphics();
     
         this.darkness = this.add.graphics();
-        this.darkness.fillStyle(0x000000, 0.9);
+        this.darkness.fillStyle(0x000000, .9);
         this.darkness.fillRect(0, 0, width, height);
         this.darkness.setDepth(20); 
 
@@ -179,18 +227,24 @@ export class Level3Scene extends Phaser.Scene {
         const playerX = this.player.x;
         const playerY = this.player.y;
         const radius = this.flashlightRadius;
+        if (this.currentBattery > 0) {
+            let alpha = 0.09;
+            if (this.currentBattery <= 10) {
+                alpha = Phaser.Math.FloatBetween(0.05, 0.15);
+            }
 
-        this.lightMask.fillStyle(0xffffff, 0.1);
-        this.lightMask.fillCircle(playerX, playerY, radius * 0.95);
+            this.lightMask.fillStyle(0xffffff, alpha);
+            this.lightMask.fillCircle(playerX, playerY, radius * 0.95);
 
-        this.lightMask.fillStyle(0xffffff, 0.2);
-        this.lightMask.fillCircle(playerX, playerY, radius);
+            this.lightMask.fillStyle(0xffffff, 0.2);
+            this.lightMask.fillCircle(playerX, playerY, radius);
+        }
     }
 
     private notifyUISceneStarted(): void {
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene && uiScene.scene.isActive()) {
-            uiScene.events.emit('sceneStarted');
+        const level3UI = this.scene.get('Level3UI');
+        if (level3UI && level3UI.scene.isActive()) {
+            level3UI.events.emit('sceneStarted');
         }
         this.game.events.emit('levelStarted');
     }
@@ -216,23 +270,36 @@ export class Level3Scene extends Phaser.Scene {
     }
 
     private cleanupBeforeRestart(): void {
-        this.gameMap.getBoxes().forEach(box => {
-            if (typeof box.forceStopHiding === 'function') {
-                box.forceStopHiding();
-            }
-        });
+        if (this.batteryDrainTimer) {
+            this.batteryDrainTimer.destroy();
+        }
+        this.currentBattery = 80;
+        this.flashlightRadius = 100;
+
+        if (this.gameMap && this.gameMap.getBoxes) {
+            this.gameMap.getBoxes().forEach(box => {
+                if (box && typeof box.forceStopHiding === 'function') {
+                    box.forceStopHiding();
+                }
+            });
+        }
 
         this.dogs.forEach(dog => {
-            if (typeof dog.stopBark === 'function') {
+            if (dog && typeof dog.stopBark === 'function') {
                 dog.stopBark();
             }
         });
-        if (this.itemSystem) {
+        
+        if (this.itemSystem && typeof this.itemSystem.clearAllItems === 'function') {
             this.itemSystem.clearAllItems();
         }
     }
 
     private cleanupBeforeExit(): void {
+        if (this.batteryDrainTimer) {
+            this.batteryDrainTimer.destroy();
+        }
+
         if (this.gameTheme) {
             if (this.gameTheme.isPlaying) {
                 this.gameTheme.stop();
@@ -280,6 +347,14 @@ export class Level3Scene extends Phaser.Scene {
         return this.player;
     }
 
+    public getCurrentBattery(): number {
+        return this.currentBattery;
+    }
+
+    public getMaxBattery(): number {
+        return this.maxBattery;
+    }
+
     override update(time: number, delta: number): void {
         if (this.player && this.player.active) {
             this.player.update(time, delta);
@@ -294,6 +369,20 @@ export class Level3Scene extends Phaser.Scene {
         if (this.gameMap) {
             this.gameMap.update();
         }
+
         this.updateFlashlightMask();
+        if (this.currentBattery <= 0) {
+            this.handleBatteryDrained();
+        }
+    }
+
+    private handleBatteryDrained(): void {
+        if (this.batteryDrainTimer) {
+            this.batteryDrainTimer.destroy();
+        }
+        this.cleanupBeforeRestart();
+        this.time.delayedCall(1000, () => {
+            this.scene.restart();
+        });
     }
 }

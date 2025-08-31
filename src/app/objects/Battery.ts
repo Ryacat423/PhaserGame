@@ -11,9 +11,8 @@ export class Battery extends Phaser.Physics.Arcade.Sprite {
         this.setScale(0.2);
         this.setCollideWorldBounds(true);
         this.setDepth(1);
-        this.chargeValue = 25; // Each battery gives 25% charge
-        
-        // Yellow glow effect for batteries
+        this.chargeValue = 25;
+
         this.setTint(0xFFD700);
         
         this.glowEffect = scene.tweens.add({
@@ -27,7 +26,6 @@ export class Battery extends Phaser.Physics.Arcade.Sprite {
             ease: 'Sine.easeInOut'
         });
 
-        // Additional sparkling effect
         scene.tweens.add({
             targets: this,
             rotation: Math.PI * 2,
