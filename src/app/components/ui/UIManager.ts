@@ -44,6 +44,8 @@ export class UIManager {
         scene.load.image('poison2', 'assets/global/food/mushroom.png');
         scene.load.image('poison3', 'assets/global/food/poison_apple.png');
 
+        scene.load.image('battery', 'assets/scene/levels/3/battery.png');
+
         // Sounds
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
         scene.load.audio('game_theme', 'assets/global/audio/lvl-1-theme.mp3');

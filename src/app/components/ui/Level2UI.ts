@@ -16,8 +16,8 @@ export class Level2UI extends Phaser.Scene {
     
     private coldnessBarWidth: number = 150;
     private coldnessBarHeight: number = 20;
-    private coldnessBarX: number = 125;
-    private coldnessBarY: number = 17;
+    private coldnessBarX: number = 145;
+    private coldnessBarY: number = 20;
 
     private almostCold!: Phaser.Sound.BaseSound;
     private freeze!: Phaser.Sound.BaseSound;
@@ -57,7 +57,7 @@ export class Level2UI extends Phaser.Scene {
         this.coldnessBar = this.add.graphics()
             .setDepth(103);
 
-        this.coldnessIcon = this.add.image(this.coldnessBarX - 10, this.coldnessBarY + 5, 'snowflake_icon')
+        this.coldnessIcon = this.add.image(120, 30, 'snowflake_icon')
             .setScale(0.04)
             .setDepth(102);
 

@@ -1,7 +1,7 @@
 export class Level3UI extends Phaser.Scene {
     private batteryBar!: Phaser.GameObjects.Graphics;
     private batteryBarBg!: Phaser.GameObjects.Graphics;
-    private batteryIcon!: Phaser.GameObjects.Graphics;
+    private batteryIcon!: Phaser.GameObjects.Image;
     private batteryText!: Phaser.GameObjects.Text;
     private lowBatteryWarning?: Phaser.GameObjects.Text;
     private lowBatteryTween?: Phaser.Tweens.Tween;
@@ -11,8 +11,8 @@ export class Level3UI extends Phaser.Scene {
     
     private batteryBarWidth: number = 150;
     private batteryBarHeight: number = 20;
-    private batteryBarX: number = 125;
-    private batteryBarY: number = 47;
+    private batteryBarX: number = 145;
+    private batteryBarY: number = 20;
 
     private lowBatterySound!: Phaser.Sound.BaseSound;
 
@@ -48,13 +48,10 @@ export class Level3UI extends Phaser.Scene {
             .setDepth(103)
             .setScrollFactor(0);
 
-        this.batteryIcon = this.add.graphics()
-            .setDepth(102)
-            .setScrollFactor(0);
-        this.batteryIcon.fillStyle(0xFFD700);
-        this.batteryIcon.fillRect(this.batteryBarX - 18, this.batteryBarY + 2, 12, 16);
-        this.batteryIcon.fillStyle(0xFFD700);
-        this.batteryIcon.fillRect(this.batteryBarX - 16, this.batteryBarY - 1, 8, 3);
+        this.batteryIcon = this.add.image(120, 30, 'battery')
+            .setScale(.3);
+        
+
         this.batteryText = this.add.text(
             this.batteryBarX + this.batteryBarWidth + 10, 
             this.batteryBarY + 2, 
@@ -146,7 +143,7 @@ export class Level3UI extends Phaser.Scene {
     private showLowBatteryWarning(): void {
         if (this.lowBatteryWarning) return;
         
-        this.lowBatteryWarning = this.add.text(200, 52, 'LOW BATTERY!', {
+        this.lowBatteryWarning = this.add.text(210, 70, 'LOW BATTERY!', {
             fontSize: '16px',
             fontFamily: 'Arial Black, Arial',
             color: '#FF8800',

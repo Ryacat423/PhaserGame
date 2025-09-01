@@ -9,7 +9,10 @@ export class Level3Scene extends Phaser.Scene {
     private dogs: Dog[] = [];
     private gameMap!: GameMap;
     private itemSystem!: ItemSystem;
+
     private gameTheme!: Phaser.Sound.BaseSound;
+    private ambience!: Phaser.Sound.BaseSound;
+    private owlHoot!: Phaser.Sound.BaseSound;
 
     private darkness!: Phaser.GameObjects.Graphics;
     private lightMask!: Phaser.GameObjects.Graphics;
@@ -20,7 +23,7 @@ export class Level3Scene extends Phaser.Scene {
     private batteryDrainTimer!: Phaser.Time.TimerEvent;
     private currentBattery: number = 80;
     private maxBattery: number = 100;
-    private batteryDrainRate: number = 1;
+    private batteryDrainRate: number = 3;
 
     constructor() {
         super({ key: 'level3' });
@@ -29,6 +32,10 @@ export class Level3Scene extends Phaser.Scene {
     preload(): void {
         this.load.image('level3_map', 'assets/scene/levels/3/map.png');
         this.load.audio('level3_theme', 'assets/global/audio/night-theme.mp3');
+
+        this.load.audio('night-ambience', 'assets/global/audio/night-ambience.mp3');
+        this.load.audio('owl-hoot', 'assets/global/audio/owl-hoot.mp3');
+
     }
 
     create(): void {
@@ -43,8 +50,19 @@ export class Level3Scene extends Phaser.Scene {
             this.gameTheme.stop();
         }
         
-        this.gameTheme = this.sound.add('level3_theme', { loop: true, volume: 0.5 });
+        this.gameTheme = this.sound.add('level3_theme', { loop: true }).setVolume(.2);
+        this.ambience = this.sound.add('night-ambience', { loop: true, volume: 1 });
+        this.owlHoot = this.sound.add('owl-hoot', { loop: true, volume: 1});
         this.gameTheme.play();
+        this.ambience.play();
+
+        this.time.addEvent({
+            delay: 5000,
+            callback: () => {
+                this.owlHoot.play();
+            },
+            loop: true
+        });
 
         this.background = this.add.image(0, 0, 'level3_map')
             .setOrigin(0)
@@ -209,7 +227,7 @@ export class Level3Scene extends Phaser.Scene {
         this.lightMask = this.add.graphics();
     
         this.darkness = this.add.graphics();
-        this.darkness.fillStyle(0x000000, .9);
+        this.darkness.fillStyle(0x000000, 1);
         this.darkness.fillRect(0, 0, width, height);
         this.darkness.setDepth(20); 
 
@@ -303,8 +321,10 @@ export class Level3Scene extends Phaser.Scene {
         if (this.gameTheme) {
             if (this.gameTheme.isPlaying) {
                 this.gameTheme.stop();
+                this.ambience.stop()
             }
             this.gameTheme.destroy();
+            this.ambience.destroy();
         }
         
         this.dogs.forEach(dog => {
