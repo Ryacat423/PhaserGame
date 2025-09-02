@@ -26,7 +26,6 @@ export class Level2Scene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('level2_map', 'assets/scene/levels/2/map.png');
         this.load.image('snowman', 'assets/scene/levels/2/snowman.png');
 
         this.load.audio('level2_theme', 'assets/global/audio/lvl-2-theme.mp3');

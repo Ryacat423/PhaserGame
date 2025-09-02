@@ -49,7 +49,7 @@ export class GameComponent implements OnInit {
       physics: {
         default: 'arcade',
         arcade: {
-          debug: true,
+          // debug: true,
           y: 0,
           x: 0
         }

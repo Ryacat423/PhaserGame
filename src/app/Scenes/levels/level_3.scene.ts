@@ -30,7 +30,6 @@ export class Level3Scene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('level3_map', 'assets/scene/levels/3/map.png');
         this.load.audio('level3_theme', 'assets/global/audio/night-theme.mp3');
 
         this.load.audio('night-ambience', 'assets/global/audio/night-ambience.mp3');
@@ -125,7 +124,7 @@ export class Level3Scene extends Phaser.Scene {
         const itemConfig: ItemSpawnConfig = {
             foodCount: 10,
             poisonCount: 6,
-            batteryCount: 5,
+            batteryCount: 10,
             minItemDistance: 70,
             minObstacleDistance: 45,
             minBoxDistance: 70,
@@ -391,18 +390,18 @@ export class Level3Scene extends Phaser.Scene {
         }
 
         this.updateFlashlightMask();
-        if (this.currentBattery <= 0) {
-            this.handleBatteryDrained();
-        }
+        // if (this.currentBattery <= 0) {
+        //     this.handleBatteryDrained();
+        // }
     }
 
-    private handleBatteryDrained(): void {
-        if (this.batteryDrainTimer) {
-            this.batteryDrainTimer.destroy();
-        }
-        this.cleanupBeforeRestart();
-        this.time.delayedCall(1000, () => {
-            this.scene.restart();
-        });
-    }
+    // private handleBatteryDrained(): void {
+    //     if (this.batteryDrainTimer) {
+    //         this.batteryDrainTimer.destroy();
+    //     }
+    //     // this.cleanupBeforeRestart();
+    //     // // this.time.delayedCall(1000, () => {
+    //     // //     this.scene.restart();
+    //     // // });
+    // }
 }

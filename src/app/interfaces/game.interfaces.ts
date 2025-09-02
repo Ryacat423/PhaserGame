@@ -15,6 +15,14 @@ export interface ManualObstacleData {
     depth?: number;
 }
 
+export interface Checkbox {
+    bg: Phaser.GameObjects.Image;
+    mark: Phaser.GameObjects.Image;
+    checked: boolean;
+    callback: (checked: boolean) => void;
+    mechanicKey?: string;
+}
+
 export interface RandomObstacleZone {
     zone: { x: number; y: number; width: number; height: number };
     type: ObstacleType;

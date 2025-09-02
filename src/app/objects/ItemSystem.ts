@@ -67,32 +67,20 @@ export class ItemSystem {
             this.spawnBatteries(config, occupiedPositions);
         }
     }
-
+    
     private spawnBatteries(config: ItemSpawnConfig, occupiedPositions: { x: number, y: number }[]): void {
-        const batteryPositions = [
-            { x: 400, y: 150 },
-            { x: 600, y: 300 },
-            { x: 250, y: 450 },
-            { x: 700, y: 200 },
-            { x: 350, y: 350 },
-            { x: 550, y: 450 },
-            { x: 800, y: 150 },
-            { x: 150, y: 200 }
-        ];
-        const selectedPositions = Phaser.Utils.Array.Shuffle(batteryPositions).slice(0, config.batteryCount);
-
-        selectedPositions.forEach(pos => {
-            if (this.isValidSpawnPosition(pos.x, pos.y, config, occupiedPositions)) {
-                // const batterySprite = this.scene.add.rectangle(pos.x, pos.y, 20, 30, 0xFFD700);
-                const batterySprite = new Battery(this.scene, pos.x, pos.y, 'battery');
+        for (let i = 0; i < config.batteryCount!; i++) {
+            const position = this.findValidSpawnPosition(config, occupiedPositions);
+            if (position) {
+                const batterySprite = new Battery(this.scene, position.x, position.y, 'battery');
                 batterySprite.setDepth(1);
                 this.scene.physics.add.existing(batterySprite);
                 
                 this.scene.tweens.add({
                     targets: batterySprite,
                     alpha: 0.6,
-                    scaleX: .4,
-                    scaleY: .3,
+                    scaleX: .2,
+                    scaleY: .2,
                     duration: 1500,
                     yoyo: true,
                     repeat: -1,
@@ -101,8 +89,8 @@ export class ItemSystem {
 
                 const batteryObject = {
                     sprite: batterySprite,
-                    x: pos.x,
-                    y: pos.y,
+                    x: position.x,
+                    y: position.y,
                     getChargeValue: () => 25,
                     destroy: () => {
                         if (batterySprite && batterySprite.scene) {
@@ -112,12 +100,14 @@ export class ItemSystem {
                 };
                 
                 this.batteries.push(batteryObject);
-                occupiedPositions.push(pos);
+                occupiedPositions.push(position);
                 this.scene.physics.add.overlap(this.player, batterySprite, () => {
                     this.collectBattery(batteryObject);
                 });
+            } else {
+                console.warn(`Could not spawn battery ${i + 1}`);
             }
-        });
+        }
     }
 
     private collectBattery(battery: any): void {

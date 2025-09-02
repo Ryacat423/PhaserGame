@@ -29,7 +29,7 @@ export class LevelsScene extends Phaser.Scene {
         
         this.level2 = this.add.image(480, 320, 'level_2').setScale(0.58);
         
-        this.level3 = this.add.image(680, 320, 'level_3').setScale(0.58);
+        this.level3 = this.add.image(680, 320, 'level_3').setScale(0.63);
 
         this.back = this.add.image(110, 340, 'btn-next').setScale(0.1).setFlipX(true);
 

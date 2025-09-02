@@ -16,7 +16,6 @@ export class Level1Scene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('level1_map', 'assets/scene/levels/1/map.png');
         this.load.audio('level1_theme', 'assets/global/audio/gameplay.ogg');
     }
 

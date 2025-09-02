@@ -46,6 +46,11 @@ export class UIManager {
 
         scene.load.image('battery', 'assets/scene/levels/3/battery.png');
 
+        // Maps
+        scene.load.image('level1_map', 'assets/scene/levels/1/map.png');
+        scene.load.image('level2_map', 'assets/scene/levels/2/map.png');
+        scene.load.image('level3_map', 'assets/scene/levels/3/map.png');
+
         // Sounds
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
         scene.load.audio('game_theme', 'assets/global/audio/lvl-1-theme.mp3');

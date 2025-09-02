@@ -81,7 +81,7 @@ export class Level3UI extends Phaser.Scene {
 
     private setupEventListeners(): void {
         const resetBatteries = () => {
-            if (this.scene.isActive('Level2UI')) {
+            if (this.scene.isActive('Level3UI')) {
                 this.resetBattery();
             }
         };
