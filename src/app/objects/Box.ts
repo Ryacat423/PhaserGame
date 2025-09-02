@@ -169,7 +169,7 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         }
         
         this.player.setHiding(false);
-        this.setTexture(this.originalTexture, 0);
+        this.setTexture(this.originalTexture, );
         this.stop();
         
         this.setOrigin(0.5, 0.5);

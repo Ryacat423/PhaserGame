@@ -5,6 +5,8 @@ export class LevelsScene extends Phaser.Scene {
     level2!: Phaser.GameObjects.Image;
     level3!: Phaser.GameObjects.Image;
 
+    custom!: Phaser.GameObjects.Image;
+
     constructor() {
         super({key: 'levels'})
     }
@@ -14,6 +16,7 @@ export class LevelsScene extends Phaser.Scene {
         this.load.image('level_1', 'assets/scene/levels/level_1.png');
         this.load.image('level_2', 'assets/scene/levels/level_2.png');
         this.load.image('level_3', 'assets/scene/levels/level_3.png');
+        this.load.image('level_custom', 'assets/scene/levels/level_custom.png');
     }
 
     create(): void {
@@ -30,6 +33,7 @@ export class LevelsScene extends Phaser.Scene {
 
         this.back = this.add.image(110, 340, 'btn-next').setScale(0.1).setFlipX(true);
 
+        this.custom = this.add.image(875, 325, 'level_custom').setScale(0.58);
         this.back
             .setInteractive()
             .once('pointerdown', () => {
@@ -56,6 +60,13 @@ export class LevelsScene extends Phaser.Scene {
             .once('pointerdown', () => {
                 this.scene.stop();
                 this.scene.start('level3');
-            })
+            });
+
+        this.custom
+            .setInteractive()
+            .once('pointerdown', () => {
+                this.scene.stop();
+                this.scene.start('custom_panel');
+            });
     }
 }
