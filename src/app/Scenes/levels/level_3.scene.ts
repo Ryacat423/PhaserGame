@@ -1,24 +1,14 @@
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
-import { Dog } from "../../objects/Dog";
-import { GameMap } from "../../objects/GameMap";
-import { ItemSystem } from "../../objects/ItemSystem";
-import { Player } from "../../objects/Player";
+import { Dog, DogState } from "../../objects/Dog";
+import { BaseLevel } from "./base_level";
 
-export class Level3Scene extends Phaser.Scene {
-    private player!: Player;
-    private dogs: Dog[] = [];
-    private gameMap!: GameMap;
-    private itemSystem!: ItemSystem;
-
-    private gameTheme!: Phaser.Sound.BaseSound;
+export class Level3Scene extends BaseLevel {
     private ambience!: Phaser.Sound.BaseSound;
     private owlHoot!: Phaser.Sound.BaseSound;
-
+    
     private darkness!: Phaser.GameObjects.Graphics;
     private lightMask!: Phaser.GameObjects.Graphics;
-
     private flashlightRadius: number = 100;
-    private background!: Phaser.GameObjects.Image;
     
     private batteryDrainTimer!: Phaser.Time.TimerEvent;
     private currentBattery: number = 80;
@@ -26,35 +16,58 @@ export class Level3Scene extends Phaser.Scene {
     private batteryDrainRate: number = 3;
 
     constructor() {
-        super({ key: 'level3' });
+        super('level3');
     }
 
-    preload(): void {
-        this.load.audio('level3_theme', 'assets/global/audio/night-theme.mp3');
-
+    protected override preloadLevelAssets(): void {
         this.load.audio('night-ambience', 'assets/global/audio/night-ambience.mp3');
         this.load.audio('owl-hoot', 'assets/global/audio/owl-hoot.mp3');
-
     }
 
-    create(): void {
-        if (!this.scene.isActive('UIScene')) {
-            this.scene.launch('UIScene');
-        }
-        if (!this.scene.isActive('Level3UI')) {
-            this.scene.launch('Level3UI');
-        }
+    protected getThemeAudioKey(): string {
+        return 'level3_theme';
+    }
 
-        if (this.gameTheme && this.gameTheme.isPlaying) {
-            this.gameTheme.stop();
-        }
-        
-        this.gameTheme = this.sound.add('level3_theme', { loop: true }).setVolume(.2);
+    protected override getThemeAudioPath(): string {
+        return 'assets/global/audio/night-theme.mp3';
+    }
+
+    protected override getThemeVolume(): number {
+        return 0.2;
+    }
+
+    protected getBackgroundTextureKey(): string {
+        return 'level3_map';
+    }
+
+    protected getPlayerSpawnPosition(): { x: number, y: number } {
+        return { x: 300, y: 100 };
+    }
+
+    protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
+        return [
+            { x: 200, y: 200, behavior: Dog.SLEEP },
+            { x: 800, y: 400, behavior: Dog.ROAM },
+            { x: 500, y: 500, behavior: Dog.SLEEP }
+        ];
+    }
+
+    protected override getLevelSpecificUIScenes(): string[] {
+        return ['Level3UI'];
+    }
+
+    protected override createLevelSpecificElements(): void {
+        this.setupNightAmbience();
+        this.createFlashlightSystem();
+        this.setupBatterySystem();
+        this.setupBatteryEventListeners();
+    }
+
+    private setupNightAmbience(): void {
         this.ambience = this.sound.add('night-ambience', { loop: true, volume: 1 });
-        this.owlHoot = this.sound.add('owl-hoot', { loop: true, volume: 1});
-        this.gameTheme.play();
+        this.owlHoot = this.sound.add('owl-hoot', { loop: true, volume: 1 });
+        
         this.ambience.play();
-
         this.time.addEvent({
             delay: 5000,
             callback: () => {
@@ -62,109 +75,24 @@ export class Level3Scene extends Phaser.Scene {
             },
             loop: true
         });
+    }
 
-        this.background = this.add.image(0, 0, 'level3_map')
-            .setOrigin(0)
-            .setDepth(0);
+    private createFlashlightSystem(): void {
+        const width = this.background.width;
+        const height = this.background.height;
 
-        this.player = new Player(this, 300, 100);
-        this.add.existing(this.player);
-
-        const dog1 = new Dog(this, 200, 200, this.player, Dog.SLEEP);
-        const dog2 = new Dog(this, 800, 400, this.player, Dog.ROAM);
-        const dog3 = new Dog(this, 500, 500, this.player, Dog.SLEEP); 
-
-        this.add.existing(dog1);
-        this.add.existing(dog2);
-        this.add.existing(dog3);
-        this.physics.add.collider(dog1, dog2);
-        this.physics.add.collider(dog1, dog3);
-        this.physics.add.collider(dog2, dog3);
+        this.lightMask = this.add.graphics();
         
-        this.dogs.push(dog1, dog2, dog3);
-        this.dogs.forEach(dog => {
-            this.physics.add.collider(this.player, dog, () => {
-                dog.onCollideWithPlayer();
-            });
-        });
+        this.darkness = this.add.graphics();
+        this.darkness.fillStyle(0x000000, 1);
+        this.darkness.fillRect(0, 0, width, height);
+        this.darkness.setDepth(20);
 
-        this.gameMap = new GameMap(this, this.player);
+        const mask = this.lightMask.createGeometryMask();
+        mask.invertAlpha = true;
+        this.darkness.setMask(mask);
 
-        this.createFlashlightSystem(this.background.width, this.background.height);
-
-        const levelConfig: LevelConfig = {
-            playerSpawn: { x: 300, y: 100 },
-            dogSpawn: { x: 200, y: 200 },
-            manualObstacles: [
-                { type: 'tree', x: 300, y: 150, scale: 0.2 },
-            ],
-            randomObstacleZones: [
-                { 
-                    zone: { x: 300, y: 200, width: 200, height: 200 }, 
-                    type: 'tree', 
-                    count: 3, 
-                    minDistance: 80 
-                }
-            ],
-            boxes: [
-                { x: 150, y: 300 },
-                { x: 450, y: 200 },
-                { x: 750, y: 350 },
-                { x: 650, y: 150 }
-            ],
-            foodCount: 12, 
-            mapTexture: 'level3_map',
-            backgroundMusic: 'level3_theme'
-        };
-
-        this.gameMap.setup(levelConfig);
-        this.gameMap.setupDogColliders(this.dogs);
-        this.itemSystem = new ItemSystem(this, this.player, this.gameMap);
-        
-        const itemConfig: ItemSpawnConfig = {
-            foodCount: 10,
-            poisonCount: 6,
-            batteryCount: 10,
-            minItemDistance: 70,
-            minObstacleDistance: 45,
-            minBoxDistance: 70,
-            minPlayerDistance: 100,
-            mapWidth: this.background.width,
-            mapHeight: this.background.height,
-            playerSpawn: { x: 300, y: 100 },
-            dogSpawns: [
-                { x: 200, y: 200 },
-                { x: 800, y: 400 },
-                { x: 500, y: 500 }
-            ]
-        };
-        
-        this.itemSystem.spawnItems(itemConfig);
-        this.setupBatterySystem();
-        this.setupBatteryEventListeners();
-
-        this.setupBoxEventListeners();
-        const mainCam = this.cameras.main;
-        mainCam.setBounds(0, 0, this.background.width, this.background.height);
-        mainCam.startFollow(this.player);
-        mainCam.setZoom(1.5);
-
-        this.events.on('beforeSceneRestart', () => {
-            this.cleanupBeforeRestart();
-        });
-
-        this.game.events.on('returnToWelcome', () => {
-            this.cleanupBeforeExit();
-            this.scene.stop('Level3UI');
-            this.scene.stop('UIScene');
-            this.scene.start('welcome');
-        });
-        
-        this.events.once('shutdown', () => {
-            this.cleanupBeforeExit();
-        });
-
-        this.notifyUISceneStarted();
+        this.updateFlashlightMask();
     }
 
     private setupBatterySystem(): void {
@@ -183,6 +111,7 @@ export class Level3Scene extends Phaser.Scene {
             this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
             this.updateBatteryUI();
             this.updateFlashlightRadius();
+            
             const level3UI = this.scene.get('Level3UI');
             if (level3UI && level3UI.scene.isActive()) {
                 level3UI.events.emit('batteryCollected', chargeAmount);
@@ -212,7 +141,7 @@ export class Level3Scene extends Phaser.Scene {
         const batteryPercentage = this.currentBattery / this.maxBattery;
         
         if (batteryPercentage <= 0) {
-            this.flashlightRadius = 0; 
+            this.flashlightRadius = 0;
         } else if (batteryPercentage <= 0.1) {
             this.flashlightRadius = 30;
         } else if (batteryPercentage <= 0.3) {
@@ -222,28 +151,15 @@ export class Level3Scene extends Phaser.Scene {
         }
     }
 
-    private createFlashlightSystem(width: number, height: number): void {
-        this.lightMask = this.add.graphics();
-    
-        this.darkness = this.add.graphics();
-        this.darkness.fillStyle(0x000000, 1);
-        this.darkness.fillRect(0, 0, width, height);
-        this.darkness.setDepth(20); 
-
-        const mask = this.lightMask.createGeometryMask();
-        mask.invertAlpha = true;
-        this.darkness.setMask(mask);
-
-        this.updateFlashlightMask();
-    }
-
     private updateFlashlightMask(): void {
         if (!this.lightMask || !this.player) return;
+        
         this.lightMask.clear();
         
         const playerX = this.player.x;
         const playerY = this.player.y;
         const radius = this.flashlightRadius;
+        
         if (this.currentBattery > 0) {
             let alpha = 0.09;
             if (this.currentBattery <= 10) {
@@ -258,112 +174,86 @@ export class Level3Scene extends Phaser.Scene {
         }
     }
 
-    private notifyUISceneStarted(): void {
-        const level3UI = this.scene.get('Level3UI');
-        if (level3UI && level3UI.scene.isActive()) {
-            level3UI.events.emit('sceneStarted');
-        }
-        this.game.events.emit('levelStarted');
+    protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig {
+        return {
+            playerSpawn: { x: 300, y: 100 },
+            dogSpawn: { x: 200, y: 200 },
+            manualObstacles: [
+                { type: 'tree', x: 300, y: 150, scale: 0.2 }
+            ],
+            randomObstacleZones: [
+                { 
+                    zone: { x: 300, y: 200, width: 200, height: 200 }, 
+                    type: 'tree', 
+                    count: 3, 
+                    minDistance: 80 
+                }
+            ],
+            boxes: [
+                { x: 150, y: 300 },
+                { x: 450, y: 200 },
+                { x: 750, y: 350 },
+                { x: 650, y: 150 }
+            ],
+            foodCount: 12,
+            mapTexture: 'level3_map',
+            backgroundMusic: 'level3_theme'
+        };
     }
 
-    private setupBoxEventListeners(): void {
-        this.events.on('playerNearBox', (isNear: boolean) => {
-            const uiScene = this.scene.get('UIScene');
-            if (uiScene && uiScene.scene.isActive()) {
-                uiScene.events.emit('playerNearBox', isNear);
-            }
-        });
-        
-        this.events.on('hideButtonPressed', () => {
-            this.handleHideAction();
-        });
+    protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
+        return {
+            foodCount: 10,
+            poisonCount: 6,
+            batteryCount: 10,
+            minItemDistance: 70,
+            minObstacleDistance: 45,
+            minBoxDistance: 70,
+            minPlayerDistance: 100,
+            mapWidth: backgroundWidth,
+            mapHeight: backgroundHeight,
+            playerSpawn: { x: 300, y: 100 },
+            dogSpawns: [
+                { x: 200, y: 200 },
+                { x: 800, y: 400 },
+                { x: 500, y: 500 }
+            ]
+        };
     }
 
-    private handleHideAction(): void {
-        const nearbyBox = this.gameMap.getBoxes().find(box => box.getIsPlayerNearby());
-        if (nearbyBox && nearbyBox.getIsPlayerHiding()) {
-            nearbyBox.forceStopHiding();
-        }
-    }
-
-    private cleanupBeforeRestart(): void {
+    protected override cleanupLevelSpecific(): void {
         if (this.batteryDrainTimer) {
             this.batteryDrainTimer.destroy();
         }
         this.currentBattery = 80;
         this.flashlightRadius = 100;
 
-        if (this.gameMap && this.gameMap.getBoxes) {
-            this.gameMap.getBoxes().forEach(box => {
-                if (box && typeof box.forceStopHiding === 'function') {
-                    box.forceStopHiding();
-                }
-            });
-        }
-
-        this.dogs.forEach(dog => {
-            if (dog && typeof dog.stopBark === 'function') {
-                dog.stopBark();
-            }
-        });
-        
-        if (this.itemSystem && typeof this.itemSystem.clearAllItems === 'function') {
-            this.itemSystem.clearAllItems();
-        }
-    }
-
-    private cleanupBeforeExit(): void {
-        if (this.batteryDrainTimer) {
-            this.batteryDrainTimer.destroy();
-        }
-
-        if (this.gameTheme) {
-            if (this.gameTheme.isPlaying) {
-                this.gameTheme.stop();
-                this.ambience.stop()
-            }
-            this.gameTheme.destroy();
-            this.ambience.destroy();
-        }
-        
-        this.dogs.forEach(dog => {
-            if (typeof dog.stopBark === 'function') {
-                dog.stopBark();
-            }
-        });
-        this.tweens.getTweens().forEach(tween => tween.stop());
-        if (this.itemSystem) {
-            this.itemSystem.clearAllItems();
-        }
-        this.gameMap.getBoxes().forEach(box => {
-            if (typeof box.forceStopHiding === 'function') {
-                box.forceStopHiding();
-            }
-        });
         if (this.lightMask) {
             this.lightMask.destroy();
         }
-        this.children.removeAll();
-        this.sound.stopAll();
+        if (this.darkness) {
+            this.darkness.destroy();
+        }
     }
 
-    public getDogs(): Dog[] {
-        return this.dogs;
-    }
-    
-    public destroyDogs(): void {
-        this.dogs.forEach(dog => {
-                dog.destroy();
-        });
-        this.dogs = [];
+    protected override cleanupBeforeExit(): void {
+        super.cleanupBeforeExit();
+
+        if (this.ambience) {
+            this.ambience.stop();
+            this.ambience.destroy();
+        }
+        if (this.owlHoot) {
+            this.owlHoot.stop();
+            this.owlHoot.destroy();
+        }
     }
 
-    public getItemSystem(): ItemSystem {
-        return this.itemSystem;
-    }
-
-    public getPlayer(): Player {
-        return this.player;
+    protected override updateLevelSpecific(time: number, delta: number): void {
+        this.updateFlashlightMask();
+        // if (this.currentBattery <= 0) {
+        //     this.handleBatteryDrained();
+        // }
     }
 
     public getCurrentBattery(): number {
@@ -374,34 +264,10 @@ export class Level3Scene extends Phaser.Scene {
         return this.maxBattery;
     }
 
-    override update(time: number, delta: number): void {
-        if (this.player && this.player.active) {
-            this.player.update(time, delta);
-        }
-
-        this.dogs.forEach(dog => {
-            if (dog && dog.active) {
-                dog.update(time, delta);
-            }
-        });
-
-        if (this.gameMap) {
-            this.gameMap.update();
-        }
-
-        this.updateFlashlightMask();
-        // if (this.currentBattery <= 0) {
-        //     this.handleBatteryDrained();
-        // }
-    }
-
     // private handleBatteryDrained(): void {
     //     if (this.batteryDrainTimer) {
     //         this.batteryDrainTimer.destroy();
     //     }
-    //     // this.cleanupBeforeRestart();
-    //     // // this.time.delayedCall(1000, () => {
-    //     // //     this.scene.restart();
-    //     // // });
+    //     // Handle battery drained game over logic here
     // }
 }

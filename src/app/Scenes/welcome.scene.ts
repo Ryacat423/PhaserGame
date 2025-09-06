@@ -6,6 +6,8 @@ export class WelcomeScene extends Phaser.Scene {
     private help!: Phaser.GameObjects.Image;
     private tutorial!: Phaser.GameObjects.Image;
 
+    gameConfig: any
+
     constructor() {
         super({ key: 'welcome' });
     }
@@ -35,7 +37,13 @@ export class WelcomeScene extends Phaser.Scene {
         this.createUI();
         this.createAnimations();
         this.catIdleSprite();
+
+        
     }
+
+    // init(): void {
+    //     localStorage.clear()
+    // }
     
     createUI(): void {
         this.add.image(0,0, 'welcome-bg')

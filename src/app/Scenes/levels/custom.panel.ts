@@ -5,8 +5,12 @@ export class CustomPanel extends Phaser.Scene {
     checkboxes!: Checkbox[];
 
     createMap!: Phaser.GameObjects.Image;
+
+    savedGame: any[] = [];
+    mapKey: any;
     
     private config = {
+        map: 'key',
         mechanics: {
             snow: false,
             night: false,
@@ -14,7 +18,8 @@ export class CustomPanel extends Phaser.Scene {
         },
         spawnables: {
             foods: 10,
-            poison: 5
+            poison: 5,
+            dog: 3
         }
     };
 
@@ -37,7 +42,7 @@ export class CustomPanel extends Phaser.Scene {
 
         const panel = this.add.image(150, 70, 'panel')
             .setOrigin(0, 0)
-            .setScale(.8);
+            .setScale(1);
 
         this.back = this.add.image(100, 70, 'btn-next')
             .setScale(.09)
@@ -48,8 +53,12 @@ export class CustomPanel extends Phaser.Scene {
                 this.scene.start('welcome');
             });
 
-        this.createMap = this.add.image(700, 450, 'create_btn')
+        this.createMap = this.add.image(770, 550, 'create_btn')
             .setScale(.3)
+            .setInteractive()
+            .once('pointerdown', () => {
+                localStorage.setItem('lvl', JSON.stringify(this.config));
+            });
 
         this.createCheckboxes();
         this.createSpawnableInputs();
@@ -59,7 +68,7 @@ export class CustomPanel extends Phaser.Scene {
     private createCheckboxes(): void {
         this.checkboxes = [];
         const mechanicsStartX = 250;
-        const mechanicsStartY = 400;
+        const mechanicsStartY = 425;
         const spacing = 45;
         
         const mechanics = [
@@ -90,8 +99,8 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createSpawnableInputs(): void {
-        const inputStartX = 460;
-        const inputStartY = 400;
+        const inputStartX = 480;
+        const inputStartY = 435;
         const spacing = 45;
 
         this.createNumberInput(
@@ -111,6 +120,16 @@ export class CustomPanel extends Phaser.Scene {
             'poison-input',
             (value: number) => {
                 this.config.spawnables.poison = value;
+            }
+        );
+
+        this.createNumberInput(
+            inputStartX, 
+            inputStartY + spacing * 2, 
+            this.config.spawnables.dog,
+            'dog-input',
+            (value: number) => {
+                this.config.spawnables.dog = value;
             }
         );
     }
@@ -195,6 +214,8 @@ export class CustomPanel extends Phaser.Scene {
                             this.config.spawnables.foods = parsedValue;
                         } else if (id === 'poison-input') {
                             this.config.spawnables.poison = parsedValue;
+                        } else if (id === 'dog-input') {
+                            this.config.spawnables.dog = parsedValue;
                         }
                     }
                 }
@@ -218,8 +239,8 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createMapPreviews(): void {
-        const startX = 300;
-        const y = 200;
+        const startX = 330;
+        const y = 230;
         const spacing = 230;
 
         const maps = [
@@ -235,7 +256,7 @@ export class CustomPanel extends Phaser.Scene {
 
             this.add.text(mapImage.x, mapImage.y + 60, map.name, {
                 fontSize: '14px',
-                color: '#ffffff',
+                color: '#130d01ff',
                 fontFamily: 'Arial',
                 fontStyle: 'bold'
             }).setOrigin(0.5, 0);
@@ -257,7 +278,7 @@ export class CustomPanel extends Phaser.Scene {
                     duration: 100,
                     yoyo: true,
                     onComplete: () => {
-                        console.log(`Selected ${map.name}`);
+                        this.config.map = map.key;
                     }
                 });
             });
