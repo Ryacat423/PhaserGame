@@ -2,7 +2,6 @@ import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
 
-
 export class Level1Scene extends BaseLevel {
     constructor() {
         super('level1');
