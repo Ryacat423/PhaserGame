@@ -12,7 +12,7 @@ export abstract class BaseLevel extends Phaser.Scene {
     protected gameTheme!: Phaser.Sound.BaseSound;
     protected background!: Phaser.GameObjects.Image;
 
-    constructor(key: string) {
+    constructor(key: string = 'level-custom') {
         super({ key });
     }
 
@@ -256,6 +256,10 @@ export abstract class BaseLevel extends Phaser.Scene {
         this.physics.add.collider(this.player, house);
         
         return house;
+    }
+
+    public isPlayerCold(): boolean {
+        return this.player.getIsCold();
     }
 
     public getDogs(): Dog[] {

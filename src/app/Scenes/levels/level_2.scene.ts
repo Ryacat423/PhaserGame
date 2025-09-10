@@ -22,6 +22,8 @@ export class Level2Scene extends BaseLevel {
         this.load.audio('firewood', 'assets/global/audio/firewood.mp3');
         this.load.audio('cat_burned', 'assets/global/audio/cat_burned.mp3');
         this.load.audio('burned', 'assets/global/audio/burn.mp3');
+
+        this.load.image('ice', 'assets/scene/levels/2/slippery.png');
     }
 
     protected getThemeAudioKey(): string {
@@ -92,11 +94,11 @@ export class Level2Scene extends BaseLevel {
             .play('blow')
             .setDepth(0);
 
-        this.add.image(0, 30, 'snowman')
+        let snowman1 = this.physics.add.staticImage(0, 30, 'snowman')
             .setOrigin(0)
             .setDepth(0);
 
-        this.add.image(850, 450, 'snowman')
+        let snowman2 = this.physics.add.staticImage(850, 450, 'snowman')
             .setOrigin(0)
             .setFlipX(true)
             .setDepth(0);
@@ -104,6 +106,8 @@ export class Level2Scene extends BaseLevel {
         this.fireSprite = this.add.sprite(500, 150, 'fire')
             .play('sway')
             .setScale(.1);
+
+        let slip1 = this.add.image(200, 250, 'ice')
     }
 
     private setupFireMechanics(): void {
@@ -206,10 +210,10 @@ export class Level2Scene extends BaseLevel {
             playerSpawn: { x: 100, y: 100 },
             dogSpawn: { x: 200, y: 200 },
             manualObstacles: [
-                { type: 'bush', x: 300, y: 150, scale: 0.1 }
+                { type: 'bushsnow', x: 300, y: 150, scale: 0.1 }
             ],
             randomObstacleZones: [
-                { zone: { x: 0, y: 0, width: backgroundWidth, height: 100 }, type: 'bush', count: 4, minDistance: 200 }
+                { zone: { x: 0, y: 0, width: backgroundWidth, height: 100 }, type: 'bushsnow', count: 4, minDistance: 200 }
             ],
             boxes: [
                 { x: 150, y: 300 },

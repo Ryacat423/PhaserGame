@@ -14,6 +14,10 @@ export class LevelCustom extends BaseLevel {
         this.loadCustomConfig();
     }
 
+    init(data: any): void {
+        this.customConfig = data;
+    }
+
     private loadCustomConfig(): void {
         const savedConfig = localStorage.getItem('lvl');
         if (savedConfig) {

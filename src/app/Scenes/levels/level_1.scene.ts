@@ -46,17 +46,11 @@ export class Level1Scene extends BaseLevel {
             manualObstacles: [
                 { type: 'tree', x: 300, y: 150, scale: 0.2 },
                 { type: 'tree', x: 500, y: 250, scale: 0.15 },
-                { type: 'tree', x: 700, y: 150, scale: 0.20 },
-                { type: 'tree', x: 200, y: 400, scale: 0.21 },
-                { type: 'tree', x: 600, y: 500, scale: 0.19 },
-                { type: 'tree', x: 450, y: 350, scale: 0.14 },
+                { type: 'bush', x: 700, y: 150, scale: 0.20 },
             ],
             randomObstacleZones: [
                 { zone: { x: 0, y: 0, width: backgroundWidth, height: 100 }, type: 'tree', count: 8, minDistance: 60 },
-                { zone: { x: 0, y: backgroundHeight - 100, width: backgroundWidth, height: 100 }, type: 'tree', count: 8, minDistance: 60 },
-                { zone: { x: 0, y: 100, width: 80, height: backgroundHeight - 200 }, type: 'tree', count: 5, minDistance: 60 },
-                { zone: { x: backgroundWidth - 80, y: 100, width: 80, height: backgroundHeight - 200 }, type: 'tree', count: 5, minDistance: 60 },
-                { zone: { x: 300, y: 200, width: 200, height: 200 }, type: 'tree', count: 3, minDistance: 80 }
+                { zone: { x: 0, y: backgroundHeight - 100, width: backgroundWidth, height: 100 }, type: 'bush', count: 8, minDistance: 60 },
             ],
             boxes: [
                 { x: 150, y: 300 },

@@ -1,4 +1,4 @@
-export type ObstacleType = 'tree' | 'rock' | 'bush';
+export type ObstacleType = 'tree' | 'rock' | 'bush' | 'bushsnow';
 
 export interface ObstacleConfig {
     type: ObstacleType;
@@ -92,9 +92,16 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
                 rotation: { min: -15, max: 15 },
                 depth: 5
             },
+            bushsnow: {
+                type: 'bushsnow',
+                texture: 'bush',
+                scale: { min: 0.13, max: 0.23 },
+                rotation: { min: -15, max: 15 },
+                depth: 5
+            },
             bush: {
                 type: 'bush',
-                texture: 'bush',
+                texture: 'bush-green',
                 scale: { min: 0.13, max: 0.23 },
                 rotation: { min: -15, max: 15 },
                 depth: 5

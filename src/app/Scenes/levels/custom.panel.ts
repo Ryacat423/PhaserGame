@@ -1,4 +1,5 @@
 import { Checkbox } from "../../interfaces/game.interfaces";
+import Swal from "sweetalert2";
 
 export class CustomPanel extends Phaser.Scene {
     back!: Phaser.GameObjects.Image;
@@ -8,6 +9,8 @@ export class CustomPanel extends Phaser.Scene {
 
     savedGame: any[] = [];
     mapKey: any;
+
+    chosenMapText?: Phaser.GameObjects.Text;
     
     private config = {
         map: 'key',
@@ -29,7 +32,7 @@ export class CustomPanel extends Phaser.Scene {
 
     preload(): void {
         this.load.image('custom_bg', 'assets/scene/levels/4/background.jpg');
-        this.load.image('panel', 'assets/scene/levels/4/panel.png');
+        this.load.image('panel', 'assets/global/ui/panel.png');
         this.load.image('checkbox', 'assets/scene/levels/4/checkbox.png');
         this.load.image('checkmark', 'assets/scene/levels/4/checkmark.png');
         this.load.image('create_btn', 'assets/scene/levels/4/create_btn.png');
@@ -40,7 +43,7 @@ export class CustomPanel extends Phaser.Scene {
             .setOrigin(0, 0)
             .setDisplaySize(this.scale.width, this.scale.height);
 
-        const panel = this.add.image(150, 70, 'panel')
+        const panel = this.add.image(250, 70, 'panel')
             .setOrigin(0, 0)
             .setScale(1);
 
@@ -53,11 +56,26 @@ export class CustomPanel extends Phaser.Scene {
                 this.scene.start('welcome');
             });
 
-        this.createMap = this.add.image(770, 550, 'create_btn')
+        this.createMap = this.add.image(880, 500, 'create_btn')
             .setScale(.3)
             .setInteractive()
             .once('pointerdown', () => {
                 localStorage.setItem('lvl', JSON.stringify(this.config));
+                setTimeout(()=> {
+                    Swal.fire({
+                        title: 'Level Created',
+                        text: 'Your custom level is ready!',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Play',
+                        cancelButtonText: 'Close'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.scene.stop();
+                            this.scene.start('level-custom', this.config);
+                        }
+                    });
+                }, 1000);
             });
 
         this.createCheckboxes();
@@ -67,8 +85,8 @@ export class CustomPanel extends Phaser.Scene {
 
     private createCheckboxes(): void {
         this.checkboxes = [];
-        const mechanicsStartX = 250;
-        const mechanicsStartY = 425;
+        const mechanicsStartX = 375;
+        const mechanicsStartY = 383;
         const spacing = 45;
         
         const mechanics = [
@@ -99,8 +117,8 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createSpawnableInputs(): void {
-        const inputStartX = 480;
-        const inputStartY = 435;
+        const inputStartX = 570;
+        const inputStartY = 383;
         const spacing = 45;
 
         this.createNumberInput(
@@ -239,9 +257,9 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createMapPreviews(): void {
-        const startX = 330;
-        const y = 230;
-        const spacing = 230;
+        const startX = 417;
+        const y = 209;
+        const spacing = 198;
 
         const maps = [
             { key: 'level1_map', name: 'Meadows' },
@@ -251,23 +269,23 @@ export class CustomPanel extends Phaser.Scene {
 
         maps.forEach((map, index) => {
             const mapImage = this.add.image(startX + index * spacing, y, map.key)
-                .setScale(0.2)
+                .setScale(0.15)
                 .setInteractive({ useHandCursor: true });
 
             this.add.text(mapImage.x, mapImage.y + 60, map.name, {
                 fontSize: '14px',
-                color: '#130d01ff',
+                color: '#f0f0efff',
                 fontFamily: 'Arial',
                 fontStyle: 'bold'
             }).setOrigin(0.5, 0);
 
             mapImage.on('pointerover', () => {
-                mapImage.setScale(0.22);
+                mapImage.setScale(0.17);
                 mapImage.setTint(0xdddddd);
             });
 
             mapImage.on('pointerout', () => {
-                mapImage.setScale(0.2);
+                mapImage.setScale(0.15);
                 mapImage.clearTint();
             });
 
@@ -279,6 +297,15 @@ export class CustomPanel extends Phaser.Scene {
                     yoyo: true,
                     onComplete: () => {
                         this.config.map = map.key;
+                        if (this.chosenMapText) {
+                            this.chosenMapText.destroy();
+                        }
+                        this.chosenMapText = this.add.text(700, 120, `Chosen map: ${map.name}`, {
+                            fontSize: '20px',
+                            color: '#F5DEB3',
+                            fontFamily: 'Arial',
+                            fontStyle: 'bold'
+                        }).setOrigin(0.5, 0.5);
                     }
                 });
             });
