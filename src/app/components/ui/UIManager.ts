@@ -50,6 +50,7 @@ export class UIManager {
         scene.load.image('level1_map', 'assets/scene/levels/1/map.png');
         scene.load.image('level2_map', 'assets/scene/levels/2/map.png');
         scene.load.image('level3_map', 'assets/scene/levels/3/map.png');
+        scene.load.image('level4_map', 'assets/scene/levels/5/map.png');
 
         // Sounds
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
@@ -64,6 +65,9 @@ export class UIManager {
         scene.load.audio('slow', 'assets/global/audio/slow.mp3');
         scene.load.audio('hurt', 'assets/global/audio/hurt.wav');
         scene.load.audio('lvl-complete', 'assets/global/audio/lvl-complete.wav');
+
+        //Video
+        scene.load.video('pool', 'assets/scene/levels/5/pool.mp4');
         
         // Global Sprites
         scene.load.spritesheet('dog', 'assets/sprites/dog_sprite.png', {
@@ -71,7 +75,7 @@ export class UIManager {
             frameHeight: 950
         });
 
-        scene.load.spritesheet('cat', 'assets/sprites/cat_sprite.png', {
+        scene.load.spritesheet('cat', 'assets/sprites/cat_sprite2.png', {
             frameWidth: 480,
             frameHeight: 480
         });
@@ -84,6 +88,11 @@ export class UIManager {
         scene.load.spritesheet('fire', 'assets/sprites/bonfire.png', {
             frameWidth: 392,
             frameHeight: 626
+        });
+
+        scene.load.spritesheet('lightning', 'assets/sprites/lightning.png', {
+            frameWidth: 270,
+            frameHeight: 480
         });
     }
 
@@ -132,6 +141,12 @@ export class UIManager {
             });
 
             this.scene.anims.create({
+                key: 'cat_jump',
+                frames: this.scene.anims.generateFrameNumbers('cat', {start: 88, end: 101}),
+                frameRate: 40
+            })
+
+            this.scene.anims.create({
                 key: 'blow',
                 frames: this.scene.anims.generateFrameNumbers('snow', {start: 0, end: 100}),
                 frameRate: 64,
@@ -144,6 +159,12 @@ export class UIManager {
                 frameRate: 64,
                 repeat: -1
             });
+
+            this.scene.anims.create({
+                key: 'strike',
+                frames: this.scene.anims.generateFrameNumbers('lightning', {start:0, end: 22 }),
+                frameRate: 20
+            })
         }
     }
 

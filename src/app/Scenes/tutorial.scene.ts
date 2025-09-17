@@ -37,6 +37,7 @@ export class TutorialScene extends Phaser.Scene {
             .setDepth(0);
 
         this.player = new Player(this, 500, 300);
+        this.player.setJumpEnabled(true)
         this.add.existing(this.player);
 
         const house = this.physics.add

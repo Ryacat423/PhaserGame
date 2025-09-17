@@ -125,7 +125,7 @@ export abstract class BaseLevel extends Phaser.Scene {
         this.itemSystem.spawnItems(itemConfig);
     }
 
-    private setupCamera(): void {
+    protected setupCamera(): void {
         const mainCam = this.cameras.main;
         mainCam.setBounds(0, 0, this.background.width, this.background.height);
         mainCam.startFollow(this.player);

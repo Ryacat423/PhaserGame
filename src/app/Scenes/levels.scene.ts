@@ -4,6 +4,7 @@ export class LevelsScene extends Phaser.Scene {
     level1!: Phaser.GameObjects.Image;
     level2!: Phaser.GameObjects.Image;
     level3!: Phaser.GameObjects.Image;
+    level4!: Phaser.GameObjects.Image;
 
     custom!: Phaser.GameObjects.Image;
     
@@ -18,6 +19,7 @@ export class LevelsScene extends Phaser.Scene {
         this.load.image('level_1', 'assets/scene/levels/level_1.png');
         this.load.image('level_2', 'assets/scene/levels/level_2.png');
         this.load.image('level_3', 'assets/scene/levels/level_3.png');
+        this.load.image('level_4', 'assets/scene/levels/level_4.png');
         this.load.image('level_custom', 'assets/scene/levels/level_custom.png');
     }
 
@@ -35,10 +37,12 @@ export class LevelsScene extends Phaser.Scene {
         this.level2 = this.add.image(480, 320, 'level_2').setScale(0.58);
         
         this.level3 = this.add.image(680, 320, 'level_3').setScale(0.63);
+    
+        this.level4 = this.add.image(875, 323, 'level_4').setScale(0.64);
 
         this.back = this.add.image(110, 340, 'btn-next').setScale(0.1).setFlipX(true);
 
-        this.custom = this.add.image(875, 325, 'level_custom').setScale(0.58);
+        // this.custom = this.add.image(875, 325, 'level_custom').setScale(0.58);
         this.back
             .setInteractive()
             .once('pointerdown', () => {
@@ -67,11 +71,18 @@ export class LevelsScene extends Phaser.Scene {
                 this.scene.start('level3');
             });
 
-        this.custom
+        // this.custom
+        //     .setInteractive()
+        //     .once('pointerdown', () => {
+        //         this.scene.stop();
+        //         this.scene.start(this.customConfig ? 'level-custom' : 'custom_panel');
+        //     });
+
+        this.level4
             .setInteractive()
             .once('pointerdown', () => {
                 this.scene.stop();
-                this.scene.start(this.customConfig ? 'level-custom' : 'custom_panel');
+                this.scene.start('level4');
             });
     }
 }

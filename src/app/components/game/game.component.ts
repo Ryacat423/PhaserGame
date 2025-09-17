@@ -12,6 +12,7 @@ import { Level3Scene } from '../../Scenes/levels/level_3.scene';
 import { Level3UI } from '../ui/Level3UI';
 import { CustomPanel } from '../../Scenes/levels/custom.panel';
 import { LevelCustom } from '../../Scenes/levels/level_custom';
+import { Level4Scene } from '../../Scenes/levels/level_4.scene';
 
 @Component({
   selector: 'app-game',
@@ -37,6 +38,7 @@ export class GameComponent implements OnInit {
         Level1Scene,
         Level2Scene,
         Level3Scene,
+        Level4Scene,
         CustomPanel,
         LevelCustom,
         GameUI,

@@ -111,15 +111,63 @@ export class GameUI extends Phaser.Scene {
         }
     }
 
-    public loseLife(): void {
+    public loseLife(amount: number = 1): void {
+        console.log('loseLife called with amount:', amount, 'Current lives:', this.playerLives);
+        
         if (this.playerLives > 0) {
-            this.playerLives--;
-            this.updateLivesDisplay();            
+            this.playerLives = Math.max(0, this.playerLives - amount);
+            console.log('Lives after damage:', this.playerLives);
+            this.updateLivesDisplay();
+            
+            // Add visual feedback for damage
+            this.createDamageEffect(amount);
+            
             if (this.playerLives <= 0) {
+                console.log('Game Over!');
                 alert('gameover')
                 this.onGameOver();
             }
         }
+    }
+
+    private createDamageEffect(damageAmount: number): void {
+        if (this.avatarTintTween) {
+            this.avatarTintTween.stop();
+        }
+
+        this.avatarSprite.setTint(0xff0000);
+        
+        this.avatarTintTween = this.tweens.add({
+            targets: this.avatarSprite,
+            alpha: 0.3,
+            duration: 100,
+            yoyo: true,
+            repeat: damageAmount - 1,
+            ease: 'Power1',
+            onComplete: () => {
+                this.avatarSprite.clearTint();
+                this.avatarSprite.setAlpha(1);
+            }
+        });
+
+        const damageText = this.add.text(150, 90, `-${damageAmount}`, {
+            fontSize: '24px',
+            color: '#ff0000',
+            fontFamily: 'Arial',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setDepth(103);
+
+        this.tweens.add({
+            targets: damageText,
+            y: 70,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                damageText.destroy();
+            }
+        });
     }
 
     private onGameOver(): void {
@@ -175,6 +223,7 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupEventListeners() {
+        // Clear all existing listeners first
         this.events.off('playerNearBox');
         this.events.off('playerHitByDog');
         this.events.off('sceneStarted');
@@ -188,9 +237,10 @@ export class GameUI extends Phaser.Scene {
         });
 
         this.events.on('playerHitByDog', () => {
-            this.loseLife();
+            console.log('UI: Player hit by dog');
+            this.loseLife(1); // Dog damage = 1 life
         });
-
+        
         this.events.on('sceneStarted', () => {
             this.onSceneStart();
         });

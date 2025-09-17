@@ -18,6 +18,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private coldShiverTimer: number = 0;
   private coldShiverInterval: number = 2000;
   
+  private isJumping: boolean = false;
+  private jumpDuration: number = 600;
+  
   private slowedText?: Phaser.GameObjects.Text;
   private slowedTextTween?: Phaser.Tweens.Tween;
   private coldText?: Phaser.GameObjects.Text;
@@ -33,7 +36,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       w: Phaser.Input.Keyboard.KeyCodes.W,
       a: Phaser.Input.Keyboard.KeyCodes.A,
       s: Phaser.Input.Keyboard.KeyCodes.S,
-      d: Phaser.Input.Keyboard.KeyCodes.D
+      d: Phaser.Input.Keyboard.KeyCodes.D,
+      f: Phaser.Input.Keyboard.KeyCodes.F
     });
 
     this.hideKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -234,6 +238,75 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.isHiding;
   }
 
+  public getIsJumping(): boolean {
+    return this.isJumping;
+  }
+
+  // Simple animation-only jump for top-down gameplay
+  public performJump(): void {
+    if (this.isJumping) return; // Prevent multiple jumps
+    
+    this.isJumping = true;
+    this.setScale(0.18);
+    // Play jump animation
+    this.play('cat_jump');
+        
+    // Create visual bounce effect for top-down perspective
+    const originalScale = this.scaleX;
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: originalScale * 1.2,
+      scaleY: originalScale * 1.2,
+      duration: this.jumpDuration / 2,
+      ease: 'Back.easeOut',
+      yoyo: true,
+      onComplete: () => {
+        this.isJumping = false;
+        // Return to appropriate animation based on movement
+        if (!this.isMoving()) {
+          this.play('cat_idle');
+        } else {
+          this.play('cat_walk');
+        }
+      }
+    });
+    
+    // Optional: Add a shadow effect
+    this.createJumpShadow();
+  }
+
+  private createJumpShadow(): void {
+    // Create a temporary shadow that shrinks and grows during jump
+    const shadow = this.scene.add.ellipse(this.x, this.y + 10, 30, 15, 0x000000, 0.3)
+      .setDepth(this.depth - 1);
+    
+    this.scene.tweens.add({
+      targets: shadow,
+      scaleX: 0.5,
+      scaleY: 0.5,
+      alpha: 0.1,
+      duration: this.jumpDuration / 2,
+      ease: 'Power2.easeOut',
+      yoyo: true,
+      onComplete: () => {
+        shadow.destroy();
+      }
+    });
+  }
+
+  private isMoving(): boolean {
+    const { w, a, s, d } = this.cursor;
+    return w.isDown || a.isDown || s.isDown || d.isDown;
+  }
+
+  public setJumpEnabled(enabled: boolean): void {
+    this.setData('jumpEnabled', enabled);
+  }
+
+  public getJumpEnabled(): boolean {
+    return this.getData('jumpEnabled') || false;
+  }
+
   public takeDamage(): void {
     if (this.invulnerable) return;
     this.invulnerable = true;
@@ -390,11 +463,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     let x = 0;
     let y = 0;
 
-    const { w, a, s, d } = this.cursor;
+    const { w, a, s, d, f } = this.cursor;
     const buttonPressed = w.isDown || a.isDown || s.isDown || d.isDown;
 
+    // Handle jump input - only if jumping is enabled for this scene
+    if (f.isDown && this.getJumpEnabled()) {
+      this.performJump();
+    }
+
     if (!buttonPressed) {
-      if (this.anims.currentAnim?.key !== 'cat_idle') {
+      // Only change to idle if not jumping
+      if (!this.isJumping && this.anims.currentAnim?.key !== 'cat_idle') {
         this.play('cat_idle');
       }
 
@@ -414,7 +493,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.moveSound.resume();
       }
         
-      if (this.anims.currentAnim?.key !== 'cat_walk') {
+      // Only change to walk animation if not jumping
+      if (!this.isJumping && this.anims.currentAnim?.key !== 'cat_walk') {
         this.play('cat_walk');
       }
 
