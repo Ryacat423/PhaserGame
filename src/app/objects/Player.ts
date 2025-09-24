@@ -19,12 +19,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private coldShiverInterval: number = 2000;
   
   private isJumping: boolean = false;
-  private jumpDuration: number = 600;
+  private jumpDuration: number = 400;
+  private jumpCooldown: number = 800;
+  private lastJumpTime: number = 0;
+  private jumpSpeedBoost: number = 1.5;
+  
+  private maxStamina: number = 100;
+  private currentStamina: number = 100;
+  private staminaCostPerJump: number = 25;
+  private staminaRegenRate: number = 15;
   
   private slowedText?: Phaser.GameObjects.Text;
   private slowedTextTween?: Phaser.Tweens.Tween;
   private coldText?: Phaser.GameObjects.Text;
   private coldTextTween?: Phaser.Tweens.Tween;
+  private staminaBar?: Phaser.GameObjects.Graphics;
+  private staminaBarBg?: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'cat');
@@ -37,7 +47,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       a: Phaser.Input.Keyboard.KeyCodes.A,
       s: Phaser.Input.Keyboard.KeyCodes.S,
       d: Phaser.Input.Keyboard.KeyCodes.D,
-      f: Phaser.Input.Keyboard.KeyCodes.F
+      f: Phaser.Input.Keyboard.KeyCodes.F,
+      shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
     });
 
     this.hideKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -50,8 +61,211 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.moveSound = scene.sound.add('footsteps');
     this.hurtSound = scene.sound.add('hurt');
+
+    this.createStaminaBar();
   }
 
+  private createStaminaBar(): void {
+    const barWidth = 40;
+    const barHeight = 4;
+    
+    this.staminaBarBg = this.scene.add.graphics();
+    this.staminaBarBg.fillStyle(0x333333, 0.7);
+    this.staminaBarBg.fillRect(-barWidth/2, -35, barWidth, barHeight);
+    
+    this.staminaBar = this.scene.add.graphics();
+    this.updateStaminaBar();
+  }
+
+  private updateStaminaBar(): void {
+    if (!this.staminaBar) return;
+    
+    const barWidth = 40;
+    const barHeight = 4;
+    const fillWidth = (this.currentStamina / this.maxStamina) * barWidth;
+    
+    this.staminaBar.clear();
+    
+    let color = 0x00ff00;
+    if (this.currentStamina < 30) color = 0xff0000;
+    else if (this.currentStamina < 60) color = 0xffaa00;
+    
+    this.staminaBar.fillStyle(color, 0.9);
+    this.staminaBar.fillRect(-barWidth/2, -35, fillWidth, barHeight);
+    
+    if (this.staminaBarBg) {
+      this.staminaBarBg.x = this.x;
+      this.staminaBarBg.y = this.y;
+    }
+    this.staminaBar.x = this.x;
+    this.staminaBar.y = this.y;
+    
+    const visible = this.currentStamina < this.maxStamina;
+    this.staminaBar.setVisible(visible);
+    if (this.staminaBarBg) this.staminaBarBg.setVisible(visible);
+  }
+
+  public performJump(): void {
+    const currentTime = this.scene.time.now;
+
+    if (this.isJumping || 
+        currentTime - this.lastJumpTime < this.jumpCooldown ||
+        this.currentStamina < this.staminaCostPerJump) {
+      return;
+    }
+    
+    this.isJumping = true;
+    this.lastJumpTime = currentTime;
+    this.currentStamina -= this.staminaCostPerJump;
+
+    this.play('cat_jump');
+    const jumpBoostDuration = this.jumpDuration * 0.7;
+
+    const shadow = this.createJumpShadow();
+
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: 0.18,
+      scaleY: 0.18,
+      duration: this.jumpDuration / 2,
+      ease: 'Quad.easeOut',
+      yoyo: true,
+      onUpdate: () => {
+        if (this.body) {
+          const progress = this.scene.tweens.getTweensOf(this)[0]?.progress || 0;
+          if (progress > 0.3 && progress < 0.7) {
+            this.body.checkCollision.none = true;
+          } else {
+            this.body.checkCollision.none = false;
+          }
+        }
+      },
+      onComplete: () => {
+        this.isJumping = false;
+        this.setScale(0.15);
+        if (this.body) {
+          this.body.checkCollision.none = false;
+        }
+        
+        if (!this.isMoving()) {
+          this.play('cat_idle');
+        } else {
+          this.play('cat_walk');
+        }
+      }
+    });
+  }
+
+  private createJumpShadow(): Phaser.GameObjects.Ellipse {
+    const shadow = this.scene.add.ellipse(this.x, this.y + 10, 30, 15, 0x000000, 0.3)
+      .setDepth(this.depth - 1);
+    
+    this.scene.tweens.add({
+      targets: shadow,
+      scaleX: 0.3,
+      scaleY: 0.3,
+      alpha: 0.1,
+      duration: this.jumpDuration / 2,
+      ease: 'Quad.easeOut',
+      yoyo: true,
+      onComplete: () => shadow.destroy()
+    });
+    
+    const updateShadow = this.scene.time.addEvent({
+      delay: 16,
+      callback: () => {
+        if (shadow && shadow.scene) {
+          shadow.x = this.x;
+          shadow.y = this.y + 10;
+        }
+      },
+      loop: true
+    });
+    
+    this.scene.time.delayedCall(this.jumpDuration, () => {
+      updateShadow.destroy();
+    });
+    
+    return shadow;
+  }
+
+  private regenerateStamina(delta: number): void {
+    if (this.currentStamina < this.maxStamina && !this.isJumping) {
+      this.currentStamina = Math.min(
+        this.maxStamina,
+        this.currentStamina + (this.staminaRegenRate * delta / 1000)
+      );
+      this.updateStaminaBar();
+    }
+  }
+
+  private isMoving(): boolean {
+    const { w, a, s, d } = this.cursor;
+    return w.isDown || a.isDown || s.isDown || d.isDown;
+  }
+
+  public setJumpEnabled(enabled: boolean): void {
+    this.setData('jumpEnabled', enabled);
+  }
+
+  public getJumpEnabled(): boolean {
+    return this.getData('jumpEnabled') || false;
+  }
+
+  public takeDamage(): void {
+    if (this.invulnerable) return;
+    this.invulnerable = true;
+    this.setTint(0xff6666);
+    this.hurtSound.play();
+    this.scene.events.emit('playerHitByDog');
+    
+    const knockbackForce = 200;
+    const angle = Phaser.Math.Angle.Random();
+    this.setVelocity(
+      Math.cos(angle) * knockbackForce,
+      Math.sin(angle) * knockbackForce
+    );
+    
+    this.scene.time.delayedCall(200, () => {
+      this.setVelocity(0, 0);
+    });
+    
+    this.scene.time.delayedCall(this.invulnerabilityDuration, () => {
+      this.invulnerable = false;
+      this.updateTint();
+    });
+  }
+
+  public applyPoison(): void {
+    if (this.isPoisoned) return;
+    
+    this.isPoisoned = true;
+    this.poisonTimer = this.poisonDuration;
+    
+    this.currentSpeed = this.baseSpeed * 0.5;
+    this.staminaRegenRate = 5;
+  
+    this.updateTint();
+    this.showSlowedText(this.scene, true);
+  }
+
+  private curePoison(): void {
+    if (!this.isPoisoned) return;
+    
+    this.isPoisoned = false;
+    this.poisonTimer = 0;
+    this.staminaRegenRate = 15;
+
+    if (this.isCold) {
+      this.currentSpeed = this.baseSpeed * 0.7;
+    } else {
+      this.currentSpeed = this.baseSpeed;
+    }
+    
+    this.showSlowedText(this.scene, false);
+    this.updateTint();
+  }
+  
   private createSlowedText(): void {
     if (this.slowedText) {
       this.destroySlowedText();
@@ -242,96 +456,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.isJumping;
   }
 
-  // Simple animation-only jump for top-down gameplay
-  public performJump(): void {
-    if (this.isJumping) return; // Prevent multiple jumps
-    
-    this.isJumping = true;
-    this.setScale(0.18);
-    // Play jump animation
-    this.play('cat_jump');
-        
-    // Create visual bounce effect for top-down perspective
-    const originalScale = this.scaleX;
-    this.scene.tweens.add({
-      targets: this,
-      scaleX: originalScale * 1.2,
-      scaleY: originalScale * 1.2,
-      duration: this.jumpDuration / 2,
-      ease: 'Back.easeOut',
-      yoyo: true,
-      onComplete: () => {
-        this.isJumping = false;
-        // Return to appropriate animation based on movement
-        if (!this.isMoving()) {
-          this.play('cat_idle');
-        } else {
-          this.play('cat_walk');
-        }
-      }
-    });
-    
-    // Optional: Add a shadow effect
-    this.createJumpShadow();
-  }
-
-  private createJumpShadow(): void {
-    // Create a temporary shadow that shrinks and grows during jump
-    const shadow = this.scene.add.ellipse(this.x, this.y + 10, 30, 15, 0x000000, 0.3)
-      .setDepth(this.depth - 1);
-    
-    this.scene.tweens.add({
-      targets: shadow,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      alpha: 0.1,
-      duration: this.jumpDuration / 2,
-      ease: 'Power2.easeOut',
-      yoyo: true,
-      onComplete: () => {
-        shadow.destroy();
-      }
-    });
-  }
-
-  private isMoving(): boolean {
-    const { w, a, s, d } = this.cursor;
-    return w.isDown || a.isDown || s.isDown || d.isDown;
-  }
-
-  public setJumpEnabled(enabled: boolean): void {
-    this.setData('jumpEnabled', enabled);
-  }
-
-  public getJumpEnabled(): boolean {
-    return this.getData('jumpEnabled') || false;
-  }
-
-  public takeDamage(): void {
-    if (this.invulnerable) return;
-    this.invulnerable = true;
-    this.setTint(0xff6666);
-    this.hurtSound.play();
-    this.scene.events.emit('playerHitByDog');
-    
-    this.scene.time.delayedCall(this.invulnerabilityDuration, () => {
-      this.invulnerable = false;
-      this.updateTint();
-    });
-  }
-
-  public applyPoison(): void {
-    if (this.isPoisoned) return;
-    
-    this.isPoisoned = true;
-    this.poisonTimer = this.poisonDuration;
-    
-    this.currentSpeed = this.baseSpeed * 0.5;
-  
-    this.updateTint();
-    this.showSlowedText(this.scene, true);
-  }
-
   public applyCold(): void {
     if (this.isCold) return;
     
@@ -408,22 +532,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  private curePoison(): void {
-    if (!this.isPoisoned) return;
-    
-    this.isPoisoned = false;
-    this.poisonTimer = 0;
-
-    if (this.isCold) {
-      this.currentSpeed = this.baseSpeed * 0.7;
-    } else {
-      this.currentSpeed = this.baseSpeed;
-    }
-    
-    this.showSlowedText(this.scene, false);
-    this.updateTint();
-  }
-
   public getIsPoisoned(): boolean {
     return this.isPoisoned;
   }
@@ -442,6 +550,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (delta) {
       this.updatePoisonEffect(delta);
       this.updateColdEffect(delta);
+      this.regenerateStamina(delta);
     }
 
     if (this.isPoisoned) {
@@ -451,6 +560,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isCold) {
       this.updateColdTextPosition();
     }
+
+    this.updateStaminaBar();
 
     if (this.isHiding || (this.body && !this.body.enable)) {
       if (this.body) {
@@ -463,16 +574,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     let x = 0;
     let y = 0;
 
-    const { w, a, s, d, f } = this.cursor;
+    const { w, a, s, d, f, shift } = this.cursor;
     const buttonPressed = w.isDown || a.isDown || s.isDown || d.isDown;
 
-    // Handle jump input - only if jumping is enabled for this scene
-    if (f.isDown && this.getJumpEnabled()) {
+    if (f.isDown && !this.isHiding) {
       this.performJump();
     }
 
+    let speedMultiplier = 1;
+    if (shift.isDown && this.currentStamina > 10 && !this.isJumping) {
+      speedMultiplier = 1.5;
+      this.currentStamina = Math.max(0, this.currentStamina - 20 * (delta! / 1000));
+    }
+
+    if (this.isJumping) {
+      speedMultiplier *= this.jumpSpeedBoost;
+    }
+
     if (!buttonPressed) {
-      // Only change to idle if not jumping
       if (!this.isJumping && this.anims.currentAnim?.key !== 'cat_idle') {
         this.play('cat_idle');
       }
@@ -493,7 +612,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.moveSound.resume();
       }
         
-      // Only change to walk animation if not jumping
       if (!this.isJumping && this.anims.currentAnim?.key !== 'cat_walk') {
         this.play('cat_walk');
       }
@@ -511,7 +629,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (w.isDown) y = -1;
       if (s.isDown) y = 1;
 
-      this.setVelocity(this.currentSpeed * x, this.currentSpeed * y);
+      this.setVelocity(
+        this.currentSpeed * x * speedMultiplier, 
+        this.currentSpeed * y * speedMultiplier
+      );
     }
+  }
+
+  override destroy(fromScene?: boolean): void {
+    if (this.staminaBar) this.staminaBar.destroy();
+    if (this.staminaBarBg) this.staminaBarBg.destroy();
+    super.destroy(fromScene);
   }
 }

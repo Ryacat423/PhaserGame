@@ -32,8 +32,8 @@ export class GameComponent implements OnInit {
       width: 1000,
       scene: [ 
         WelcomeScene,
-        TutorialScene,
         LevelsScene,
+        TutorialScene,
         InformationScene,
         Level1Scene,
         Level2Scene,

@@ -195,7 +195,7 @@ export class Level3Scene extends BaseLevel {
                 { x: 750, y: 350 },
                 { x: 650, y: 150 }
             ],
-            foodCount: 12,
+            foodCount: 3,
             mapTexture: 'level3_map',
             backgroundMusic: 'level3_theme'
         };
@@ -203,7 +203,7 @@ export class Level3Scene extends BaseLevel {
 
     protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
         return {
-            foodCount: 10,
+            foodCount: 1,
             poisonCount: 6,
             batteryCount: 10,
             minItemDistance: 70,

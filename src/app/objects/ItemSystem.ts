@@ -193,7 +193,6 @@ export class ItemSystem {
         if(this.foods.length === 0) {
             this.lvlComplete.play();
             this.scene.game.events.emit('levelCompleted');
-            alert('round completed!');
         }
     }
 

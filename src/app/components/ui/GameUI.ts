@@ -12,13 +12,13 @@ export class GameUI extends Phaser.Scene {
     private avatarSprite!: Phaser.GameObjects.Sprite;
     private avatarFrame!: Phaser.GameObjects.Image;
     private maxLives: number = 9;
-    private playerLives: number = 9;
+    private playerLives: number = 1;
     private livesText!: Phaser.GameObjects.Text;
     private livesIcon!: Phaser.GameObjects.Image;
     private avatarTintTween?: Phaser.Tweens.Tween;
 
     private foodCounterText!: Phaser.GameObjects.Text;
-
+    
     constructor() {
         super({ key: 'UIScene' });
     }
@@ -56,11 +56,6 @@ export class GameUI extends Phaser.Scene {
         const assetKeys: string[] = ['btn-home', 'btn-settings', 'btn-reset', 'btn-pause'];
         this.setupUIButtons(assetKeys);
         
-        // this.help = this.add.image(900, 40, 'btn-info')
-        //     .setScale(0.5)
-        //     .setInteractive()
-        //     .setDepth(101);
-
         this.hideButton = this.add.image(this.scale.width - 60, this.scale.height - 60, 'btn-hide-disabled')
             .setScale(0.1)
             .setDepth(101)
@@ -68,12 +63,11 @@ export class GameUI extends Phaser.Scene {
             .setInteractive();
             
         this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);
-        // this.setupHelpModal();
         this.setupLivesDisplay();
         this.setupFoodDisplay();
         this.setupHideButton();
         this.setupEventListeners();        
-        this.initializeLives();
+        this.loadSavedLives();
     }
 
     private setupLivesDisplay(): void {
@@ -90,8 +84,31 @@ export class GameUI extends Phaser.Scene {
         }).setDepth(102);
     }
 
+    private loadSavedLives(): void {
+        const savedLives = localStorage.getItem('playerLives');
+        if (savedLives) {
+            try {
+                this.playerLives = parseInt(savedLives);
+                this.playerLives = Math.max(0, Math.min(this.maxLives, this.playerLives));
+            } catch (e) {
+                this.playerLives = this.maxLives;
+            }
+        } else {
+            this.playerLives = this.maxLives;
+        }
+        this.updateLivesDisplay();
+    }
+
+    private saveLives(): void {
+        localStorage.setItem('playerLives', this.playerLives.toString());
+    }
+
     private initializeLives(): void {
-        this.playerLives = this.maxLives;
+        const savedLives = localStorage.getItem('playerLives');
+        if (!savedLives) {
+            this.playerLives = this.maxLives;
+            this.saveLives();
+        }
         this.updateLivesDisplay();
     }
 
@@ -117,14 +134,13 @@ export class GameUI extends Phaser.Scene {
         if (this.playerLives > 0) {
             this.playerLives = Math.max(0, this.playerLives - amount);
             console.log('Lives after damage:', this.playerLives);
+            this.saveLives();
             this.updateLivesDisplay();
-            
-            // Add visual feedback for damage
+
             this.createDamageEffect(amount);
             
             if (this.playerLives <= 0) {
                 console.log('Game Over!');
-                alert('gameover')
                 this.onGameOver();
             }
         }
@@ -171,17 +187,94 @@ export class GameUI extends Phaser.Scene {
     }
 
     private onGameOver(): void {
+        this.showGameOverScreen();
+        this.togglePause();
+    }
+
+    private showGameOverScreen(): void {
+        const overlay = this.add.image(
+            this.scale.width / 2, 
+            this.scale.height / 2, 
+            'game-over'
+        ).setDepth(200);
+
+        
+        const homeBtn = this.add.image(
+            400,
+            500,
+            'game-home'
+        )
+        .setInteractive()
+        .setDepth(202);
+
+        const tryAgainBtn = this.add.image(
+            620,
+            500,
+            'game-replay'
+        )
+        .setInteractive()
+        .setDepth(202);
+        
+        const gameOverElements = [overlay, tryAgainBtn, homeBtn];
+        this.data.set('gameOverOverlay', gameOverElements);
+
+        tryAgainBtn.on('pointerdown', () => {
+            this.cleanupGameOverScreen();
+            this.resetLivesAndRestart();
+        });
+
+        homeBtn.on('pointerdown', () => {
+            this.cleanupGameOverScreen();
+            this.game.events.emit('returnToWelcome');
+        });
+
+        // Add hover effects for the image buttons
+        [tryAgainBtn, homeBtn].forEach(btn => {
+            btn.on('pointerover', () => {
+                this.tweens.add({
+                    targets: btn,
+                    scaleX: 1.1,
+                    scaleY: 1.1,
+                    duration: 100
+                });
+            });
+
+            btn.on('pointerout', () => {
+                this.tweens.add({
+                    targets: btn,
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 100
+                });
+            });
+        });
+    }
+
+    private cleanupGameOverScreen(): void {
+        const gameOverOverlay = this.data.get('gameOverOverlay');
+        if (gameOverOverlay) {
+            gameOverOverlay.forEach((element: Phaser.GameObjects.GameObject) => {
+                element.destroy();
+            });
+            this.data.remove('gameOverOverlay');
+        }
+    }
+
+    private resetLivesAndRestart(): void {
+        this.playerLives = this.maxLives;
+        this.saveLives();
         this.resetCurrentLevel();
     }
 
     public resetLives(): void {
         this.playerLives = this.maxLives;
+        this.saveLives();
         this.updateLivesDisplay();
     }
 
     public onSceneStart(): void {
         this.time.delayedCall(10, () => {
-            this.resetLives();
+            this.loadSavedLives();
         });
 
         this.time.delayedCall(50, () => {
@@ -223,7 +316,6 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupEventListeners() {
-        // Clear all existing listeners first
         this.events.off('playerNearBox');
         this.events.off('playerHitByDog');
         this.events.off('sceneStarted');
@@ -238,7 +330,7 @@ export class GameUI extends Phaser.Scene {
 
         this.events.on('playerHitByDog', () => {
             console.log('UI: Player hit by dog');
-            this.loseLife(1); // Dog damage = 1 life
+            this.loseLife(1);
         });
         
         this.events.on('sceneStarted', () => {
@@ -246,13 +338,16 @@ export class GameUI extends Phaser.Scene {
         });
 
         this.game.events.on('levelStarted', () => {
+            this.togglePause();
             this.onSceneStart();
             this.setupFoodCounter();
+            this.stopOtherLevelUIs();
         });
 
         this.game.events.on('levelReset', () => {
             this.onSceneStart();
             this.setupFoodCounter();
+            this.stopOtherLevelUIs();
         });
 
         this.game.events.on('foodCollected', (collected: number, total: number) => {
@@ -262,9 +357,216 @@ export class GameUI extends Phaser.Scene {
         this.game.events.on('levelCompleted', () => {
             this.foodCounterText.setText("All foods collected!");
             this.foodCounterText.setColor('#00ff00');
+
+            this.saveLives();
+            
+            this.time.delayedCall(1000, () => {
+                this.togglePause();
+                this.showLevelCompleteScreen();
+            });
         });
     }
 
+    private stopOtherLevelUIs(): void {
+        const currentScene = this.getActiveGameScene();
+        if (!currentScene) return;
+
+        const sceneKey = currentScene.scene.key;
+
+        const levelUIScenes = ['Level2UI', 'Level3UI', 'Level4UI'];
+        levelUIScenes.forEach(uiSceneKey => {
+            if (this.scene.manager.isActive(uiSceneKey)) {
+                const shouldStop = 
+                    (sceneKey === 'level2' && uiSceneKey !== 'Level2UI') ||
+                    (sceneKey === 'level3' && uiSceneKey !== 'Level3UI') ||
+                    (sceneKey === 'level4' && uiSceneKey !== 'Level4UI') ||
+                    (!['level2', 'level3', 'level4'].includes(sceneKey));
+                    
+                if (shouldStop) {
+                    this.scene.stop(uiSceneKey);
+                }
+            }
+        });
+
+        if (sceneKey === 'level2' && !this.scene.manager.isActive('Level2UI')) {
+            this.scene.launch('Level2UI');
+        } else if (sceneKey === 'level3' && !this.scene.manager.isActive('Level3UI')) {
+            this.scene.launch('Level3UI');
+        } else if (sceneKey === 'level4' && !this.scene.manager.isActive('Level4UI')) {
+            this.scene.launch('Level4UI');
+        }
+    }
+
+    private showLevelCompleteScreen(): void {
+
+        const overlay = this.add.image(
+            this.scale.width / 2, 
+            this.scale.height / 2, 
+            'game-complete'
+        ).setDepth(200);
+
+        const statsText = this.add.text(
+            640,
+            385,
+            `${this.playerLives}`,
+            {
+                fontSize: '50px',
+                color: '#ffffff',
+                stroke: '#000000ff',
+                strokeThickness: 3.5,
+                fontFamily: 'Arial',
+            }
+        ).setOrigin(0.5).setDepth(202);
+
+
+        const homeBtn = this.add.image(
+            270,
+            550,
+            'game-home'
+        )
+        .setInteractive()
+        .setDepth(202);
+
+        const replayBtn = this.add.image(
+            500,
+            550,
+            'game-replay'
+        )
+        .setInteractive()
+        .setDepth(202);
+
+        const nextBtn = this.add.image(
+            720,
+            550,
+            'game-next'
+        )
+        .setInteractive()
+        .setDepth(202);
+
+        const completeElements = [overlay, statsText, homeBtn, nextBtn, replayBtn];
+        this.data.set('completeOverlay', completeElements);
+
+        homeBtn.on('pointerdown', () => {
+            this.cleanupCompleteScreen();
+            this.game.events.emit('returnToWelcome');
+        });
+
+        nextBtn.on('pointerdown', () => {
+            this.cleanupCompleteScreen();
+            this.goToNextLevel();
+        });
+
+        replayBtn.on('pointerdown', () => {
+            this.cleanupCompleteScreen();
+            this.resetCurrentLevel();
+        });
+
+        // Add hover effects for the image buttons
+        [homeBtn, nextBtn, replayBtn].forEach(btn => {
+            btn.on('pointerover', () => {
+                this.tweens.add({
+                    targets: btn,
+                    scaleX: 1.1,
+                    scaleY: 1.1,
+                    duration: 100
+                });
+            });
+
+            btn.on('pointerout', () => {
+                this.tweens.add({
+                    targets: btn,
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 100
+                });
+            });
+        });
+
+        this.updateGameProgress();
+    }
+
+    private cleanupCompleteScreen(): void {
+        const completeOverlay = this.data.get('completeOverlay');
+        if (completeOverlay) {
+            completeOverlay.forEach((element: Phaser.GameObjects.GameObject) => {
+                element.destroy();
+            });
+            this.data.remove('completeOverlay');
+        }
+    }
+
+    private updateGameProgress(): void {
+        const currentScene = this.getActiveGameScene();
+        if (!currentScene) return;
+
+        const sceneKey = currentScene.scene.key;
+        let levelNumber = 0;
+
+        switch (sceneKey) {
+            case 'level1': levelNumber = 1; break;
+            case 'level2': levelNumber = 2; break;
+            case 'level3': levelNumber = 3; break;
+            case 'level4': levelNumber = 4; break;
+            default: return;
+        }
+
+        let progress = { completedLevels: 0 };
+        const saved = localStorage.getItem('gameProgress');
+        if (saved) {
+            try {
+                progress = JSON.parse(saved);
+            } catch (e) {
+                progress = { completedLevels: 0 };
+            }
+        }
+
+        if (levelNumber > progress.completedLevels) {
+            progress.completedLevels = levelNumber;
+            localStorage.setItem('gameProgress', JSON.stringify(progress));
+            console.log(`Level ${levelNumber} completed! Next level unlocked.`);
+        }
+    }
+
+    private goToNextLevel(): void {
+        const currentScene = this.getActiveGameScene();
+        if (!currentScene) return;
+
+        const sceneKey = currentScene.scene.key;
+        let nextLevel = '';
+
+        switch (sceneKey) {
+            case 'level1': nextLevel = 'level2'; break;
+            case 'level2': nextLevel = 'level3'; break;
+            case 'level3': nextLevel = 'level4'; break;
+            case 'level4':
+                this.scene.stop();
+                this.scene.start('levels');
+                return;
+            default:
+                this.scene.stop();
+                this.scene.start('levels');
+                return;
+        }
+
+        const progress = localStorage.getItem('gameProgress');
+        let completedLevels = 0;
+        if (progress) {
+            try {
+                completedLevels = JSON.parse(progress).completedLevels;
+            } catch (e) {
+                completedLevels = 0;
+            }
+        }
+
+        const nextLevelNum = parseInt(nextLevel.replace('level', ''));
+        if (nextLevelNum <= completedLevels + 1) {
+            currentScene.scene.stop(sceneKey);
+            currentScene.scene.start(nextLevel);
+        } else {
+            this.scene.stop();
+            this.scene.start('levels');
+        }
+    }
 
     private setHideButtonEnabled(enabled: boolean) {
         this.isHideButtonEnabled = enabled;
@@ -509,6 +811,9 @@ export class GameUI extends Phaser.Scene {
             if (this.isPaused) {
                 this.resumeGame();
             }
+
+            this.cleanupCompleteScreen();
+            this.cleanupGameOverScreen();
             
             currentScene.events.emit('beforeSceneRestart');
             currentScene.sound.stopAll();
@@ -569,4 +874,9 @@ export class GameUI extends Phaser.Scene {
         }
     }
 
+    public startNewGame(): void {
+        this.playerLives = this.maxLives;
+        this.saveLives();
+        this.updateLivesDisplay();
+    }
 }

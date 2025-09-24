@@ -228,7 +228,7 @@ export class Level2Scene extends BaseLevel {
 
     protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
         return {
-            foodCount: 15,
+            foodCount: 1,
             poisonCount: 6,
             minItemDistance: 70,
             minObstacleDistance: 45,

@@ -1,35 +1,62 @@
 import { Player } from "./Player";
 
-export type DogState = 'SLEEP' | 'CHASE' | 'ROAM' | 'RETURN_HOME';
+export type DogState = 'SLEEP' | 'CHASE' | 'ROAM' | 'RETURN_HOME' | 'PATROL' | 'ALERT' | 'SEARCH';
 
 export class Dog extends Phaser.Physics.Arcade.Sprite {
     public static readonly SLEEP: DogState = 'SLEEP';
     public static readonly CHASE: DogState = 'CHASE';
     public static readonly ROAM: DogState = 'ROAM';
     public static readonly RETURN_HOME: DogState = 'RETURN_HOME';
+    public static readonly PATROL: DogState = 'PATROL';
+    public static readonly ALERT: DogState = 'ALERT';
+    public static readonly SEARCH: DogState = 'SEARCH';
 
     private currentState: DogState;
     private player: Player;
     private moveDirection: Phaser.Math.Vector2;
     
     private detectionRadius = 140;
-    private chaseSpeed = 60;
+    private alertRadius = 200;
+    private hearingRadius = 180;
+
+    private chaseSpeed = 75;
     private roamSpeed = 50;
     private returnHomeSpeed = 50;
+    private patrolSpeed = 40;
+    private alertSpeed = 60;
     private maxRoamDistance = 500;
+    
+    private lastKnownPlayerPos: Phaser.Math.Vector2 | null = null;
+    private searchTimer: number = 0;
+    private maxSearchTime: number = 3000;
+    private alertLevel: number = 0;
+    private maxAlertLevel: number = 100;
+    
+    private patrolPoints: Phaser.Math.Vector2[] = [];
+    private currentPatrolIndex: number = 0;
+    private patrolWaitTime: number = 0;
     
     private spawnPoint: Phaser.Math.Vector2;
 
     private bark!: Phaser.Sound.BaseSound;    
     private meow!: Phaser.Sound.BaseSound;
+    private growl!: Phaser.Sound.BaseSound;
+    private sniff!: Phaser.Sound.BaseSound;
     
     private isPlayerHidden: boolean = false;
     private isBarking: boolean = false;
-    private behaviorType: 'SLEEPER' | 'ROAMER';
+    private behaviorType: 'SLEEPER' | 'ROAMER' | 'GUARDIAN';
     
     private directionChangeTimer: number = 0;
     private directionChangeCooldown: number = 1500;
     private isDestroyed: boolean = false;
+    
+    private visionCone?: Phaser.GameObjects.Graphics;
+    private visionAngle: number = 60;
+    private showVisionCone: boolean = false;
+    
+    private nearbyDogs: Dog[] = [];
+    private packCommunicationRadius: number = 250;
 
     constructor(scene: Phaser.Scene, x: number, y: number, player: Player, initialState: DogState = Dog.SLEEP) {
         super(scene, x, y, 'dog');
@@ -40,16 +67,67 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
         
         this.spawnPoint = new Phaser.Math.Vector2(x, y);
         
-        this.behaviorType = initialState === Dog.SLEEP ? 'SLEEPER' : 'ROAMER';
+        if (initialState === Dog.SLEEP) {
+            this.behaviorType = 'SLEEPER';
+        } else if (initialState === Dog.PATROL) {
+            this.behaviorType = 'GUARDIAN';
+            this.setupPatrolRoute();
+        } else {
+            this.behaviorType = 'ROAMER';
+        }
         
         this.setupPhysics(scene);
         this.setupAudio(scene);
         this.setupEventListeners(scene);
+        this.setupVisionCone(scene);
         this.setDepth(3);
         
         if (this.currentState === Dog.ROAM) {
             this.generateNewDirection();
         }
+    }
+
+    private setupPatrolRoute(): void {
+        const radius = 150;
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2;
+            this.patrolPoints.push(new Phaser.Math.Vector2(
+                this.spawnPoint.x + Math.cos(angle) * radius,
+                this.spawnPoint.y + Math.sin(angle) * radius
+            ));
+        }
+    }
+
+    private setupVisionCone(scene: Phaser.Scene): void {
+        this.visionCone = scene.add.graphics();
+        this.visionCone.setDepth(1);
+        this.visionCone.setAlpha(0.2);
+    }
+
+    private updateVisionCone(): void {
+        if (!this.visionCone || !this.showVisionCone) return;
+        
+        this.visionCone.clear();
+        
+        const facingAngle = this.flipX ? Math.PI : 0;
+        const coneLength = this.detectionRadius;
+        
+        this.visionCone.fillStyle(0xffff00, 0.2);
+        this.visionCone.beginPath();
+        this.visionCone.moveTo(this.x, this.y);
+        
+        const angleRad = Phaser.Math.DegToRad(this.visionAngle / 2);
+        this.visionCone.lineTo(
+            this.x + Math.cos(facingAngle - angleRad) * coneLength,
+            this.y + Math.sin(facingAngle - angleRad) * coneLength
+        );
+        this.visionCone.arc(
+            this.x, this.y, coneLength,
+            facingAngle - angleRad,
+            facingAngle + angleRad
+        );
+        this.visionCone.closePath();
+        this.visionCone.fill();
     }
 
     private setupPhysics(scene: Phaser.Scene): void {
@@ -79,6 +157,7 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
                 this.setVelocity(0, 0);
                 break;
             case Dog.ROAM:
+            case Dog.PATROL:
                 this.safePlayAnimation('dog_run', true);
                 break;
             default:
@@ -389,7 +468,7 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
         return this.currentState;
     }
 
-    public getBehaviorType(): 'SLEEPER' | 'ROAMER' {
+    public getBehaviorType(): any {
         return this.behaviorType;
     }
 

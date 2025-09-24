@@ -82,7 +82,7 @@ export class Level4Scene extends BaseLevel {
 
     protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
         return {
-            foodCount: 10,
+            foodCount: 1,
             poisonCount: 6,
             minItemDistance: 70,
             minObstacleDistance: 45,
@@ -244,15 +244,8 @@ export class Level4Scene extends BaseLevel {
                 strikeY
             );
 
-            console.log('Lightning strike at:', strikeX, strikeY);
-            console.log('Player at:', this.player.x, this.player.y);
-            console.log('Distance:', distance, 'Strike radius:', this.STRIKE_RADIUS);
-
             if (distance <= this.STRIKE_RADIUS) { 
-                console.log('Player hit by lightning!');
                 this.dealLightningDamage();
-            } else {
-                console.log('Player escaped the lightning!');
             }
         }
 
@@ -264,12 +257,10 @@ export class Level4Scene extends BaseLevel {
 
     private dealLightningDamage(): void {
         if (this.lightningDamageDealt) {
-            console.log('Lightning damage already dealt, skipping...');
             return;
         }
 
         this.lightningDamageDealt = true;
-        console.log('Dealing lightning damage:', this.LIGHTNING_DAMAGE);
         
         if (this.player && typeof this.player.takeDamage === 'function') {
             for (let i = 0; i < this.LIGHTNING_DAMAGE; i++) {
@@ -278,7 +269,6 @@ export class Level4Scene extends BaseLevel {
             
             const uiScene = this.scene.get('UIScene') as any;
             if (uiScene && uiScene.loseLife) {
-                console.log('Calling UI loseLife directly with damage:', this.LIGHTNING_DAMAGE);
                 uiScene.loseLife(this.LIGHTNING_DAMAGE);
             }
         }

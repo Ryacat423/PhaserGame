@@ -34,12 +34,21 @@ export class Level2UI extends Phaser.Scene {
     }
 
     create() {
+        this.adjustPosition();
         this.almostCold = this.sound.add('almostFreeze').setVolume(1);
         this.freeze = this.sound.add('freeze').setVolume(1);
 
         this.setupColdnessBar();
         this.setupEventListeners();
         this.startColdnessSystem();
+    }
+    
+    private adjustPosition(): void {
+        const level3UIActive = this.scene.manager.isActive('Level3UI');
+        
+        if (level3UIActive) {
+            this.coldnessBarY = 55;
+        }
     }
 
     private setupColdnessBar(): void {
@@ -199,8 +208,9 @@ export class Level2UI extends Phaser.Scene {
         if (this.coldStatusText) {
             this.destroyColdStatusText();
         }
-        
-        this.coldStatusText = this.add.text(200, 32, 'FREEZING!', {
+        const textY = this.coldnessBarY + 12;
+
+        this.coldStatusText = this.add.text(200, textY, 'FREEZING!', {
             fontSize: '16px',
             fontFamily: 'Arial Black, Arial',
             color: '#87CEEB',

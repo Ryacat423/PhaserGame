@@ -24,6 +24,13 @@ export class UIManager {
         scene.load.image('btn-reset', 'assets/global/ui/reset.png');
         scene.load.image('btn-settings', 'assets/global/ui/settings.png');
         scene.load.image('btn-pause', 'assets/global/ui/pause.png');
+        scene.load.image('lock_warning', 'assets/global/ui/lock_warning.png');
+        
+        scene.load.image('game-complete', 'assets/global/ui/lvl-complete.png');
+        scene.load.image('game-over', 'assets/global/ui/game-over.png');
+        scene.load.image('game-home', 'assets/global/ui/home-btn.png');
+        scene.load.image('game-replay', 'assets/global/ui/replay-btn.png');
+        scene.load.image('game-next', 'assets/global/ui/nxt-button.png');
         
         // Game Images
         scene.load.image('box-open', 'assets/global/bg/box_open.png');

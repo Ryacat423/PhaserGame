@@ -25,11 +25,21 @@ export class Level3UI extends Phaser.Scene {
     }
 
     create() {
+        this.adjustPosition();
         this.lowBatterySound = this.sound.add('lowBatteryWarning').setVolume(0.8);
 
         this.setupBatteryBar();
         this.setupEventListeners();
     }
+
+    private adjustPosition(): void {
+        const level2UIActive = this.scene.manager.isActive('Level2UI');
+        
+        if (level2UIActive) {
+            this.batteryBarY = 20;
+        }
+    }
+
 
     private setupBatteryBar(): void {
         this.batteryBarBg = this.add.graphics()
@@ -142,8 +152,10 @@ export class Level3UI extends Phaser.Scene {
 
     private showLowBatteryWarning(): void {
         if (this.lowBatteryWarning) return;
+        const warningY = this.batteryBarY + 50;
+
         
-        this.lowBatteryWarning = this.add.text(210, 70, 'LOW BATTERY!', {
+        this.lowBatteryWarning = this.add.text(210, warningY, 'LOW BATTERY!', {
             fontSize: '16px',
             fontFamily: 'Arial Black, Arial',
             color: '#FF8800',
