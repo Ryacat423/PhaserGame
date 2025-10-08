@@ -338,7 +338,6 @@ export class GameUI extends Phaser.Scene {
         });
 
         this.game.events.on('levelStarted', () => {
-            this.togglePause();
             this.onSceneStart();
             this.setupFoodCounter();
             this.stopOtherLevelUIs();
@@ -360,10 +359,8 @@ export class GameUI extends Phaser.Scene {
 
             this.saveLives();
             
-            this.time.delayedCall(1000, () => {
-                this.togglePause();
-                this.showLevelCompleteScreen();
-            });
+            this.pauseGame();
+            this.showLevelCompleteScreen();
         });
     }
 
@@ -461,7 +458,6 @@ export class GameUI extends Phaser.Scene {
             this.resetCurrentLevel();
         });
 
-        // Add hover effects for the image buttons
         [homeBtn, nextBtn, replayBtn].forEach(btn => {
             btn.on('pointerover', () => {
                 this.tweens.add({
@@ -492,6 +488,23 @@ export class GameUI extends Phaser.Scene {
                 element.destroy();
             });
             this.data.remove('completeOverlay');
+        }
+        
+        if (this.isPaused) {
+            const gameScene = this.getActiveGameScene();
+            if (gameScene) {
+                if (gameScene.physics && gameScene.physics.world) {
+                    gameScene.physics.world.resume();
+                }
+                if (gameScene.tweens) {
+                    gameScene.tweens.resumeAll();
+                }
+                if (gameScene.anims) {
+                    gameScene.anims.resumeAll();
+                }
+            }
+            this.isPaused = false;
+            this.hidePauseOverlay();
         }
     }
 
