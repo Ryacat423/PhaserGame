@@ -19,10 +19,6 @@ export class Level2Scene extends BaseLevel {
 
     protected override preloadLevelAssets(): void {
         this.load.image('snowman', 'assets/scene/levels/2/snowman.png');
-        this.load.audio('firewood', 'assets/global/audio/firewood.mp3');
-        this.load.audio('cat_burned', 'assets/global/audio/cat_burned.mp3');
-        this.load.audio('burned', 'assets/global/audio/burn.mp3');
-
         this.load.image('ice', 'assets/scene/levels/2/slippery.png');
     }
 
