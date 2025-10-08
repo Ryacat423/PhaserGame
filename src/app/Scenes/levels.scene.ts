@@ -15,28 +15,12 @@ export class LevelsScene extends Phaser.Scene {
         super({key: 'levels'})
     }
 
-    init(): void {
-        this.loadCustomLevels();
-    }
-
-    private loadCustomLevels(): void {
-        const saved = localStorage.getItem('customLevels');
-        if (saved) {
-            try {
-                this.savedLevels = JSON.parse(saved);
-            } catch (e) {
-                this.savedLevels = [];
-            }
-        }
-    }
-
     preload(): void {
         this.load.image('bglevel', 'assets/scene/levels/levelbg.png');
         this.load.image('level_1', 'assets/scene/levels/level_1.png');
         this.load.image('level_2', 'assets/scene/levels/level_2.png');
         this.load.image('level_3', 'assets/scene/levels/level_3.png');
         this.load.image('level_4', 'assets/scene/levels/level_4.png');
-        this.load.image('level_custom', 'assets/scene/levels/level_custom.png');
         // this.load.image('custom_slot', 'assets/scene/levels/custom_slot.png');
         this.load.image('lock_icon', 'assets/scene/levels/lock.png');
     }
@@ -47,9 +31,9 @@ export class LevelsScene extends Phaser.Scene {
             .setAlpha(.78)
             .setDisplaySize(this.scale.width, this.scale.height);
 
-        this.add.sprite(320, 280, 'snow').setScale(.164).play('blow').setDepth(10);
+        this.add.sprite(400, 280, 'snow').setScale(.164).play('blow').setDepth(10);
 
-        this.add.text(this.scale.width / 2, 50, 'SELECT LEVEL', {
+        this.add.text(this.scale.width / 2, 100, 'SELECT LEVEL', {
             fontSize: '32px',
             color: '#ffffff',
             fontFamily: 'Arial Black',
@@ -58,9 +42,6 @@ export class LevelsScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         this.createCampaignLevels();
-
-        this.createCustomSection();
-
         this.back = this.add.image(50, 50, 'btn-next')
             .setScale(0.1)
             .setFlipX(true)
@@ -76,22 +57,22 @@ export class LevelsScene extends Phaser.Scene {
     private createCampaignLevels(): void {
 
         // Level 1 - Meadows (always unlocked)
-        this.level1 = this.add.image(120, 280, 'level_1')
+        this.level1 = this.add.image(200, 290, 'level_1')
             .setScale(0.58)
             .setInteractive();
 
         // Level 2 - Winter
-        this.level2 = this.add.image(320, 280, 'level_2')
+        this.level2 = this.add.image(400, 290, 'level_2')
             .setScale(0.59)
             .setInteractive();
         
         // Level 3 - Night
-        this.level3 = this.add.image(510, 280, 'level_3')
+        this.level3 = this.add.image(600, 290, 'level_3')
             .setScale(0.64)
             .setInteractive();
         
         // Level 4 - Storm
-        this.level4 = this.add.image(705, 280, 'level_4')
+        this.level4 = this.add.image(800, 290, 'level_4')
             .setScale(0.64)
             .setInteractive();
 
@@ -150,97 +131,6 @@ export class LevelsScene extends Phaser.Scene {
                 this.showLockedMessage();
             }
         });
-    }
-
-    private createCustomSection(): void {
-        this.add.text(this.scale.width / 2, 410, 'CUSTOM LEVELS', {
-            fontSize: '20px',
-            color: '#00FF00',
-            fontFamily: 'Arial',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        this.customPanel = this.add.image(890, 286, 'level_custom')
-            .setScale(0.59)
-            .setInteractive()
-            .once('pointerdown', () => {
-                this.scene.stop();
-                this.scene.start('custom_panel');
-            });
-
-        this.add.text(180, 540, 'Create New', {
-            fontSize: '14px',
-            color: '#ffffff',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
-
-        this.createCustomSlots();
-    }
-
-    private createCustomSlots(): void {
-        const startX = 380;
-        const startY = 480;
-        const spacing = 150;
-        const maxSlots = 3;
-
-        for (let i = 0; i < maxSlots; i++) {
-            const x = startX + (i * spacing);
-            
-            if (i < this.savedLevels.length) {
-                const level = this.savedLevels[i];
-                const container = this.add.container(x, startY);
-                
-                const bg = this.add.rectangle(0, 0, 120, 120, 0x444444, 0.8)
-                    .setStrokeStyle(2, 0x00ff00)
-                    .setInteractive();
-                const mapPreview = this.add.image(0, -20, level.config.map)
-                    .setScale(0.08);
-                
-                const nameText = this.add.text(0, 30, level.name, {
-                    fontSize: '12px',
-                    color: '#ffffff',
-                    fontFamily: 'Arial'
-                }).setOrigin(0.5);
-
-                const diffColors = {
-                    easy: 0x00ff00,
-                    medium: 0xffff00,
-                    hard: 0xff8800,
-                    extreme: 0xff0000
-                };
-                
-                const diffIndicator = this.add.circle(40, -40, 8, 
-                    diffColors[level.config.difficulty as keyof typeof diffColors] || 0xffffff);
-                
-                container.add([bg, mapPreview, nameText, diffIndicator]);
-
-                bg.on('pointerdown', () => {
-                    this.scene.stop();
-                    this.scene.start('level-custom', level.config);
-                });
-                
-                bg.on('pointerover', () => {
-                    bg.setFillStyle(0x666666, 0.9);
-                    container.setScale(1.1);
-                });
-                
-                bg.on('pointerout', () => {
-                    bg.setFillStyle(0x444444, 0.8);
-                    container.setScale(1);
-                });
-                
-                this.customSlots.push(container);
-            } else {
-                const emptySlot = this.add.rectangle(x, startY, 120, 120, 0x222222, 0.5)
-                    .setStrokeStyle(2, 0x666666, 0.5);
-                
-                this.add.text(x, startY, 'Empty', {
-                    fontSize: '12px',
-                    color: '#666666',
-                    fontFamily: 'Arial'
-                }).setOrigin(0.5);
-            }
-        }
     }
 
     private addDifficultyStars(x: number, y: number, difficulty: number): void {
