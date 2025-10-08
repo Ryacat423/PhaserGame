@@ -80,32 +80,26 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('custom_bg', 'assets/scene/levels/4/background.jpg');
-        this.load.image('panel', 'assets/global/ui/panel.png');
         this.load.image('checkbox', 'assets/scene/levels/4/checkbox.png');
         this.load.image('checkmark', 'assets/scene/levels/4/checkmark.png');
-        this.load.image('create_btn', 'assets/scene/levels/4/create_btn.png');
         this.load.image('save_btn', 'assets/scene/levels/4/save_btn.png');
         this.load.image('delete_btn', 'assets/scene/levels/4/delete_btn.png');
     }
 
     create(): void {
-        this.add.image(0, 0, 'custom_bg')
-            .setOrigin(0, 0)
-            .setDisplaySize(this.scale.width, this.scale.height);
+        // Create custom gradient background
+        this.createCustomBackground();
+        
+        // Create main panel
+        this.createMainPanel();
 
-        const panel = this.add.image(350, 70, 'panel')
-            .setOrigin(0, 0)
-            .setScale(0.9);
-
+        // Back button
         this.back = this.add.image(50, 50, 'btn-next')
             .setScale(.09)
             .setInteractive()
             .setFlipX(true)
             .once('pointerdown', () => {
-                this.cleanupHTML();
-                this.scene.stop();
-                this.scene.start('levels');
+                this.cleanupAndReturn();
             });
 
         this.createSaveSlots();
@@ -116,21 +110,84 @@ export class CustomPanel extends Phaser.Scene {
         this.createActionButtons();
     }
 
+    private createCustomBackground(): void {
+        // Create gradient background
+        const graphics = this.add.graphics();
+        
+        // Main gradient (dark blue to purple)
+        graphics.fillGradientStyle(0x1a1a2e, 0x1a1a2e, 0x16213e, 0x0f3460, 1);
+        graphics.fillRect(0, 0, 1000, 600);
+        
+        // Add decorative circles
+        const circles = [
+            { x: 100, y: 100, radius: 150, color: 0x533483, alpha: 0.1 },
+            { x: 900, y: 150, radius: 200, color: 0x7209b7, alpha: 0.08 },
+            { x: 500, y: 500, radius: 180, color: 0x4361ee, alpha: 0.12 }
+        ];
+        
+        circles.forEach(circle => {
+            graphics.fillStyle(circle.color, circle.alpha);
+            graphics.fillCircle(circle.x, circle.y, circle.radius);
+        });
+    }
+
+    private createMainPanel(): void {
+        // Main panel background - centered and wider
+        const panel = this.add.graphics();
+        panel.fillStyle(0x2d3748, 0.95);
+        panel.lineStyle(3, 0x4a5568, 1);
+        
+        // Rounded rectangle
+        panel.fillRoundedRect(50, 30, 900, 540, 15);
+        panel.strokeRoundedRect(50, 30, 900, 540, 15);
+        
+        // Inner shadow effect
+        panel.lineStyle(1, 0x1a202c, 0.5);
+        panel.strokeRoundedRect(55, 35, 890, 530, 12);
+        
+        // Title bar
+        const titleBar = this.add.graphics();
+        titleBar.fillStyle(0x4a5568, 1);
+        titleBar.fillRoundedRect(50, 30, 900, 50, { tl: 15, tr: 15, bl: 0, br: 0 });
+        
+        // Title text
+        this.add.text(500, 55, '🎮 CUSTOM LEVEL CREATOR', {
+            fontSize: '24px',
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+    }
+
+    private cleanupAndReturn(): void {
+        this.cleanupHTML();
+        this.scene.stop();
+        this.scene.start('welcome');
+    }
+
     private createSaveSlots(): void {
-        const startX = 100;
-        const startY = 150;
+        const startX = 180;
+        const startY = 120;
         const slotHeight = 120;
 
+        // Section title
+        this.add.text(90, startY, 'SAVE SLOTS', {
+            fontSize: '16px',
+            color: '#cbd5e0',
+            fontFamily: 'Arial',
+            fontStyle: 'bold'
+        });
+
         for (let i = 0; i < this.maxSlots; i++) {
-            const container = this.add.container(startX, startY + i * slotHeight);
+            const container = this.add.container(startX, startY + 40 + i * slotHeight);
             
-            const bg = this.add.rectangle(0, 0, 200, 100, 0x444444, 0.8)
-                .setStrokeStyle(2, 0xffffff)
+            const bg = this.add.rectangle(0, 0, 200, 100, 0x1a202c, 0.8)
+                .setStrokeStyle(2, 0x4a5568)
                 .setInteractive();
             
             const slotText = this.add.text(0, -30, `Slot ${i + 1}`, {
                 fontSize: '16px',
-                color: '#ffffff',
+                color: '#a0aec0',
                 fontFamily: 'Arial'
             }).setOrigin(0.5);
 
@@ -140,14 +197,14 @@ export class CustomPanel extends Phaser.Scene {
                 const level = this.savedLevels[i];
                 contentText = this.add.text(0, 0, level.name, {
                     fontSize: '14px',
-                    color: '#00ff00',
+                    color: '#48bb78',
                     fontFamily: 'Arial'
                 }).setOrigin(0.5);
                 
                 const dateText = this.add.text(0, 20, 
                     new Date(level.dateCreated).toLocaleDateString(), {
                     fontSize: '10px',
-                    color: '#aaaaaa',
+                    color: '#718096',
                     fontFamily: 'Arial'
                 }).setOrigin(0.5);
                 
@@ -155,23 +212,17 @@ export class CustomPanel extends Phaser.Scene {
             } else {
                 contentText = this.add.text(0, 0, 'Empty', {
                     fontSize: '14px',
-                    color: '#888888',
+                    color: '#4a5568',
                     fontFamily: 'Arial'
                 }).setOrigin(0.5);
                 
                 container.add([bg, slotText, contentText]);
             }
 
-            bg.on('pointerdown', () => {
-                this.selectSlot(i);
-            });
-
-            bg.on('pointerover', () => {
-                bg.setFillStyle(0x666666, 0.9);
-            });
-
+            bg.on('pointerdown', () => this.selectSlot(i));
+            bg.on('pointerover', () => bg.setFillStyle(0x2d3748, 0.9));
             bg.on('pointerout', () => {
-                bg.setFillStyle(this.selectedSlot === i ? 0x668866 : 0x444444, 0.8);
+                bg.setFillStyle(this.selectedSlot === i ? 0x2f855a : 0x1a202c, 0.8);
             });
 
             this.levelSlots.push(container);
@@ -183,7 +234,7 @@ export class CustomPanel extends Phaser.Scene {
         
         this.levelSlots.forEach((container, i) => {
             const bg = container.list[0] as Phaser.GameObjects.Rectangle;
-            bg.setFillStyle(i === index ? 0x668866 : 0x444444, 0.8);
+            bg.setFillStyle(i === index ? 0x2f855a : 0x1a202c, 0.8);
         });
 
         if (index < this.savedLevels.length) {
@@ -209,7 +260,7 @@ export class CustomPanel extends Phaser.Scene {
                 'level2_map': 'Snowy Plains',
                 'level3_map': 'Night Yard'
             };
-            this.chosenMapText.setText(`Chosen map: ${mapNames[this.config.map] || 'Unknown'}`);
+            this.chosenMapText.setText(`Chosen: ${mapNames[this.config.map] || 'Unknown'}`);
         }
     }
 
@@ -220,41 +271,40 @@ export class CustomPanel extends Phaser.Scene {
         input.maxLength = 20;
         input.style.position = 'absolute';
         input.style.left = '380px';
-        input.style.top = '90px';
-        input.style.width = '200px';
-        input.style.padding = '5px';
+        input.style.top = '120px';
+        input.style.width = '240px';
+        input.style.padding = '8px 12px';
         input.style.fontSize = '14px';
-        input.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-        input.style.border = '2px solid #8B4513';
-        input.style.borderRadius = '5px';
+        input.style.backgroundColor = '#2d3748';
+        input.style.color = '#e2e8f0';
+        input.style.border = '2px solid #4a5568';
+        input.style.borderRadius = '8px';
+        input.style.outline = 'none';
+        
+        input.addEventListener('focus', () => {
+            input.style.borderColor = '#4299e1';
+        });
+        
+        input.addEventListener('blur', () => {
+            input.style.borderColor = '#4a5568';
+        });
         
         document.body.appendChild(input);
         this.levelNameInput = input;
     }
 
     private createActionButtons(): void {
-        const saveBtn = this.add.image(880, 450, 'save_btn')
+        const saveBtn = this.add.image(880, 500, 'save_btn')
             .setScale(0.25)
             .setInteractive()
-            .on('pointerdown', () => {
-                this.saveCurrentLevel();
-            });
-
-        this.createMap = this.add.image(880, 500, 'create_btn')
-            .setScale(0.3)
-            .setInteractive()
-            .on('pointerdown', () => {
-                this.playLevel();
-            });
+            .on('pointerdown', () => this.saveCurrentLevel());
 
         const deleteBtn = this.add.image(880, 550, 'delete_btn')
             .setScale(0.25)
             .setInteractive()
-            .on('pointerdown', () => {
-                this.deleteSelectedLevel();
-            });
+            .on('pointerdown', () => this.deleteSelectedLevel());
 
-        [saveBtn, this.createMap, deleteBtn].forEach(btn => {
+        [saveBtn, deleteBtn].forEach(btn => {
             btn.on('pointerover', () => btn.setScale(btn.scaleX * 1.1));
             btn.on('pointerout', () => btn.setScale(btn.scaleX / 1.1));
         });
@@ -287,7 +337,8 @@ export class CustomPanel extends Phaser.Scene {
             title: 'Level Saved!',
             text: `${levelName} saved to Slot ${this.selectedSlot + 1}`,
             icon: 'success',
-            timer: 1500
+            timer: 1500,
+            showConfirmButton: false
         });
     }
 
@@ -299,35 +350,35 @@ export class CustomPanel extends Phaser.Scene {
         
         container.removeAll(true);
         
-        const bg = this.add.rectangle(0, 0, 200, 100, 0x444444, 0.8)
-            .setStrokeStyle(2, 0xffffff)
+        const bg = this.add.rectangle(0, 0, 200, 100, 0x1a202c, 0.8)
+            .setStrokeStyle(2, 0x4a5568)
             .setInteractive();
         
         const slotText = this.add.text(0, -30, `Slot ${index + 1}`, {
             fontSize: '16px',
-            color: '#ffffff',
+            color: '#a0aec0',
             fontFamily: 'Arial'
         }).setOrigin(0.5);
         
         const contentText = this.add.text(0, 0, level.name, {
             fontSize: '14px',
-            color: '#00ff00',
+            color: '#48bb78',
             fontFamily: 'Arial'
         }).setOrigin(0.5);
         
         const dateText = this.add.text(0, 20, 
             new Date(level.dateCreated).toLocaleDateString(), {
             fontSize: '10px',
-            color: '#aaaaaa',
+            color: '#718096',
             fontFamily: 'Arial'
         }).setOrigin(0.5);
         
         container.add([bg, slotText, contentText, dateText]);
         
         bg.on('pointerdown', () => this.selectSlot(index));
-        bg.on('pointerover', () => bg.setFillStyle(0x666666, 0.9));
+        bg.on('pointerover', () => bg.setFillStyle(0x2d3748, 0.9));
         bg.on('pointerout', () => {
-            bg.setFillStyle(this.selectedSlot === index ? 0x668866 : 0x444444, 0.8);
+            bg.setFillStyle(this.selectedSlot === index ? 0x2f855a : 0x1a202c, 0.8);
         });
     }
 
@@ -352,61 +403,21 @@ export class CustomPanel extends Phaser.Scene {
             if (result.isConfirmed) {
                 this.savedLevels.splice(this.selectedSlot, 1);
                 this.saveLevels();
+                this.cleanupHTML();
                 this.scene.restart();
             }
         });
     }
 
-    private playLevel(): void {
-        // Store the config for the custom level
-        localStorage.setItem('customLevelConfig', JSON.stringify(this.config));
-
-        const activeMechanics = Object.keys(this.config.mechanics)
-            .filter(key => this.config.mechanics[key as keyof typeof this.config.mechanics] && key !== 'none');
-
-        let mechanicsText = activeMechanics.length > 0 ? activeMechanics.join(', ') : 'none';
-
-        Swal.fire({
-            title: 'Play Custom Level',
-            html: `
-                <p><strong>Map:</strong> ${this.getMapDisplayName()}</p>
-                <p><strong>Mechanics:</strong> ${mechanicsText}</p>
-                <p><strong>Foods:</strong> ${this.config.spawnables.foods}</p>
-                <p><strong>Poison:</strong> ${this.config.spawnables.poison}</p>
-                <p><strong>Dogs:</strong> ${this.config.spawnables.dog}</p>
-                ${this.config.spawnables.batteries ? `<p><strong>Batteries:</strong> ${this.config.spawnables.batteries}</p>` : ''}
-            `,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'Play!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.cleanupHTML();
-                this.scene.stop();
-                this.scene.start('level-custom', this.config);
-            }
-        });
-    }
-
-    private getMapDisplayName(): string {
-        const mapNames: { [key: string]: string } = {
-            'level1_map': 'Meadows',
-            'level2_map': 'Snowy Plains', 
-            'level3_map': 'Night Yard'
-        };
-        return mapNames[this.config.map] || 'Unknown';
-    }
-
     private createCheckboxes(): void {
         this.checkboxes = [];
-        const mechanicsStartX = 475;
-        const mechanicsStartY = 383;
+        const mechanicsStartX = 440;
+        const mechanicsStartY = 380;
         const spacing = 35;
         
-        // Add title for mechanics section
         this.add.text(mechanicsStartX, mechanicsStartY - 30, 'MECHANICS:', {
             fontSize: '14px',
-            color: '#ffffff',
+            color: '#cbd5e0',
             fontFamily: 'Arial',
             fontStyle: 'bold'
         }).setOrigin(0, 0.5);
@@ -425,7 +436,6 @@ export class CustomPanel extends Phaser.Scene {
                 this.config.mechanics[mechanic.key as keyof typeof this.config.mechanics] || false,
                 (checked: boolean) => {
                     if (mechanic.key === 'none') {
-                        // If "none" is checked, uncheck all others
                         if (checked) {
                             Object.keys(this.config.mechanics).forEach(key => {
                                 this.config.mechanics[key as keyof typeof this.config.mechanics] = false;
@@ -433,7 +443,6 @@ export class CustomPanel extends Phaser.Scene {
                             this.config.mechanics.none = true;
                         }
                     } else {
-                        // If any other mechanic is checked, uncheck "none"
                         if (checked) {
                             this.config.mechanics.none = false;
                         }
@@ -449,14 +458,13 @@ export class CustomPanel extends Phaser.Scene {
             
             this.add.text(mechanicsStartX + 25, mechanic.y, mechanic.label, {
                 fontSize: '12px',
-                color: '#ffffff',
+                color: '#e2e8f0',
                 fontFamily: 'Arial'
             }).setOrigin(0, 0.5);
         });
     }
 
     private updateBatterySpawnable(): void {
-        // Set battery count based on night mechanic
         if (this.config.mechanics.night) {
             this.config.spawnables.batteries = 5;
         } else {
@@ -465,14 +473,13 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createSpawnableInputs(): void {
-        const inputStartX = 650;
-        const inputStartY = 383;
+        const inputStartX = 700;
+        const inputStartY = 380;
         const spacing = 35;
 
-        // Add title for spawnables section
         this.add.text(inputStartX - 50, inputStartY - 30, 'SPAWNS:', {
             fontSize: '14px',
-            color: '#ffffff',
+            color: '#cbd5e0',
             fontFamily: 'Arial',
             fontStyle: 'bold'
         }).setOrigin(0.5);
@@ -486,7 +493,7 @@ export class CustomPanel extends Phaser.Scene {
         spawnables.forEach((spawnable, index) => {
             this.add.text(inputStartX - 50, inputStartY + index * spacing, spawnable.label, {
                 fontSize: '14px',
-                color: '#ffffff',
+                color: '#e2e8f0',
                 fontFamily: 'Arial'
             }).setOrigin(0.5);
 
@@ -520,17 +527,9 @@ export class CustomPanel extends Phaser.Scene {
             callback: callback
         };
 
-        checkboxBg.on('pointerdown', () => {
-            this.toggleCheckbox(checkbox);
-        });
-
-        checkboxBg.on('pointerover', () => {
-            checkboxBg.setTint(0xdddddd);
-        });
-
-        checkboxBg.on('pointerout', () => {
-            checkboxBg.clearTint();
-        });
+        checkboxBg.on('pointerdown', () => this.toggleCheckbox(checkbox));
+        checkboxBg.on('pointerover', () => checkboxBg.setTint(0xdddddd));
+        checkboxBg.on('pointerout', () => checkboxBg.clearTint());
 
         return checkbox;
     }
@@ -557,26 +556,26 @@ export class CustomPanel extends Phaser.Scene {
         const cornerRadius = 5;
 
         const inputBg = this.add.graphics();
-        inputBg.fillStyle(0x6d4730, 1);
-        inputBg.lineStyle(2, 0x8B4513, 1);
+        inputBg.fillStyle(0x1a202c, 1);
+        inputBg.lineStyle(2, 0x4a5568, 1);
         inputBg.fillRoundedRect(x - boxWidth / 2, y - boxHeight / 2, boxWidth, boxHeight, cornerRadius);
 
         const numberText = this.add.text(x, y, initialValue.toString(), {
             fontSize: '14px',
-            color: '#F5DEB3',
+            color: '#e2e8f0',
             fontFamily: 'Arial',
             fontStyle: 'bold'
         }).setOrigin(0.5, 0.5);
 
         const minusBtn = this.add.text(x - 30, y, '-', {
             fontSize: '20px',
-            color: '#ff6666',
+            color: '#fc8181',
             fontFamily: 'Arial'
         }).setOrigin(0.5).setInteractive();
 
         const plusBtn = this.add.text(x + 30, y, '+', {
             fontSize: '20px', 
-            color: '#66ff66',
+            color: '#68d391',
             fontFamily: 'Arial'
         }).setOrigin(0.5).setInteractive();
 
@@ -597,9 +596,16 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createMapPreviews(): void {
-        const startX = 450;
-        const y = 230;
-        const spacing = 150;
+        const startX = 440;
+        const y = 220;
+        const spacing = 140;
+
+        this.add.text(startX + spacing, y - 50, 'SELECT MAP', {
+            fontSize: '16px',
+            color: '#cbd5e0',
+            fontFamily: 'Arial',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
 
         const maps = [
             { key: 'level1_map', name: 'Meadows' },
@@ -614,7 +620,7 @@ export class CustomPanel extends Phaser.Scene {
 
             this.add.text(mapImage.x, mapImage.y + 50, map.name, {
                 fontSize: '12px',
-                color: '#f0f0ef',
+                color: '#e2e8f0',
                 fontFamily: 'Arial',
                 fontStyle: 'bold'
             }).setOrigin(0.5, 0);
@@ -634,9 +640,9 @@ export class CustomPanel extends Phaser.Scene {
                 if (this.chosenMapText) {
                     this.chosenMapText.destroy();
                 }
-                this.chosenMapText = this.add.text(650, 150, `Chosen: ${map.name}`, {
-                    fontSize: '16px',
-                    color: '#F5DEB3',
+                this.chosenMapText = this.add.text(580, 305, `✓ ${map.name}`, {
+                    fontSize: '14px',
+                    color: '#48bb78',
                     fontFamily: 'Arial',
                     fontStyle: 'bold'
                 }).setOrigin(0.5);
@@ -649,5 +655,9 @@ export class CustomPanel extends Phaser.Scene {
             this.levelNameInput.remove();
             this.levelNameInput = undefined;
         }
+    }
+
+    shutdown(): void {
+        this.cleanupHTML();
     }
 }
