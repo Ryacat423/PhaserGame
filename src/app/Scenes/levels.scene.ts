@@ -76,30 +76,23 @@ export class LevelsScene extends Phaser.Scene {
             .setScale(0.64)
             .setInteractive();
 
-        // Set alpha and interactivity based on unlock status
         const isLevel2Unlocked = this.checkLevelUnlocked(2);
         const isLevel3Unlocked = this.checkLevelUnlocked(3);
         const isLevel4Unlocked = this.checkLevelUnlocked(4);
 
         if (!isLevel2Unlocked) {
             this.level2.setAlpha(0.4);
-            this.add.image(320, 280, 'lock_icon').setScale(0.3).setAlpha(0.8);
+            this.add.image(400, 300, 'lock_icon').setScale(0.3).setAlpha(0.8);
         }
         if (!isLevel3Unlocked) {
             this.level3.setAlpha(0.4);
-            this.add.image(510, 280, 'lock_icon').setScale(0.3).setAlpha(0.8);
+            this.add.image(600, 300, 'lock_icon').setScale(0.3).setAlpha(0.8);
         }
         if (!isLevel4Unlocked) {
             this.level4.setAlpha(0.4);
-            this.add.image(705, 280, 'lock_icon').setScale(0.3).setAlpha(0.8);
+            this.add.image(795, 300, 'lock_icon').setScale(0.3).setAlpha(0.8);
         }
 
-        // this.addDifficultyStars(280, 355, 1);  // Level 1
-        // this.addDifficultyStars(480, 355, 2);  // Level 2
-        // this.addDifficultyStars(680, 355, 3);  // Level 3
-        // this.addDifficultyStars(875, 355, 4);  // Level 4
-
-        // Level click handlers
         this.level1.once('pointerdown', () => {
             this.scene.stop();
             this.scene.start('level1');
