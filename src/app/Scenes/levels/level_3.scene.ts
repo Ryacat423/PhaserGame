@@ -19,11 +19,6 @@ export class Level3Scene extends BaseLevel {
         super('level3');
     }
 
-    protected override preloadLevelAssets(): void {
-        this.load.audio('night-ambience', 'assets/global/audio/night-ambience.mp3');
-        this.load.audio('owl-hoot', 'assets/global/audio/owl-hoot.mp3');
-    }
-
     protected getThemeAudioKey(): string {
         return 'level3_theme';
     }
