@@ -87,7 +87,6 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     create(): void {
-        // Create custom gradient background
         this.createCustomBackground();
         
         // Create main panel
@@ -111,20 +110,19 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createCustomBackground(): void {
-        // Create gradient background
         const graphics = this.add.graphics();
-        
-        // Main gradient (dark blue to purple)
-        graphics.fillGradientStyle(0x1a1a2e, 0x1a1a2e, 0x16213e, 0x0f3460, 1);
+
+        // 🌿 Gradient background: deep to soft green
+        graphics.fillGradientStyle(0x1b4332, 0x2d6a4f, 0x40916c, 0x74c69d, 1);
         graphics.fillRect(0, 0, 1000, 600);
-        
-        // Add decorative circles
+
+        // Gentle green glow circles for depth
         const circles = [
-            { x: 100, y: 100, radius: 150, color: 0x533483, alpha: 0.1 },
-            { x: 900, y: 150, radius: 200, color: 0x7209b7, alpha: 0.08 },
-            { x: 500, y: 500, radius: 180, color: 0x4361ee, alpha: 0.12 }
+            { x: 120, y: 120, radius: 150, color: 0x95d5b2, alpha: 0.12 },
+            { x: 880, y: 180, radius: 200, color: 0x74c69d, alpha: 0.10 },
+            { x: 500, y: 480, radius: 180, color: 0x52b788, alpha: 0.15 }
         ];
-        
+
         circles.forEach(circle => {
             graphics.fillStyle(circle.color, circle.alpha);
             graphics.fillCircle(circle.x, circle.y, circle.radius);
@@ -132,32 +130,27 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createMainPanel(): void {
-        // Main panel background - centered and wider
         const panel = this.add.graphics();
-        panel.fillStyle(0x2d3748, 0.95);
-        panel.lineStyle(3, 0x4a5568, 1);
+        panel.fillStyle(0x8B5E3C, 0.95);
+        panel.lineStyle(3, 0x5C4033, 1);
         
-        // Rounded rectangle
         panel.fillRoundedRect(50, 30, 900, 540, 15);
         panel.strokeRoundedRect(50, 30, 900, 540, 15);
-        
-        // Inner shadow effect
-        panel.lineStyle(1, 0x1a202c, 0.5);
+
+        panel.lineStyle(1, 0x3E2723, 0.5);
         panel.strokeRoundedRect(55, 35, 890, 530, 12);
-        
-        // Title bar
         const titleBar = this.add.graphics();
-        titleBar.fillStyle(0x4a5568, 1);
+        titleBar.fillStyle(0x6B4226, 1);
         titleBar.fillRoundedRect(50, 30, 900, 50, { tl: 15, tr: 15, bl: 0, br: 0 });
-        
-        // Title text
-        this.add.text(500, 55, '🎮 CUSTOM LEVEL CREATOR', {
+
+        this.add.text(500, 55, '🎮 CREATE CUSTOM LEVEL', {
             fontSize: '24px',
-            color: '#ffffff',
+            color: '#fff5e1', 
             fontFamily: 'Arial',
             fontStyle: 'bold'
         }).setOrigin(0.5);
     }
+
 
     private cleanupAndReturn(): void {
         this.cleanupHTML();
@@ -170,24 +163,23 @@ export class CustomPanel extends Phaser.Scene {
         const startY = 120;
         const slotHeight = 120;
 
-        // Section title
-        this.add.text(90, startY, 'SAVE SLOTS', {
+        this.add.text(90, 90, 'SAVE SLOTS', {
             fontSize: '16px',
-            color: '#cbd5e0',
+            color: '#f4e1c1',
             fontFamily: 'Arial',
             fontStyle: 'bold'
         });
 
         for (let i = 0; i < this.maxSlots; i++) {
             const container = this.add.container(startX, startY + 40 + i * slotHeight);
-            
-            const bg = this.add.rectangle(0, 0, 200, 100, 0x1a202c, 0.8)
-                .setStrokeStyle(2, 0x4a5568)
+
+            const bg = this.add.rectangle(0, 0, 200, 100, 0x5C4033, 0.8)
+                .setStrokeStyle(2, 0x8B5E3C)
                 .setInteractive();
             
             const slotText = this.add.text(0, -30, `Slot ${i + 1}`, {
                 fontSize: '16px',
-                color: '#a0aec0',
+                color: '#f8e3c4',
                 fontFamily: 'Arial'
             }).setOrigin(0.5);
 
@@ -197,14 +189,14 @@ export class CustomPanel extends Phaser.Scene {
                 const level = this.savedLevels[i];
                 contentText = this.add.text(0, 0, level.name, {
                     fontSize: '14px',
-                    color: '#48bb78',
+                    color: '#d4a373',
                     fontFamily: 'Arial'
                 }).setOrigin(0.5);
                 
                 const dateText = this.add.text(0, 20, 
                     new Date(level.dateCreated).toLocaleDateString(), {
                     fontSize: '10px',
-                    color: '#718096',
+                    color: '#b08968', 
                     fontFamily: 'Arial'
                 }).setOrigin(0.5);
                 
@@ -212,7 +204,7 @@ export class CustomPanel extends Phaser.Scene {
             } else {
                 contentText = this.add.text(0, 0, 'Empty', {
                     fontSize: '14px',
-                    color: '#4a5568',
+                    color: '#9c6644',
                     fontFamily: 'Arial'
                 }).setOrigin(0.5);
                 
@@ -220,14 +212,15 @@ export class CustomPanel extends Phaser.Scene {
             }
 
             bg.on('pointerdown', () => this.selectSlot(i));
-            bg.on('pointerover', () => bg.setFillStyle(0x2d3748, 0.9));
+            bg.on('pointerover', () => bg.setFillStyle(0xB8860B, 0.9));
             bg.on('pointerout', () => {
-                bg.setFillStyle(this.selectedSlot === i ? 0x2f855a : 0x1a202c, 0.8);
+                bg.setFillStyle(this.selectedSlot === i ? 0xA97142 : 0x5C4033, 0.8);
             });
 
             this.levelSlots.push(container);
         }
     }
+
 
     private selectSlot(index: number): void {
         this.selectedSlot = index;
@@ -270,7 +263,7 @@ export class CustomPanel extends Phaser.Scene {
         input.placeholder = 'Enter level name...';
         input.maxLength = 20;
         input.style.position = 'absolute';
-        input.style.left = '380px';
+        input.style.left = '500px';
         input.style.top = '120px';
         input.style.width = '240px';
         input.style.padding = '8px 12px';
@@ -473,7 +466,7 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private createSpawnableInputs(): void {
-        const inputStartX = 700;
+        const inputStartX = 780;
         const inputStartY = 380;
         const spacing = 35;
 
