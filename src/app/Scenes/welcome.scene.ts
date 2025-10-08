@@ -58,8 +58,8 @@ export class WelcomeScene extends Phaser.Scene {
         const title = this.add.image(500, 150, 'title')
             .setDisplaySize(700, 380);
 
-        this.start = this.add.image(500, 250, 'btn-start').setScale(0.2)
-        this.tutorial = this.add.image(500, 310, 'btn-tutorial').setScale(0.2)
+        this.start = this.add.image(500, 250, 'adventure_btn').setScale(.4)
+        this.tutorial = this.add.image(500, 330, 'custom_mode_btn').setScale(.4)
         this.help = this.add.image(950, 50, 'btn-info').setScale(.5)
 
 
@@ -90,7 +90,7 @@ export class WelcomeScene extends Phaser.Scene {
                 this.uiManager.stopTheme();
                 this.cleanUp();
                 this.scene.sleep();
-                this.scene.start('tutorial');
+                this.scene.start('custom_levels');
             });
         });
 
@@ -113,7 +113,7 @@ export class WelcomeScene extends Phaser.Scene {
         button.on('pointerover', () => {
             this.tweens.add({
                 targets: button,
-                scale: info ? 0.7 : 0.27,
+                scale: info ? 0.7 : 0.5,
                 duration: 100,
                 ease: 'Power1'
             });
@@ -122,7 +122,7 @@ export class WelcomeScene extends Phaser.Scene {
         button.on('pointerout', () => {
             this.tweens.add({
                 targets: button,
-                scale: info ? 0.5 : 0.2,
+                scale: info ? 0.5 : 0.4,
                 duration: 100,
                 ease: 'Power1'
             });
