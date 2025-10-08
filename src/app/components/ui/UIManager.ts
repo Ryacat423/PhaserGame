@@ -25,7 +25,11 @@ export class UIManager {
         scene.load.image('btn-settings', 'assets/global/ui/settings.png');
         scene.load.image('btn-pause', 'assets/global/ui/pause.png');
         scene.load.image('lock_warning', 'assets/global/ui/lock_warning.png');
-        
+        scene.load.image('save_btn', 'assets/global/ui/save_btn.png');
+        scene.load.image('adventure_btn', 'assets/global/ui/adventure_mode_btn.png');
+        scene.load.image('delete_btn', 'assets/global/ui/delete_btn.png');
+        scene.load.image('custom_mode_btn', 'assets/global/ui/custom_mode_btn.png');
+        scene.load.image('level_custom', 'assets/scene/levels/level_custom.png');
         scene.load.image('game-complete', 'assets/global/ui/lvl-complete.png');
         scene.load.image('game-over', 'assets/global/ui/game-over.png');
         scene.load.image('game-home', 'assets/global/ui/home-btn.png');
@@ -72,7 +76,12 @@ export class UIManager {
         scene.load.audio('slow', 'assets/global/audio/slow.mp3');
         scene.load.audio('hurt', 'assets/global/audio/hurt.wav');
         scene.load.audio('lvl-complete', 'assets/global/audio/lvl-complete.wav');
-
+        scene.load.audio('night-ambience', 'assets/global/audio/night-ambience.mp3');
+        scene.load.audio('owl-hoot', 'assets/global/audio/owl-hoot.mp3');
+        scene.load.audio('firewood', 'assets/global/audio/firewood.mp3');
+        scene.load.audio('cat_burned', 'assets/global/audio/cat_burned.mp3');
+        scene.load.audio('burned', 'assets/global/audio/burn.mp3');
+        
         //Video
         scene.load.video('pool', 'assets/scene/levels/5/pool.mp4');
         
@@ -104,74 +113,96 @@ export class UIManager {
     }
 
     createAnimations(): void {
-        if (!this.scene.anims.exists('cat_idle')) {
-            this.scene.anims.create({
+        // Create animations only if they don't exist
+        // Use the global AnimationManager to ensure animations persist across scenes
+        const anims = this.scene.game.anims;
+        
+        if (!anims.exists('dog_idle')) {
+            anims.create({
                 key: 'dog_idle',
-                frames: this.scene.anims.generateFrameNumbers('dog', { start: 40, end: 60 }),
+                frames: anims.generateFrameNumbers('dog', { start: 40, end: 60 }),
                 frameRate: 24,
                 repeat: -1
             });
-    
-            this.scene.anims.create({
+        }
+
+        if (!anims.exists('dog_sleep')) {
+            anims.create({
                 key: 'dog_sleep',
-                frames: this.scene.anims.generateFrameNumbers('dog', { start: 16, end: 39 }),
+                frames: anims.generateFrameNumbers('dog', { start: 16, end: 39 }),
                 frameRate: 24,
                 repeat: -1
             });
-    
-            this.scene.anims.create({
+        }
+
+        if (!anims.exists('dog_run')) {
+            anims.create({
                 key: 'dog_run',
-                frames: this.scene.anims.generateFrameNumbers('dog', { start: 0, end: 12 }),
+                frames: anims.generateFrameNumbers('dog', { start: 0, end: 12 }),
                 frameRate: 24,
                 repeat: -1
-            })
-    
-            this.scene.anims.create({
+            });
+        }
+
+        if (!anims.exists('cat_idle')) {
+            anims.create({
                 key: 'cat_idle',
-                frames: this.scene.anims.generateFrameNumbers('cat', { start: 0, end: 19 }),
+                frames: anims.generateFrameNumbers('cat', { start: 0, end: 19 }),
                 frameRate: 6,
                 repeat: -1
             });
-    
-            this.scene.anims.create({
+        }
+
+        if (!anims.exists('cat_walk')) {
+            anims.create({
                 key: 'cat_walk',
-                frames: this.scene.anims.generateFrameNumbers('cat', { start: 33, end: 47 }),
+                frames: anims.generateFrameNumbers('cat', { start: 33, end: 47 }),
                 frameRate: 24,
                 repeat: -1
             });
+        }
 
-            this.scene.anims.create({
+        if (!anims.exists('cat_hide')) {
+            anims.create({
                 key: 'cat_hide',
-                frames: this.scene.anims.generateFrameNumbers('cat', {start: 55, end: 82 }),
+                frames: anims.generateFrameNumbers('cat', {start: 55, end: 82 }),
                 frameRate: 18,
                 repeat: -1
             });
+        }
 
-            this.scene.anims.create({
+        if (!anims.exists('cat_jump')) {
+            anims.create({
                 key: 'cat_jump',
-                frames: this.scene.anims.generateFrameNumbers('cat', {start: 88, end: 101}),
+                frames: anims.generateFrameNumbers('cat', {start: 88, end: 101}),
                 frameRate: 40
-            })
+            });
+        }
 
-            this.scene.anims.create({
+        if (!anims.exists('blow')) {
+            anims.create({
                 key: 'blow',
-                frames: this.scene.anims.generateFrameNumbers('snow', {start: 0, end: 100}),
+                frames: anims.generateFrameNumbers('snow', {start: 0, end: 100}),
                 frameRate: 64,
                 repeat: -1
             });
+        }
 
-            this.scene.anims.create({
+        if (!anims.exists('sway')) {
+            anims.create({
                 key: 'sway',
-                frames: this.scene.anims.generateFrameNumbers('fire', {start: 0, end: 105}),
+                frames: anims.generateFrameNumbers('fire', {start: 0, end: 105}),
                 frameRate: 64,
                 repeat: -1
             });
+        }
 
-            this.scene.anims.create({
+        if (!anims.exists('strike')) {
+            anims.create({
                 key: 'strike',
-                frames: this.scene.anims.generateFrameNumbers('lightning', {start:0, end: 22 }),
+                frames: anims.generateFrameNumbers('lightning', {start:0, end: 22 }),
                 frameRate: 20
-            })
+            });
         }
     }
 
