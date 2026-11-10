@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { addSceneSound } from '../utils/sound';
 import { sheetPx, sheetScale } from '../config/sprites';
+import { touchInput } from '../input/touchInput';
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursor: any;
   hideKey: Phaser.Input.Keyboard.Key;
@@ -203,8 +204,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private isMoving(): boolean {
+    const { x, y } = this.readMovement();
+    return x !== 0 || y !== 0;
+  }
+
+  /** Movement from WASD, or from the touch joystick when no key is held. */
+  private readMovement(): { x: number; y: number } {
     const { w, a, s, d } = this.cursor;
-    return w.isDown || a.isDown || s.isDown || d.isDown;
+    const x = (d.isDown ? 1 : 0) - (a.isDown ? 1 : 0);
+    const y = (s.isDown ? 1 : 0) - (w.isDown ? 1 : 0);
+    if (x !== 0 || y !== 0) return { x, y };
+    return { x: touchInput.x, y: touchInput.y };
   }
 
   public setJumpEnabled(enabled: boolean): void {
@@ -574,18 +584,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    let x = 0;
-    let y = 0;
+    const { f, shift } = this.cursor;
+    const { x, y } = this.readMovement();
+    const buttonPressed = x !== 0 || y !== 0;
 
-    const { w, a, s, d, f, shift } = this.cursor;
-    const buttonPressed = w.isDown || a.isDown || s.isDown || d.isDown;
-
-    if (f.isDown && !this.isHiding) {
+    if ((f.isDown || touchInput.jump) && !this.isHiding) {
       this.performJump();
     }
 
     let speedMultiplier = 1;
-    if (shift.isDown && this.currentStamina > 10 && !this.isJumping) {
+    if ((shift.isDown || touchInput.sprint) && this.currentStamina > 10 && !this.isJumping) {
       speedMultiplier = 1.5;
       this.currentStamina = Math.max(0, this.currentStamina - 20 * (delta! / 1000));
     }
@@ -619,18 +627,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.play('cat_walk');
       }
 
-      if (a.isDown) {
-        x = -1;
-        this.setFlipX(true);
-      }
-
-      if (d.isDown) {
-        x = 1;
-        this.setFlipX(false);
-      }
-
-      if (w.isDown) y = -1;
-      if (s.isDown) y = 1;
+      if (x < 0) this.setFlipX(true);
+      if (x > 0) this.setFlipX(false);
 
       this.setVelocity(
         this.currentSpeed * x * speedMultiplier, 

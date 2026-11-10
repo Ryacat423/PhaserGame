@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { attachTouchControls } from '../../components/ui/TouchControls';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
 import { UIManager } from '../../components/ui/UIManager';
@@ -69,6 +70,7 @@ export abstract class BaseLevel extends Phaser.Scene {
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }
+        attachTouchControls(this);
 
         this.getLevelSpecificUIScenes().forEach(sceneKey => {
             if (!this.scene.isActive(sceneKey)) {
@@ -175,9 +177,7 @@ export abstract class BaseLevel extends Phaser.Scene {
 
     private handleHideAction(): void {
         const nearbyBox = this.gameMap.getBoxes().find(box => box.getIsPlayerNearby());
-        if (nearbyBox && nearbyBox.getIsPlayerHiding()) {
-            nearbyBox.forceStopHiding();
-        }
+        nearbyBox?.toggleHiding();
     }
 
     private notifyUISceneStarted(): void {

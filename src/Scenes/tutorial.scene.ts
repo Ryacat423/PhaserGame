@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { attachTouchControls } from '../components/ui/TouchControls';
 import { onGameEvent, onSceneEvent } from '../utils/events';
 import { addSceneSound } from '../utils/sound';
 import { UIManager } from '../components/ui/UIManager';
@@ -30,6 +31,7 @@ export class TutorialScene extends Phaser.Scene {
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }
+        attachTouchControls(this);
 
         if (this.gameTheme && this.gameTheme.isPlaying) {
             this.gameTheme.stop();
@@ -156,9 +158,7 @@ export class TutorialScene extends Phaser.Scene {
 
     private handleHideAction(): void {
         const nearbyBox = this.gameMap.getBoxes().find(box => box.getIsPlayerNearby());
-        if (nearbyBox && nearbyBox.getIsPlayerHiding()) {
-            nearbyBox.forceStopHiding();
-        }
+        nearbyBox?.toggleHiding();
     }
 
     private cleanupBeforeRestart(): void {

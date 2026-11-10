@@ -17,6 +17,7 @@ import { GameUI } from './components/ui/GameUI';
 import { Level2UI } from './components/ui/Level2UI';
 import { Level3UI } from './components/ui/Level3UI';
 import { Level4UI } from './components/ui/Level4UI';
+import { TouchControls } from './components/ui/TouchControls';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -25,6 +26,10 @@ const config: Phaser.Types.Core.GameConfig = {
   height: 600,
   backgroundColor: '#000000',
   pixelArt: false,
+  input: {
+    // Joystick and a button at the same time.
+    activePointers: 3
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -50,7 +55,8 @@ const config: Phaser.Types.Core.GameConfig = {
     GameUI,
     Level2UI,
     Level3UI,
-    Level4UI
+    Level4UI,
+    TouchControls
   ]
 };
 

@@ -3,16 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Sneaky Mingming: a stealth game about a hungry cat sneaking food past sleeping dogs. Built with Phaser 3.">
+  <meta name="theme-color" content="#000000">
   <title>Sneaky Mingming</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #game { width: 100%; height: 100%; }
     canvas { display: block; touch-action: none; }
+
+    /* The game is a 1000x600 landscape canvas; in portrait on a phone it would be tiny. */
+    #rotate {
+      display: none;
+      position: fixed; inset: 0; z-index: 10;
+      align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+      background: #111; color: #fff; text-align: center;
+      font: 600 18px/1.4 system-ui, sans-serif; padding: 24px;
+    }
+    #rotate svg { width: 64px; height: 64px; animation: tilt 2s ease-in-out infinite; }
+    @keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+    @media (orientation: portrait) and (pointer: coarse) {
+      #rotate { display: flex; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #rotate svg { animation: none; }
+    }
   </style>
 </head>
 <body>
   <div id="game"></div>
+  <div id="rotate" role="status">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>
+    </svg>
+    Rotate your phone to play
+  </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
