@@ -54,7 +54,7 @@ export class Level4UI extends Phaser.Scene {
     }
 
     private setupStormUI(): void {
-        this.add.text(this.baseX, this.baseY, 'STORM INTENSITY:', {
+        this.add.text(this.baseX, this.baseY, 'STORM', {
             fontSize: '14px',
             color: '#ffffff',
             fontFamily: 'Arial',
@@ -82,7 +82,7 @@ export class Level4UI extends Phaser.Scene {
     }
 
     private createStormIntensityBar(): void {
-        const barX = this.baseX + 115;
+        const barX = this.baseX + 60;
         const barY = this.baseY;
         const barWidth = 80;
         const barHeight = 12;
@@ -107,7 +107,7 @@ export class Level4UI extends Phaser.Scene {
 
     /** The bar used to be drawn once, so it showed level 1 for the whole level. */
     private drawStormIntensity(): void {
-        const barX = this.baseX + 115;
+        const barX = this.baseX + 60;
         const barWidth = 80;
         this.intensityFill?.clear()
             .fillStyle(0xff6600, 0.9)
