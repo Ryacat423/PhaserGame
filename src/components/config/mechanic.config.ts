@@ -205,7 +205,7 @@ export class Mechanics {
                                 warningPosition.x, warningPosition.y
                             );
 
-                            if (distance <= STRIKE_RADIUS) {
+                            if (distance <= STRIKE_RADIUS && !player.getIsHiding()) {
                                 lightningDamageDealt = true;
                                 for (let i = 0; i < LIGHTNING_DAMAGE; i++) {
                                     player.takeDamage();

@@ -133,12 +133,26 @@ export abstract class BaseLevel extends Phaser.Scene {
         }
         attachTouchControls(this);
 
-        this.getLevelSpecificUIScenes().forEach(sceneKey => {
+        const huds = this.getLevelSpecificUIScenes();
+        // Another level's HUD can still be around, paused, if you left that level from a menu.
+        BaseLevel.LEVEL_HUDS.filter(key => !huds.includes(key)).forEach(key => {
+            if (this.scene.isActive(key) || this.scene.isPaused(key)) this.scene.stop(key);
+        });
+        huds.forEach(sceneKey => {
             if (!this.scene.isActive(sceneKey)) {
                 this.scene.launch(sceneKey);
             }
         });
+
+        // Draw order: the main HUD (with its full-screen frame), this level's HUD bars over it,
+        // touch controls on top. Menus move the main HUD to the front, and nothing put it back
+        // when the next level started, so its frame covered the level 3 battery bar.
+        this.scene.bringToTop('UIScene');
+        huds.forEach(key => this.scene.bringToTop(key));
+        this.scene.bringToTop('TouchControls');
     }
+
+    private static readonly LEVEL_HUDS = ['Level2UI', 'Level3UI', 'Level4UI'];
 
     private setupAudio(): void {
         if (this.gameTheme && this.gameTheme.isPlaying) {
@@ -397,6 +411,8 @@ export abstract class BaseLevel extends Phaser.Scene {
         if (this.gameMap) {
             this.gameMap.update();
         }
+
+        this.itemSystem?.update();
 
         this.updateLevelSpecific(time, delta);
     }

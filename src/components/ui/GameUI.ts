@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { FONTS } from '../../config/fonts';
+import { prefersTouchControls } from '../../input/touchInput';
 import { storage } from '../../utils/storage';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
@@ -68,7 +69,9 @@ export class GameUI extends Phaser.Scene {
             .setScale(0.1)
             .setDepth(101)
             .setAlpha(0.5)
-            .setInteractive();
+            .setInteractive()
+            // Touch screens get a larger HIDE button from TouchControls instead.
+            .setVisible(!prefersTouchControls());
         
         this.outSound = addSceneSound(this, 'out');
         this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);

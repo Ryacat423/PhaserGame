@@ -393,7 +393,8 @@ export class Level4Scene extends BaseLevel {
                 strikeY
             );
 
-            if (distance <= this.STRIKE_RADIUS) { 
+            // A cat hiding in a box has taken cover, as the warning tells you to.
+            if (distance <= this.STRIKE_RADIUS && !this.player.getIsHiding()) {
                 this.dealLightningDamage();
             }
         }

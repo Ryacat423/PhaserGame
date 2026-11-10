@@ -110,8 +110,12 @@ export class Level3UI extends Phaser.Scene {
             this.chargeBattery(chargeAmount);
         });
 
+        // The level owns the battery; this only displays it.
         onSceneEvent(this, 'batteryLevelChanged', (data: any) => {
             this.currentBattery = data.current;
+            if (this.currentBattery > 20) {
+                this.hideLowBatteryWarning();
+            }
             this.updateBatteryBar();
         });
 

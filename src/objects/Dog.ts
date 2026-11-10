@@ -153,8 +153,23 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
         this.playInitialAnimation();
     }
     
+    /**
+     * A sleeping dog can't be shoved. Dog bodies used to be pushable (with a little bounce) in
+     * every state, so the cat or a roaming dog bumping into a sleeper slid it across the map
+     * while it kept snoring.
+     */
+    private updatePushable(): void {
+        const body = this.body as Phaser.Physics.Arcade.Body | null;
+        if (!body) return;
+        const asleep = this.currentState === Dog.SLEEP;
+        body.pushable = !asleep;
+        body.setBounce(asleep ? 0 : 0.1);
+        if (asleep) body.setVelocity(0, 0);
+    }
+
     private playInitialAnimation(): void {
         if (this.isDestroyed || !this.scene || !this.anims) return;
+        this.updatePushable();
         
         switch (this.currentState) {
             case Dog.SLEEP:
@@ -220,10 +235,16 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
             }
             
             this.stopBark();
+            // Back off for a few seconds. The dog used to start chasing again on the next frame,
+            // biting about once a second (3 lives in 2.5 s) until the cat got away.
+            this.chaseCooldownUntil = this.scene.time.now + Dog.CHASE_COOLDOWN_MS;
             if (this.behaviorType === 'SLEEPER') {
                 this.setState(Dog.RETURN_HOME);
             } else {
                 this.setState(Dog.ROAM);
+                // Turn away from the cat so it has room to escape.
+                const away = new Phaser.Math.Vector2(this.x - this.player.x, this.y - this.player.y);
+                if (away.lengthSq() > 0) this.moveDirection.copy(away.normalize());
             }
         }
     }
@@ -272,6 +293,7 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
 
     private initializeNewState(): void {
         if (this.isDestroyed) return;
+        this.updatePushable();
         switch (this.currentState) {
             case Dog.SLEEP:
                 this.safePlayAnimation('dog_sleep', true);
@@ -315,8 +337,13 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
         this.directionChangeTimer = 0;
     }
 
+    /** Game time until which this dog won't start chasing again, after catching the cat. */
+    private chaseCooldownUntil = 0;
+    private static readonly CHASE_COOLDOWN_MS = 3000;
+
     private shouldChasePlayer(): boolean {
         if (this.isDestroyed || this.isPlayerHidden) return false;
+        if (this.scene.time.now < this.chaseCooldownUntil) return false;
         
         const distance = Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y);
         return distance < this.detectionRadius;

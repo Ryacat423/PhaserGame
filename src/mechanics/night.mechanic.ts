@@ -77,11 +77,6 @@ export class NightMechanics {
             this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
             this.updateBatteryUI();
             this.updateFlashlightRadius();
-            
-            const ui = this.scene.scene.get('Level3UI');
-            if (ui && ui.scene.isActive()) {
-                ui.events.emit('batteryCollected', chargeAmount);
-            }
         });
     }
 
@@ -106,8 +101,8 @@ export class NightMechanics {
     private updateFlashlightRadius(): void {
         const percentage = this.currentBattery / this.maxBattery;
         
-        if (percentage <= 0) this.flashlightRadius = 0;
-        else if (percentage <= 0.1) this.flashlightRadius = 30;
+        if (percentage <= 0) this.flashlightRadius = 34;
+        else if (percentage <= 0.1) this.flashlightRadius = 44;
         else if (percentage <= 0.3) this.flashlightRadius = 60;
         else this.flashlightRadius = 100;
     }
@@ -121,18 +116,17 @@ export class NightMechanics {
         
         this.lightMask.clear();
         
-        if (this.currentBattery > 0) {
-            let alpha = 0.09;
-            if (this.currentBattery <= 10) {
-                alpha = Phaser.Math.FloatBetween(0.05, 0.15);
-            }
-
-            this.lightMask.fillStyle(0xffffff, alpha);
-            this.lightMask.fillCircle(this.player.x, this.player.y, this.flashlightRadius * 0.95);
-
-            this.lightMask.fillStyle(0xffffff, 0.2);
-            this.lightMask.fillCircle(this.player.x, this.player.y, this.flashlightRadius);
+        // Drawn at 0% too, as a small glow, so the cat never disappears.
+        let alpha = 0.09;
+        if (this.currentBattery <= 10) {
+            alpha = Phaser.Math.FloatBetween(0.05, 0.15);
         }
+
+        this.lightMask.fillStyle(0xffffff, alpha);
+        this.lightMask.fillCircle(this.player.x, this.player.y, this.flashlightRadius * 0.95);
+
+        this.lightMask.fillStyle(0xffffff, 0.2);
+        this.lightMask.fillCircle(this.player.x, this.player.y, this.flashlightRadius);
     }
 
     getCurrentBattery(): number {

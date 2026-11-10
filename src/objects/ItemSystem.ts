@@ -56,7 +56,6 @@ export class ItemSystem {
                 const food = new Food(this.scene, position.x, position.y, texture);
                 this.foods.push(food);
                 occupiedPositions.push(position);
-                this.scene.physics.add.overlap(this.player, food, (_, f) => this.collectFood(f as Food));
             }
         }
 
@@ -71,7 +70,6 @@ export class ItemSystem {
                 this.poisons.push(poison);
                 occupiedPositions.push(position);
 
-                this.scene.physics.add.overlap(this.player, poison, (_, p) => this.collectPoison(p as Poison));
             }
         }
 
@@ -113,9 +111,6 @@ export class ItemSystem {
                 
                 this.batteries.push(batteryObject);
                 occupiedPositions.push(position);
-                this.scene.physics.add.overlap(this.player, batterySprite, () => {
-                    this.collectBattery(batteryObject);
-                });
             } else {
                 console.warn(`Could not spawn battery ${i + 1}`);
             }
@@ -192,6 +187,26 @@ export class ItemSystem {
         return this.gameMap.getBoxes().some(box =>
             Phaser.Math.Distance.Between(box.x, box.y, x, y) < minDistance
         );
+    }
+
+    /** How close an item's centre must be to the middle of the cat's body to be picked up. */
+    private static readonly REACH = 30;
+
+    /**
+     * Picks up anything the cat's body is over. Pickups used to use the cat's physics body, which
+     * is only a footprint at its paws (so it can walk behind things), so the cat could stand
+     * visibly on top of a fish without eating it. Hiding cats don't pick things up.
+     */
+    public update(): void {
+        if (!this.player.active || this.player.getIsHiding()) return;
+        const cx = this.player.x;
+        const cy = this.player.y + 8;
+        const inReach = (o: { x: number; y: number; active?: boolean }) =>
+            o.active !== false && Phaser.Math.Distance.Between(cx, cy, o.x, o.y) < ItemSystem.REACH;
+
+        this.foods.filter(inReach).forEach(f => this.collectFood(f));
+        this.poisons.filter(inReach).forEach(p => this.collectPoison(p));
+        this.batteries.filter(b => b.sprite?.active && inReach(b.sprite)).forEach(b => this.collectBattery(b));
     }
 
     private collectFood(food: Food): void {

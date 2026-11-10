@@ -18,7 +18,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private poisonTimer: number = 0;
   private poisonDuration: number = 5000;
   private invulnerable: boolean = false;
-  private invulnerabilityDuration: number = 1000;
+  private invulnerabilityDuration: number = 2000;
   
   private isCold: boolean = false;
   private coldShiverTimer: number = 0;
@@ -67,6 +67,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     sortEveryFrame(this);
 
     this.moveSound = addSceneSound(scene, 'footsteps');
+    // A paused level stops calling update(), so the footstep loop has to be stopped here too.
+    scene.events.on(Phaser.Scenes.Events.PAUSE, this.stopFootsteps, this);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.events.off(Phaser.Scenes.Events.PAUSE, this.stopFootsteps, this));
     this.hurtSound = addSceneSound(scene, 'hurt');
 
     this.createStaminaBar();
@@ -462,6 +465,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   public setHiding(hiding: boolean): void {
     this.isHiding = hiding;
+    if (hiding) this.stopFootsteps();
+  }
+
+  private stopFootsteps(): void {
+    if (this.moveSound?.isPlaying || this.moveSound?.isPaused) this.moveSound.stop();
   }
 
   public getIsHiding(): boolean {
@@ -584,6 +592,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.disableBody(false, false);
       }
       this.setVelocity(0, 0);
+      // This used to return before the footsteps were stopped, so they kept looping in the box.
+      this.stopFootsteps();
       return;
     }
 

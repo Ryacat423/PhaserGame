@@ -17,6 +17,8 @@ export class Level2UI extends Phaser.Scene {
     private isCold: boolean = false;
 
     private isNearFire: boolean = false;
+    /** Which colour band the meter was in last update (0 = warm ... 3 = freezing). */
+    private coldBand: number = 0;
     
     private coldnessBarWidth: number = 150;
     private coldnessBarHeight: number = 20;
@@ -42,6 +44,7 @@ export class Level2UI extends Phaser.Scene {
         this.currentColdness = 0;
         this.isCold = false;
         this.isNearFire = false;
+        this.coldBand = 0;
         this.coldStatusText = undefined;
         this.coldStatusTween = undefined;
     }
@@ -149,17 +152,27 @@ export class Level2UI extends Phaser.Scene {
         const fillWidth = this.coldnessBarWidth * fillPercentage;
         
         let barColor: number;
+        let band: number;
         if (fillPercentage < 0.3) {
             barColor = 0x87CEEB;
+            band = 0;
         } else if (fillPercentage < 0.6) {
             barColor = 0x4682B4;
-            this.almostCold.play();
+            band = 1;
         } else if (fillPercentage < 0.9) {
             barColor = 0x1E90FF;
-            this.freeze.play();
+            band = 2;
         } else {
             barColor = 0x0000FF;
+            band = 3;
         }
+        // Warn once when the meter gets colder. This runs every 100 ms, and it used to restart
+        // the warning sound on every run while the meter was between 30% and 90%.
+        if (band > this.coldBand) {
+            if (band === 1) this.almostCold.play();
+            if (band === 2) this.freeze.play();
+        }
+        this.coldBand = band;
 
         this.coldnessBar.fillStyle(barColor, 0.9);
         this.coldnessBar.fillRoundedRect(

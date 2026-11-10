@@ -9,16 +9,28 @@ const KNOB_RADIUS = 28;
 /** Joystick input below this fraction of the radius is ignored. */
 const DEAD_ZONE = 0.2;
 
+/** What TouchControls needs from the level it runs over. */
+type HideableLevel = Phaser.Scene & {
+  gameMap?: { getBoxes(): { getIsPlayerNearby(): boolean }[] };
+  player?: { getIsHiding(): boolean };
+};
+
 /**
- * On-screen joystick plus Jump and Sprint buttons for touch devices. Runs on top of a level and
- * writes to `touchInput`. Hiding uses the hide button GameUI already draws bottom-right.
+ * On-screen controls for touch devices: a joystick, RUN, and HIDE. Runs on top of a level and
+ * writes to `touchInput`. There's no jump button on touch screens.
  */
 export class TouchControls extends Phaser.Scene {
   private knob!: Phaser.GameObjects.Arc;
   private stickPointerId: number | null = null;
+  private levelKey = '';
+  private hideButton!: Phaser.GameObjects.Container;
 
   constructor() {
     super({ key: 'TouchControls' });
+  }
+
+  init(data: { level?: string }): void {
+    this.levelKey = data.level ?? '';
   }
 
   create(): void {
@@ -26,10 +38,21 @@ export class TouchControls extends Phaser.Scene {
     this.stickPointerId = null;
 
     this.createJoystick();
-    this.createButton(830, 545, 'JUMP', (down) => (touchInput.jump = down));
-    this.createButton(940, 440, 'RUN', (down) => (touchInput.sprint = down));
+    this.createButton(830, 545, 'RUN', (down) => (touchInput.sprint = down));
+    // HIDE replaces GameUI's small hide icon on touch screens, where it was easy to miss.
+    this.hideButton = this.createButton(935, 470, 'HIDE', (down) => {
+      if (down) this.scene.get(this.levelKey)?.events.emit('hideButtonPressed');
+    });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => touchInput.reset());
+  }
+
+  /** HIDE is bright next to a box (or while hiding, to come out) and dim otherwise. */
+  override update(): void {
+    const level = this.scene.get(this.levelKey) as HideableLevel | null;
+    const usable = !!level?.player?.getIsHiding() ||
+      !!level?.gameMap?.getBoxes().some(box => box.getIsPlayerNearby());
+    this.hideButton.setAlpha(usable ? 1 : 0.4);
   }
 
   private createJoystick(): void {
@@ -84,17 +107,16 @@ export class TouchControls extends Phaser.Scene {
     }
   }
 
-  private createButton(x: number, y: number, label: string, onChange: (down: boolean) => void): void {
-    const button = this.add.circle(x, y, 40, 0x000000, 0.3)
+  private createButton(x: number, y: number, label: string, onChange: (down: boolean) => void): Phaser.GameObjects.Container {
+    const button = this.add.circle(0, 0, 40, 0x000000, 0.3)
       .setStrokeStyle(3, 0xffffff, 0.6)
-      .setScrollFactor(0)
-      .setDepth(1000)
       .setInteractive();
-    this.add.text(x, y, label, {
+    const text = this.add.text(0, 0, label, {
       fontFamily: FONTS.display,
       fontSize: '15px',
       color: '#ffffff'
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+    }).setOrigin(0.5);
+    const container = this.add.container(x, y, [button, text]).setScrollFactor(0).setDepth(1000);
 
     let pointerId: number | null = null;
     button.on('pointerdown', (p: Phaser.Input.Pointer) => {
@@ -110,12 +132,15 @@ export class TouchControls extends Phaser.Scene {
     };
     this.input.on('pointerup', release);
     this.input.on('pointerupoutside', release);
+    return container;
   }
 }
 
 /** Shows touch controls over `scene` on touch devices, until that scene shuts down. */
 export function attachTouchControls(scene: Phaser.Scene): void {
   if (!prefersTouchControls()) return;
-  if (!scene.scene.isActive('TouchControls')) scene.scene.launch('TouchControls');
+  // Always launch (Phaser restarts it if it's running). Checking isActive first missed the
+  // controls on a level restart: the old level's stop was still queued, so it ran afterwards.
+  scene.scene.launch('TouchControls', { level: scene.scene.key });
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.scene.stop('TouchControls'));
 }

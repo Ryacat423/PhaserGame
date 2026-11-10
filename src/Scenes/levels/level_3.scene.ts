@@ -98,13 +98,10 @@ export class Level3Scene extends BaseLevel {
     private setupBatteryEventListeners(): void {
         onSceneEvent(this, 'batteryCollected', (chargeAmount: number) => {
             this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
+            // The HUD only shows this value. It used to also get the raw charge and add it again,
+            // so the bar ran ahead of the real battery after every pickup.
             this.updateBatteryUI();
             this.updateFlashlightRadius();
-            
-            const level3UI = this.scene.get('Level3UI');
-            if (level3UI && level3UI.scene.isActive()) {
-                level3UI.events.emit('batteryCollected', chargeAmount);
-            }
         });
     }
 
@@ -130,9 +127,11 @@ export class Level3Scene extends BaseLevel {
         const batteryPercentage = this.currentBattery / this.maxBattery;
         
         if (batteryPercentage <= 0) {
-            this.flashlightRadius = 0;
+            // A faint glow, so the cat is still visible and can head for a battery. At 0 the
+            // whole screen used to go black.
+            this.flashlightRadius = 34;
         } else if (batteryPercentage <= 0.1) {
-            this.flashlightRadius = 30;
+            this.flashlightRadius = 44;
         } else if (batteryPercentage <= 0.3) {
             this.flashlightRadius = 60;
         } else {
@@ -149,18 +148,16 @@ export class Level3Scene extends BaseLevel {
         const playerY = this.player.y;
         const radius = this.flashlightRadius;
         
-        if (this.currentBattery > 0) {
-            let alpha = 0.09;
-            if (this.currentBattery <= 10) {
-                alpha = Phaser.Math.FloatBetween(0.05, 0.15);
-            }
-
-            this.lightMask.fillStyle(0xffffff, alpha);
-            this.lightMask.fillCircle(playerX, playerY, radius * 0.95);
-
-            this.lightMask.fillStyle(0xffffff, 0.2);
-            this.lightMask.fillCircle(playerX, playerY, radius);
+        let alpha = 0.09;
+        if (this.currentBattery <= 10) {
+            alpha = Phaser.Math.FloatBetween(0.05, 0.15);
         }
+
+        this.lightMask.fillStyle(0xffffff, alpha);
+        this.lightMask.fillCircle(playerX, playerY, radius * 0.95);
+
+        this.lightMask.fillStyle(0xffffff, 0.2);
+        this.lightMask.fillCircle(playerX, playerY, radius);
     }
 
     protected override cleanupLevelSpecific(): void {

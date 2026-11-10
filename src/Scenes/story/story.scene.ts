@@ -71,7 +71,8 @@ export class StoryScene extends Phaser.Scene {
     private stopAllLevelUIs(): void {
         const levelUIScenes = ['Level2UI', 'Level3UI', 'Level4UI'];
         levelUIScenes.forEach(sceneKey => {
-            if (this.scene.manager.isActive(sceneKey)) {
+            // Paused ones too: finishing a level pauses its HUD before the story starts.
+            if (this.scene.manager.isActive(sceneKey) || this.scene.manager.isPaused(sceneKey)) {
                 this.scene.stop(sceneKey);
             }
         });
