@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { loadFonts, useGameFontsByDefault } from './config/fonts';
 import { WelcomeScene } from './Scenes/welcome.scene';
 import { TutorialScene } from './Scenes/tutorial.scene';
 import { LevelsScene } from './Scenes/levels.scene';
@@ -60,9 +61,16 @@ const config: Phaser.Types.Core.GameConfig = {
   ]
 };
 
-const game = new Phaser.Game(config);
+useGameFontsByDefault();
 
-pauseWhileOffScreen(game);
+// Start once the fonts are ready, so text is never drawn in a fallback font first.
+loadFonts().then(() => {
+  const game = new Phaser.Game(config);
+  pauseWhileOffScreen(game);
+  if (import.meta.env.DEV) {
+    (window as unknown as { __game: Phaser.Game }).__game = game;
+  }
+});
 
 /**
  * Phaser already pauses when the tab is hidden. When embedded (e.g. on the portfolio), also
@@ -88,6 +96,3 @@ function pauseWhileOffScreen(game: Phaser.Game): void {
   }).observe(document.getElementById('game')!);
 }
 
-if (import.meta.env.DEV) {
-  (window as unknown as { __game: Phaser.Game }).__game = game;
-}

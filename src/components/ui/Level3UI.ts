@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
 export class Level3UI extends Phaser.Scene {
@@ -78,7 +79,7 @@ export class Level3UI extends Phaser.Scene {
             '80%', {
                 fontSize: '14px',
                 color: '#FFD700',
-                fontFamily: 'Arial',
+                fontFamily: FONTS.body,
                 stroke: '#000000',
                 strokeThickness: 1
             }
@@ -90,7 +91,7 @@ export class Level3UI extends Phaser.Scene {
             'Find batteries to recharge flashlight', {
                 fontSize: '12px',
                 color: '#ffffff',
-                fontFamily: 'Arial',
+                fontFamily: FONTS.body,
                 stroke: '#000000',
                 strokeThickness: 1
             }
@@ -167,7 +168,7 @@ export class Level3UI extends Phaser.Scene {
         
         this.lowBatteryWarning = this.add.text(210, warningY, 'LOW BATTERY!', {
             fontSize: '16px',
-            fontFamily: 'Arial Black, Arial',
+            fontFamily: FONTS.display,
             color: '#FF8800',
             stroke: '#000000',
             strokeThickness: 2,

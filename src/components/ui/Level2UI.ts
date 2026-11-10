@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
 export class Level2UI extends Phaser.Scene {
@@ -88,7 +89,7 @@ export class Level2UI extends Phaser.Scene {
             '0%', {
                 fontSize: '14px',
                 color: '#87CEEB',
-                fontFamily: 'Arial',
+                fontFamily: FONTS.body,
                 stroke: '#000000',
                 strokeThickness: 1
             }
@@ -224,7 +225,7 @@ export class Level2UI extends Phaser.Scene {
 
         this.coldStatusText = this.add.text(200, textY, 'FREEZING!', {
             fontSize: '16px',
-            fontFamily: 'Arial Black, Arial',
+            fontFamily: FONTS.display,
             color: '#87CEEB',
             stroke: '#000080',
             strokeThickness: 2,

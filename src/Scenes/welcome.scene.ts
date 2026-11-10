@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { UIManager } from "../components/ui/UIManager";
 
+/** Custom mode (the level builder) is hidden from the menu for now. */
+const SHOW_CUSTOM_MODE = false;
+
 export class WelcomeScene extends Phaser.Scene {
     private uiManager: UIManager = new UIManager(this);
     private start!: Phaser.GameObjects.Image;
@@ -58,8 +61,9 @@ export class WelcomeScene extends Phaser.Scene {
         const title = this.add.image(500, 150, 'title')
             .setDisplaySize(700, 380);
 
-        this.start = this.add.image(500, 250, 'adventure_btn').setScale(.4)
-        this.tutorial = this.add.image(500, 330, 'custom_mode_btn').setScale(.4)
+        // Custom mode is hidden for now; set SHOW_CUSTOM_MODE to bring its button back.
+        this.start = this.add.image(500, SHOW_CUSTOM_MODE ? 250 : 290, 'adventure_btn').setScale(.4)
+        this.tutorial = this.add.image(500, 330, 'custom_mode_btn').setScale(.4).setVisible(SHOW_CUSTOM_MODE)
         this.help = this.add.image(950, 50, 'btn-info').setScale(.5)
 
 
@@ -83,7 +87,7 @@ export class WelcomeScene extends Phaser.Scene {
             });
         });
      
-        this.tutorial.setInteractive().on('pointerdown', () => {
+        if (SHOW_CUSTOM_MODE) this.tutorial.setInteractive().on('pointerdown', () => {
             this.uiManager.playClickSound();
 
             this.time.delayedCall(150, () => {
@@ -107,7 +111,7 @@ export class WelcomeScene extends Phaser.Scene {
         this.createTooltip(this.help, "Character Information");
 
         this.setupButtonHover(this.start, false);
-        this.setupButtonHover(this.tutorial, false);
+        if (SHOW_CUSTOM_MODE) this.setupButtonHover(this.tutorial, false);
         this.setupButtonHover(this.help, true);
     }
                 

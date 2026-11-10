@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../config/fonts';
 import { sortEveryFrame } from '../utils/depth';
 import { addSceneSound } from '../utils/sound';
 import { sheetScale } from '../config/sprites';
@@ -287,7 +288,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     this.slowedText = this.scene.add.text(0, 0, 'SLOWED', {
       fontSize: '12px',
-      fontFamily: 'Arial Black, Arial',
+      fontFamily: FONTS.display,
       color: '#ffffff',
       stroke: '#880088',
       strokeThickness: 2,
@@ -372,7 +373,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     this.coldText = this.scene.add.text(0, 0, 'COLD', {
       fontSize: '12px',
-      fontFamily: 'Arial Black, Arial',
+      fontFamily: FONTS.display,
       color: '#87CEEB',
       stroke: '#000080',
       strokeThickness: 2,

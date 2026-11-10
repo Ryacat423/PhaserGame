@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { storage } from '../../utils/storage';
 import { showDialog } from '../../utils/dialog';
 import { Checkbox } from "../../interfaces/game.interfaces";
@@ -146,7 +147,7 @@ export class CustomPanel extends Phaser.Scene {
         this.add.text(500, 55, '🎮 CREATE CUSTOM LEVEL', {
             fontSize: '24px',
             color: '#fff5e1', 
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0.5);
     }
@@ -166,7 +167,7 @@ export class CustomPanel extends Phaser.Scene {
         this.add.text(90, 90, 'SAVE SLOTS', {
             fontSize: '16px',
             color: '#f4e1c1',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         });
 
@@ -180,7 +181,7 @@ export class CustomPanel extends Phaser.Scene {
             const slotText = this.add.text(0, -30, `Slot ${i + 1}`, {
                 fontSize: '16px',
                 color: '#f8e3c4',
-                fontFamily: 'Arial'
+                fontFamily: FONTS.body
             }).setOrigin(0.5);
 
             let contentText: Phaser.GameObjects.Text;
@@ -190,14 +191,14 @@ export class CustomPanel extends Phaser.Scene {
                 contentText = this.add.text(0, 0, level.name, {
                     fontSize: '14px',
                     color: '#d4a373',
-                    fontFamily: 'Arial'
+                    fontFamily: FONTS.body
                 }).setOrigin(0.5);
                 
                 const dateText = this.add.text(0, 20, 
                     new Date(level.dateCreated).toLocaleDateString(), {
                     fontSize: '10px',
                     color: '#b08968', 
-                    fontFamily: 'Arial'
+                    fontFamily: FONTS.body
                 }).setOrigin(0.5);
                 
                 container.add([bg, slotText, contentText, dateText]);
@@ -205,7 +206,7 @@ export class CustomPanel extends Phaser.Scene {
                 contentText = this.add.text(0, 0, 'Empty', {
                     fontSize: '14px',
                     color: '#9c6644',
-                    fontFamily: 'Arial'
+                    fontFamily: FONTS.body
                 }).setOrigin(0.5);
                 
                 container.add([bg, slotText, contentText]);
@@ -350,20 +351,20 @@ export class CustomPanel extends Phaser.Scene {
         const slotText = this.add.text(0, -30, `Slot ${index + 1}`, {
             fontSize: '16px',
             color: '#a0aec0',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0.5);
         
         const contentText = this.add.text(0, 0, level.name, {
             fontSize: '14px',
             color: '#48bb78',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0.5);
         
         const dateText = this.add.text(0, 20, 
             new Date(level.dateCreated).toLocaleDateString(), {
             fontSize: '10px',
             color: '#718096',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0.5);
         
         container.add([bg, slotText, contentText, dateText]);
@@ -411,7 +412,7 @@ export class CustomPanel extends Phaser.Scene {
         this.add.text(mechanicsStartX, mechanicsStartY - 30, 'MECHANICS:', {
             fontSize: '14px',
             color: '#cbd5e0',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0, 0.5);
         
@@ -452,7 +453,7 @@ export class CustomPanel extends Phaser.Scene {
             this.add.text(mechanicsStartX + 25, mechanic.y, mechanic.label, {
                 fontSize: '12px',
                 color: '#e2e8f0',
-                fontFamily: 'Arial'
+                fontFamily: FONTS.body
             }).setOrigin(0, 0.5);
         });
     }
@@ -473,7 +474,7 @@ export class CustomPanel extends Phaser.Scene {
         this.add.text(inputStartX - 50, inputStartY - 30, 'SPAWNS:', {
             fontSize: '14px',
             color: '#cbd5e0',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
@@ -487,7 +488,7 @@ export class CustomPanel extends Phaser.Scene {
             this.add.text(inputStartX - 50, inputStartY + index * spacing, spawnable.label, {
                 fontSize: '14px',
                 color: '#e2e8f0',
-                fontFamily: 'Arial'
+                fontFamily: FONTS.body
             }).setOrigin(0.5);
 
             this.createNumberInput(
@@ -556,20 +557,20 @@ export class CustomPanel extends Phaser.Scene {
         const numberText = this.add.text(x, y, initialValue.toString(), {
             fontSize: '14px',
             color: '#e2e8f0',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0.5, 0.5);
 
         const minusBtn = this.add.text(x - 30, y, '-', {
             fontSize: '20px',
             color: '#fc8181',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0.5).setInteractive();
 
         const plusBtn = this.add.text(x + 30, y, '+', {
             fontSize: '20px', 
             color: '#68d391',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0.5).setInteractive();
 
         const updateValue = (delta: number) => {
@@ -596,7 +597,7 @@ export class CustomPanel extends Phaser.Scene {
         this.add.text(startX + spacing, y - 50, 'SELECT MAP', {
             fontSize: '16px',
             color: '#cbd5e0',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
@@ -614,7 +615,7 @@ export class CustomPanel extends Phaser.Scene {
             this.add.text(mapImage.x, mapImage.y + 50, map.name, {
                 fontSize: '12px',
                 color: '#e2e8f0',
-                fontFamily: 'Arial',
+                fontFamily: FONTS.body,
                 fontStyle: 'bold'
             }).setOrigin(0.5, 0);
 
@@ -636,7 +637,7 @@ export class CustomPanel extends Phaser.Scene {
                 this.chosenMapText = this.add.text(580, 305, `✓ ${map.name}`, {
                     fontSize: '14px',
                     color: '#48bb78',
-                    fontFamily: 'Arial',
+                    fontFamily: FONTS.body,
                     fontStyle: 'bold'
                 }).setOrigin(0.5);
             });

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { prefersTouchControls, touchInput } from '../../input/touchInput';
 
 const STICK_X = 110;
@@ -90,7 +91,7 @@ export class TouchControls extends Phaser.Scene {
       .setDepth(1000)
       .setInteractive();
     this.add.text(x, y, label, {
-      fontFamily: 'Arial Black',
+      fontFamily: FONTS.display,
       fontSize: '15px',
       color: '#ffffff'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../config/fonts';
 import { storage } from '../utils/storage';
 import { GameUI } from "../components/ui/GameUI";
 
@@ -98,7 +99,7 @@ export class SettingScene extends Phaser.Scene {
         this.add.text(centerX, 110, '⚙️ SETTINGS', {
             fontSize: '28px',
             color: '#fff5e1',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(202);
 
@@ -140,7 +141,7 @@ export class SettingScene extends Phaser.Scene {
         this.add.text(x, y, text, {
             fontSize: '20px',
             color: '#52b788',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(202);
 
@@ -168,7 +169,7 @@ export class SettingScene extends Phaser.Scene {
         const buttonText = this.add.text(0, 0, text, {
             fontSize: `${fontSize}px`,
             color: '#fff5e1',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: text === '×' ? 'normal' : 'bold'
         }).setOrigin(0.5);
 
@@ -205,7 +206,7 @@ export class SettingScene extends Phaser.Scene {
         this.add.text(x - 230, y, label, {
             fontSize: '16px',
             color: '#f4e1c1',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0, 0.5).setDepth(202);
 
         // Slider track background
@@ -231,7 +232,7 @@ export class SettingScene extends Phaser.Scene {
         const valueText = this.add.text(x + 170, y, Math.round(value * 100) + '%', {
             fontSize: '16px',
             color: '#d4a373',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0, 0.5).setDepth(202);
 
@@ -295,7 +296,7 @@ export class SettingScene extends Phaser.Scene {
         this.add.text(x - 230, y, label, {
             fontSize: '16px',
             color: '#f4e1c1',
-            fontFamily: 'Arial'
+            fontFamily: FONTS.body
         }).setOrigin(0, 0.5).setDepth(202);
 
         // Toggle container
@@ -324,7 +325,7 @@ export class SettingScene extends Phaser.Scene {
         const stateText = this.add.text(x + 80, y, value ? 'ON' : 'OFF', {
             fontSize: '16px',
             color: value ? '#52b788' : '#9c6644',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             fontStyle: 'bold'
         }).setOrigin(0, 0.5).setDepth(202);
 

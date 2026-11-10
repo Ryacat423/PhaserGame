@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { storage } from '../../utils/storage';
 export class CustomLevels extends Phaser.Scene {
     private customSlots: Phaser.GameObjects.Container[] = [];
@@ -52,7 +53,7 @@ export class CustomLevels extends Phaser.Scene {
         this.add.text(this.scale.width / 2, 80, 'CUSTOM LEVELS', {
             fontSize: '32px',
             color: '#ffffff',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5);
@@ -70,7 +71,7 @@ export class CustomLevels extends Phaser.Scene {
         const text = this.add.text(890, 311, 'Create New Level', {
             fontSize: '14px',
             color: '#00ff00',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             align: 'center'
         }).setOrigin(0.5);
         
@@ -120,7 +121,7 @@ export class CustomLevels extends Phaser.Scene {
                 const nameText = this.add.text(0, 30, level.name, {
                     fontSize: '12px',
                     color: '#ffffff',
-                    fontFamily: 'Arial'
+                    fontFamily: FONTS.body
                 }).setOrigin(0.5);
 
                 const diffColors = {
@@ -158,7 +159,7 @@ export class CustomLevels extends Phaser.Scene {
                 this.add.text(x, startY, 'Empty', {
                     fontSize: '12px',
                     color: '#666666',
-                    fontFamily: 'Arial'
+                    fontFamily: FONTS.body
                 }).setOrigin(0.5);
             }
         }

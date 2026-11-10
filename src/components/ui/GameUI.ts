@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { storage } from '../../utils/storage';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
@@ -47,17 +48,13 @@ export class GameUI extends Phaser.Scene {
     }
 
     create() {
+        // Phaser reuses this scene object, so per-run lists start empty each time.
+        this.uiElements = [];
         this.avatarFrame = this.add.image(-10, -10, 'avatar_frame')
             .setOrigin(0)
             .setDepth(101);
 
-        // Centred in the round frame and clipped to it; it used to sit half off the top of the screen.
-        this.avatarSprite = this.add.sprite(55, 60, 'cat')
-            .setScale(sheetScale('cat', 0.2))
-            .setDepth(102)
-            .play('cat_idle');
-        const avatarMask = this.make.graphics({}, false).fillCircle(55, 55, 50);
-        this.avatarSprite.setMask(avatarMask.createGeometryMask());
+        this.createAvatar();
         
         const frame = this.add.image(0, 0, 'game_frame')
             .setOrigin(0)
@@ -84,18 +81,63 @@ export class GameUI extends Phaser.Scene {
         this.onSceneStart();
     }
 
+    /** Centre of the round avatar frame, and the radius inside its wooden rim. */
+    private static readonly AVATAR = { x: 55, y: 55, radius: 52 };
+
+    /**
+     * The pixel cat from the welcome screen, framed so only its face shows in the circle. In the
+     * 125x150 cat_idle frames the head spans x 2-92, y 4-82; its centre is at (47, 43).
+     */
+    private createAvatar(): void {
+        const { x, y, radius } = GameUI.AVATAR;
+        const scale = 1.0;
+        const headCentre = { x: 47, y: 43 };
+        const frameCentre = { x: 125 / 2, y: 150 / 2 };
+        // A little below the circle's centre, so the ears clear the rim and the chin fills the bottom.
+        const faceY = y + 9;
+
+        this.avatarSprite = this.add.sprite(
+            x - (headCentre.x - frameCentre.x) * scale,
+            faceY - (headCentre.y - frameCentre.y) * scale,
+            'cat_idle', 1
+        )
+            .setScale(scale)
+            .setDepth(102);
+        this.textures.get('cat_idle').setFilter(Phaser.Textures.FilterMode.NEAREST);
+        if (this.anims.exists('idle')) this.avatarSprite.play('idle');
+        this.time.addEvent({
+            delay: 3500,
+            loop: true,
+            callback: () => {
+                if (!this.anims.exists('blink') || !this.avatarSprite.active) return;
+                this.avatarSprite.play('blink');
+                this.avatarSprite.once('animationcomplete', () => this.avatarSprite.play('idle'));
+            }
+        });
+
+        const mask = this.make.graphics({}, false).fillCircle(x, y, radius);
+        this.avatarSprite.setMask(mask.createGeometryMask());
+    }
+
+    /** Lives as a small badge just right of the avatar: heart, then the count. */
     private setupLivesDisplay(): void {
-        // A small heart and count tucked under the frame, side by side instead of overlapping.
-        this.livesIcon = this.add.image(104, 96, 'life')
-            .setScale(0.11)
+        const badge = this.add.graphics().setDepth(101.5);
+        badge.fillStyle(0x2b1a0e, 0.72);
+        badge.fillRoundedRect(96, 82, 70, 30, 15);
+        badge.lineStyle(2, 0xe8b76a, 0.9);
+        badge.strokeRoundedRect(96, 82, 70, 30, 15);
+        this.uiElements.push(badge);
+
+        this.livesIcon = this.add.image(116, 97, 'life')
+            .setScale(0.085)
             .setDepth(102);
 
-        this.livesText = this.add.text(124, 96, `${this.playerLives}`, {
-            fontSize: '20px',
+        this.livesText = this.add.text(134, 97, `${this.playerLives}`, {
+            fontSize: '22px',
             color: '#ffffff',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 3
+            fontFamily: FONTS.display,
+            stroke: '#3a2412',
+            strokeThickness: 4
         }).setOrigin(0, 0.5).setDepth(102);
     }
 
@@ -191,7 +233,7 @@ export class GameUI extends Phaser.Scene {
         const damageText = this.add.text(150, 90, `-${damageAmount}`, {
             fontSize: '24px',
             color: '#ff0000',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             stroke: '#000000',
             strokeThickness: 2
         }).setDepth(103);
@@ -515,7 +557,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '42px',
                 color: '#00ff00',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 stroke: '#000000',
                 strokeThickness: 6
             }
@@ -528,7 +570,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '20px',
                 color: '#ffffff',
-                fontFamily: 'Arial'
+                fontFamily: FONTS.body
             }
         ).setOrigin(0.5).setDepth(202);
 
@@ -539,7 +581,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '18px',
                 color: '#ffffff',
-                fontFamily: 'Arial'
+                fontFamily: FONTS.body
             }
         ).setOrigin(0, 0.5).setDepth(202);
 
@@ -550,7 +592,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '32px',
                 color: '#00ff00',
-                fontFamily: 'Arial Black'
+                fontFamily: FONTS.display
             }
         ).setOrigin(1, 0.5).setDepth(202);
 
@@ -561,7 +603,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '20px',
                 color: '#ffffff',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 backgroundColor: '#333333',
                 padding: { x: 20, y: 10 }
             }
@@ -574,7 +616,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '20px',
                 color: '#ffffff',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 backgroundColor: '#333333',
                 padding: { x: 20, y: 10 }
             }
@@ -687,7 +729,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '42px',
                 color: '#FFD700',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 stroke: '#000000',
                 strokeThickness: 6
             }
@@ -700,7 +742,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '18px',
                 color: '#ffffff',
-                fontFamily: 'Arial'
+                fontFamily: FONTS.body
             }
         ).setOrigin(0, 0.5).setDepth(202);
 
@@ -711,7 +753,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '32px',
                 color: '#00ff00',
-                fontFamily: 'Arial Black'
+                fontFamily: FONTS.display
             }
         ).setOrigin(1, 0.5).setDepth(202);
 
@@ -722,7 +764,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '20px',
                 color: '#ffffff',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 backgroundColor: '#333333',
                 padding: { x: 20, y: 10 }
             }
@@ -735,7 +777,7 @@ export class GameUI extends Phaser.Scene {
             {
                 fontSize: '20px',
                 color: '#ffffff',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 backgroundColor: '#333333',
                 padding: { x: 20, y: 10 }
             }
@@ -847,7 +889,7 @@ export class GameUI extends Phaser.Scene {
         const panel = this.add.image(cx, this.scale.height / 2, texture).setDepth(200);
         const lives = this.add.text(640, 385, `${this.playerLives}`, {
             fontSize: '44px',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             color: '#ffffff',
             stroke: '#5a3a1a',
             strokeThickness: 8

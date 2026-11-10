@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { LEVEL_2, LevelLayout } from '../../config/layouts';
 import { onGameEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
@@ -183,7 +184,7 @@ export class Level2Scene extends BaseLevel {
         const damageText = this.add.text(this.player.x, this.player.y - 30, 'OUCH!', {
             fontSize: '16px',
             color: '#ff4444',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             stroke: '#000000',
             strokeThickness: 2
         }).setDepth(10);

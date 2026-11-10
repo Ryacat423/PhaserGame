@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../config/fonts';
 import { CUSTOM_SNOW } from '../config/layouts';
 import { sortOnce } from '../utils/depth';
 import { addSceneSound } from '../utils/sound';
@@ -132,7 +133,7 @@ export class SnowMechanic {
         const damageText = this.scene.add.text(this.player.x, this.player.y - 30, 'OUCH!', {
             fontSize: '16px',
             color: '#ff4444',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             stroke: '#000000',
             strokeThickness: 2
         }).setDepth(10);

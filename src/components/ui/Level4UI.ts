@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 export class Level4UI extends Phaser.Scene {
     private stormWarning?: Phaser.GameObjects.Text;
@@ -57,7 +58,7 @@ export class Level4UI extends Phaser.Scene {
         this.add.text(this.baseX, this.baseY, 'STORM', {
             fontSize: '14px',
             color: '#ffffff',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             stroke: '#000000',
             strokeThickness: 1
         }).setDepth(102).setScrollFactor(0);
@@ -65,7 +66,7 @@ export class Level4UI extends Phaser.Scene {
         this.lightningCounter = this.add.text(this.baseX, this.baseY + 20, `Lightning Strikes: ${this.lightningStrikes}`, {
             fontSize: '12px',
             color: '#ffff88',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             stroke: '#000000',
             strokeThickness: 1
         }).setDepth(102).setScrollFactor(0);
@@ -73,7 +74,7 @@ export class Level4UI extends Phaser.Scene {
         this.nextStrikeTimer = this.add.text(this.baseX, this.baseY + 35, `Next Strike: ${this.timeToNextStrike}s`, {
             fontSize: '12px',
             color: '#88ffff',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             stroke: '#000000',
             strokeThickness: 1
         }).setDepth(102).setScrollFactor(0);
@@ -97,7 +98,7 @@ export class Level4UI extends Phaser.Scene {
         this.intensityLabel = this.add.text(barX + barWidth + 10, barY - 2, '', {
             fontSize: '12px',
             color: '#ff6600',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             stroke: '#000000',
             strokeThickness: 1
         }).setDepth(102).setScrollFactor(0);
@@ -179,7 +180,7 @@ export class Level4UI extends Phaser.Scene {
             '⚡ LIGHTNING INCOMING! TAKE COVER! ⚡', 
             {
                 fontSize: '18px',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 color: '#ffff00',
                 stroke: '#ff0000',
                 strokeThickness: 3,
@@ -278,7 +279,7 @@ export class Level4UI extends Phaser.Scene {
             `STORM INTENSITY INCREASED TO LEVEL ${this.stormIntensity}!`,
             {
                 fontSize: '24px',
-                fontFamily: 'Arial Black',
+                fontFamily: FONTS.display,
                 color: '#ff6600',
                 stroke: '#000000',
                 strokeThickness: 2

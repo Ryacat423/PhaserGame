@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../config/fonts';
 import { storage } from '../utils/storage';
 import { sheetScale } from '../config/sprites';
 export class LevelsScene extends Phaser.Scene {
@@ -39,7 +40,7 @@ export class LevelsScene extends Phaser.Scene {
         this.add.text(this.scale.width / 2, 100, 'SELECT LEVEL', {
             fontSize: '32px',
             color: '#ffffff',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5);

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS } from '../../config/fonts';
 import { addSceneSound } from '../../utils/sound';
 import { UIManager } from '../../components/ui/UIManager';
 
@@ -320,7 +321,7 @@ export class StoryScene extends Phaser.Scene {
 
         this.speakerText = this.add.text(60, 20, '', {
             fontSize: '24px',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             color: '#FFD700',
             stroke: '#000000',
             strokeThickness: 3
@@ -328,7 +329,7 @@ export class StoryScene extends Phaser.Scene {
 
         this.dialogueText = this.add.text(60, 60, '', {
             fontSize: '18px',
-            fontFamily: 'Arial',
+            fontFamily: FONTS.body,
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 2,
@@ -386,7 +387,7 @@ export class StoryScene extends Phaser.Scene {
         
         const buttonText = this.add.text(0, 0, 'SKIP', {
             fontSize: '16px',
-            fontFamily: 'Arial Black',
+            fontFamily: FONTS.display,
             color: '#ffffff'
         }).setOrigin(0.5);
 
