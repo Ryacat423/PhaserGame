@@ -1,59 +1,43 @@
-# Project
+# Sneaky Mingming
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.15.
+A top-down stealth game built with Phaser 3 and TypeScript. Mingming the cat sneaks
+around sleeping and roaming dogs to collect food, hiding in boxes when they wake. Four
+levels add their own mechanics (snow and a campfire, a night level with a flashlight
+battery, a lightning storm), and a custom mode lets you combine mechanics into your own levels.
 
-## Development server
+Plays with a keyboard (WASD to move, Shift to run, F to jump, Space to hide) or with
+on-screen controls on phones and tablets.
 
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Development
 
 ```bash
-ng generate component component-name
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # type-check, then build to dist/
+npm run preview    # serve the production build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Project layout
 
-```bash
-ng generate --help
-```
+- `src/main.ts` — game config and scene list
+- `src/Scenes/` — menus, story, tutorial, and levels (`levels/base_level.ts` holds shared level logic)
+- `src/objects/` — player, dogs, boxes, food, obstacles
+- `src/mechanics/`, `src/components/config/` — snow, night and lightning mechanics for custom levels
+- `src/components/ui/` — HUD scenes (`GameUI`, per-level UIs, `TouchControls`)
+- `src/config/sprites.ts` — spritesheet frame sizes and the scale helpers that go with them
+- `src/utils/` — scene-scoped sounds and event listeners, safe storage, lazy dialogs
+- `public/assets/` — images (WebP) and audio (MP3)
 
-## Building
+## Assets
 
-To build the project run:
+`scripts/optimize-assets.mjs` repacked the spritesheets, converted images to WebP and re-encoded
+audio. It was run once; the original files are in git history. If you change a sheet's frame size,
+update `src/config/sprites.ts` to match. `scripts/asset-report.mjs` lists every asset with its
+size and whether the code references it.
 
-```bash
-ng build
-```
+Menu assets load before the first screen. Level assets load in the background once the menu is up.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Deploying
 
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The game is deployed on Vercel as a static site (`vercel.json`). The portfolio at ryacat.com
+embeds it in an iframe; the `frame-ancestors` header limits which sites can embed it.

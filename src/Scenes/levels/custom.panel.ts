@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { storage } from '../../utils/storage';
+import { showDialog } from '../../utils/dialog';
 import { Checkbox } from "../../interfaces/game.interfaces";
-import Swal from "sweetalert2";
 
 interface SavedLevel {
     name: string;
@@ -307,7 +307,7 @@ export class CustomPanel extends Phaser.Scene {
         const levelName = this.levelNameInput?.value || `Level ${Date.now()}`;
         
         if (this.selectedSlot === -1) {
-            Swal.fire({
+            showDialog({
                 title: 'Select a Slot',
                 text: 'Please select a save slot first',
                 icon: 'warning'
@@ -326,7 +326,7 @@ export class CustomPanel extends Phaser.Scene {
         
         this.updateSlotDisplay(this.selectedSlot);
         
-        Swal.fire({
+        showDialog({
             title: 'Level Saved!',
             text: `${levelName} saved to Slot ${this.selectedSlot + 1}`,
             icon: 'success',
@@ -377,7 +377,7 @@ export class CustomPanel extends Phaser.Scene {
 
     private deleteSelectedLevel(): void {
         if (this.selectedSlot === -1 || this.selectedSlot >= this.savedLevels.length) {
-            Swal.fire({
+            showDialog({
                 title: 'No Level Selected',
                 text: 'Please select a saved level to delete',
                 icon: 'warning'
@@ -385,7 +385,7 @@ export class CustomPanel extends Phaser.Scene {
             return;
         }
 
-        Swal.fire({
+        showDialog({
             title: 'Delete Level?',
             text: `Delete ${this.savedLevels[this.selectedSlot].name}?`,
             icon: 'warning',

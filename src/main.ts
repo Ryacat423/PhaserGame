@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import 'sweetalert2/dist/sweetalert2.min.css';
 import { WelcomeScene } from './Scenes/welcome.scene';
 import { TutorialScene } from './Scenes/tutorial.scene';
 import { LevelsScene } from './Scenes/levels.scene';
