@@ -39,5 +39,17 @@ Menu assets load before the first screen. Level assets load in the background on
 
 ## Deploying
 
-The game is deployed on Vercel as a static site (`vercel.json`). The portfolio at ryacat.com
-embeds it in an iframe; the `frame-ancestors` header limits which sites can embed it.
+The game is deployed on Vercel as a static site (`vercel.json`) at https://play.ryacat.com. The portfolio
+at ryacat.com embeds it in a sandboxed iframe. The `frame-ancestors` header only allows ryacat.com (and
+localhost, for development) to embed it, so other sites can't frame the game.
+
+## Credits
+
+The code and game design are by Ramil Yacat. The artwork, music and sound effects come from free game-asset
+sites and are not my own work. This is a free, non-commercial student project; the assets are not sold or
+distributed separately from the game.
+
+<!-- TODO: list each asset pack with its creator, source link and license. -->
+
+If you created an asset used here and want a different credit or for it to be removed, open an issue on this
+repository.
