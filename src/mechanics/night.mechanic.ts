@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onSceneEvent } from '../utils/events';
+import { addSceneSound } from '../utils/sound';
 export class NightMechanics {
     private scene: Phaser.Scene;
     private player: any;
@@ -37,8 +39,8 @@ export class NightMechanics {
     }
 
     private setupAmbience(): void {
-        this.ambience = this.scene.sound.add('night-ambience', { loop: true, volume: 1 });
-        this.owlHoot = this.scene.sound.add('owl-hoot', { loop: true, volume: 1 });
+        this.ambience = addSceneSound(this.scene, 'night-ambience', { loop: true, volume: 1 });
+        this.owlHoot = addSceneSound(this.scene, 'owl-hoot', { loop: true, volume: 1 });
         
         this.ambience.play();
         this.scene.time.addEvent({
@@ -71,7 +73,7 @@ export class NightMechanics {
     }
 
     private setupEventListeners(): void {
-        this.scene.events.on('batteryCollected', (chargeAmount: number) => {
+        onSceneEvent(this.scene, 'batteryCollected', (chargeAmount: number) => {
             this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
             this.updateBatteryUI();
             this.updateFlashlightRadius();

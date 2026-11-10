@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onGameEvent, onSceneEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 export class Level2UI extends Phaser.Scene {
     private coldnessBar!: Phaser.GameObjects.Graphics;
     private coldnessBarBg!: Phaser.GameObjects.Graphics;
@@ -34,10 +36,19 @@ export class Level2UI extends Phaser.Scene {
         this.load.audio('freeze', 'assets/global/audio/freezing.mp3');
     }
 
+    /** Phaser reuses the scene instance, so state has to be reset on every launch. */
+    init() {
+        this.currentColdness = 0;
+        this.isCold = false;
+        this.isNearFire = false;
+        this.coldStatusText = undefined;
+        this.coldStatusTween = undefined;
+    }
+
     create() {
         this.adjustPosition();
-        this.almostCold = this.sound.add('almostFreeze').setVolume(1);
-        this.freeze = this.sound.add('freeze').setVolume(1);
+        this.almostCold = addSceneSound(this, 'almostFreeze').setVolume(1);
+        this.freeze = addSceneSound(this, 'freeze').setVolume(1);
 
         this.setupColdnessBar();
         this.setupEventListeners();
@@ -92,15 +103,15 @@ export class Level2UI extends Phaser.Scene {
                 this.resetColdness();
             }
         };
-        this.events.on('playerNearFire', (isNear: boolean) => {
+        onSceneEvent(this, 'playerNearFire', (isNear: boolean) => {
             this.isNearFire = isNear;
         });
 
-        this.events.on('playerOnFire', () => {
+        onSceneEvent(this, 'playerOnFire', () => {
             this.handleFireDamage();
         });
-        this.game.events.on('levelStarted', resetColdness);
-        this.game.events.on('levelReset', resetColdness);
+        onGameEvent(this, 'levelStarted', resetColdness);
+        onGameEvent(this, 'levelReset', resetColdness);
     }
 
     private startColdnessSystem(): void {

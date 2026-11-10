@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onSceneEvent } from '../utils/events';
+import { addSceneSound } from '../utils/sound';
 import { sheetPx, sheetScale } from '../config/sprites';
 import { Player } from "./Player";
 
@@ -186,8 +188,8 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
 
     private setupAudio(scene: Phaser.Scene): void {
         try {
-            this.bark = scene.sound.add('bark', { volume: 0.6 });
-            this.meow = scene.sound.add('meow', { volume: 0.4 });
+            this.bark = addSceneSound(scene, 'bark', { volume: 0.6 });
+            this.meow = addSceneSound(scene, 'meow', { volume: 0.4 });
         } catch (error) {
             console.warn('Could not setup audio for dog:', error);
         }
@@ -196,8 +198,8 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
     private setupEventListeners(scene: Phaser.Scene): void {
         if (!scene.events) return;
         
-        scene.events.on('playerHidden', () => this.onPlayerHidden());
-        scene.events.on('playerVisible', () => this.onPlayerVisible());
+        onSceneEvent(scene, 'playerHidden', () => this.onPlayerHidden());
+        onSceneEvent(scene, 'playerVisible', () => this.onPlayerVisible());
         
         scene.events.once('shutdown', () => {
             this.isDestroyed = true;

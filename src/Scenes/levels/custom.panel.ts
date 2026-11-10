@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { storage } from '../../utils/storage';
 import { Checkbox } from "../../interfaces/game.interfaces";
 import Swal from "sweetalert2";
 
@@ -64,7 +65,7 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private loadSavedLevels(): void {
-        const saved = localStorage.getItem('customLevels');
+        const saved = storage.getItem('customLevels');
         if (saved) {
             try {
                 this.savedLevels = JSON.parse(saved);
@@ -77,7 +78,7 @@ export class CustomPanel extends Phaser.Scene {
     }
 
     private saveLevels(): void {
-        localStorage.setItem('customLevels', JSON.stringify(this.savedLevels));
+        storage.setItem('customLevels', JSON.stringify(this.savedLevels));
     }
 
     preload(): void {

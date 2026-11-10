@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../utils/sound';
 import { sheetScale } from '../config/sprites';
 export class SnowMechanic {
     private scene: Phaser.Scene;
@@ -36,9 +37,9 @@ export class SnowMechanic {
     }
 
     private setupSounds(): void {
-        this.firewoodSound = this.scene.sound.add('firewood', { volume: 0.8 });
-        this.catBurned = this.scene.sound.add('cat_burned', { volume: 0.7 });
-        this.burned = this.scene.sound.add('burned', { volume: 0.9 });
+        this.firewoodSound = addSceneSound(this.scene, 'firewood', { volume: 0.8 });
+        this.catBurned = addSceneSound(this.scene, 'cat_burned', { volume: 0.7 });
+        this.burned = addSceneSound(this.scene, 'burned', { volume: 0.9 });
     }
 
     private createSnowElements(): void {

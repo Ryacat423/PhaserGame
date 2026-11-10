@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { storage } from '../../utils/storage';
+import { onGameEvent, onSceneEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 import { sheetScale } from '../../config/sprites';
 export class GameUI extends Phaser.Scene {
     private uiElements: Phaser.GameObjects.GameObject[] = [];
@@ -67,7 +70,7 @@ export class GameUI extends Phaser.Scene {
             .setAlpha(0.5)
             .setInteractive();
         
-        this.outSound = this.sound.add('out');
+        this.outSound = addSceneSound(this, 'out');
         this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);
         this.setupLivesDisplay();
         this.setupFoodDisplay();
@@ -105,7 +108,7 @@ export class GameUI extends Phaser.Scene {
     private loadSavedLives(): void {
         this.currentGameMode = this.determineGameMode();
         const storageKey = this.getLifeStorageKey();
-        const savedLives = localStorage.getItem(storageKey);
+        const savedLives = storage.getItem(storageKey);
         
         if (savedLives) {
             try {
@@ -122,7 +125,7 @@ export class GameUI extends Phaser.Scene {
 
     private saveLives(): void {
         const storageKey = this.getLifeStorageKey();
-        localStorage.setItem(storageKey, this.playerLives.toString());
+        storage.setItem(storageKey, this.playerLives.toString());
     }
 
     private updateLivesDisplay(): void {
@@ -497,54 +500,44 @@ export class GameUI extends Phaser.Scene {
     }
 
     private setupEventListeners() {
-        this.events.off('playerNearBox');
-        this.events.off('playerHitByDog');
-        this.events.off('sceneStarted');
-        this.game.events.off('levelStarted');
-        this.game.events.off('levelReset');
-        this.game.events.off('foodCollected');
-        this.game.events.off('levelCompleted');
-        this.game.events.off('hideUIForStory');
-        this.game.events.off('showUIForStory');
-
-        this.events.on('playerNearBox', (isNear: boolean) => {
+        onSceneEvent(this, 'playerNearBox', (isNear: boolean) => {
             this.setHideButtonEnabled(isNear);
         });
 
-        this.events.on('playerHitByDog', () => {
+        onSceneEvent(this, 'playerHitByDog', () => {
             console.log('UI: Player hit by dog');
             this.loseLife(1);
         });
         
-        this.events.on('sceneStarted', () => {
+        onSceneEvent(this, 'sceneStarted', () => {
             this.onSceneStart();
         });
 
-        this.game.events.on('levelStarted', () => {
-            this.onSceneStart();
-            this.setupFoodCounter();
-            this.stopOtherLevelUIs();
-        });
-
-        this.game.events.on('levelReset', () => {
+        onGameEvent(this, 'levelStarted', () => {
             this.onSceneStart();
             this.setupFoodCounter();
             this.stopOtherLevelUIs();
         });
 
-        this.game.events.on('foodCollected', (collected: number, total: number) => {
+        onGameEvent(this, 'levelReset', () => {
+            this.onSceneStart();
+            this.setupFoodCounter();
+            this.stopOtherLevelUIs();
+        });
+
+        onGameEvent(this, 'foodCollected', (collected: number, total: number) => {
             this.updateFoodCounter(collected, total);
         });
 
-        this.game.events.on('hideUIForStory', () => {
+        onGameEvent(this, 'hideUIForStory', () => {
             this.hideUIElements();
         });
 
-        this.game.events.on('showUIForStory', () => {
+        onGameEvent(this, 'showUIForStory', () => {
             this.showUIElements();
         });
 
-        this.game.events.on('levelCompleted', () => {
+        onGameEvent(this, 'levelCompleted', () => {
             this.foodCounterText.setText("All foods collected!");
             this.foodCounterText.setColor('#00ff00');
 
@@ -1042,7 +1035,7 @@ export class GameUI extends Phaser.Scene {
         }
 
         let progress = { completedLevels: 0 };
-        const saved = localStorage.getItem('gameProgress');
+        const saved = storage.getItem('gameProgress');
         if (saved) {
             try {
                 progress = JSON.parse(saved);
@@ -1053,7 +1046,7 @@ export class GameUI extends Phaser.Scene {
 
         if (levelNumber > progress.completedLevels) {
             progress.completedLevels = levelNumber;
-            localStorage.setItem('gameProgress', JSON.stringify(progress));
+            storage.setItem('gameProgress', JSON.stringify(progress));
             console.log(`Level ${levelNumber} completed! Next level unlocked.`);
         }
     }
@@ -1079,7 +1072,7 @@ export class GameUI extends Phaser.Scene {
                 return;
         }
 
-        const progress = localStorage.getItem('gameProgress');
+        const progress = storage.getItem('gameProgress');
         let completedLevels = 0;
         if (progress) {
             try {

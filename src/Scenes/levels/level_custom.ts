@@ -1,3 +1,4 @@
+import { storage } from '../../utils/storage';
 import { LevelConfiguration } from "../../components/config/level.config";
 import { Mechanics } from "../../components/config/mechanic.config";
 import { ItemSpawnConfig } from "../../interfaces/game.interfaces";
@@ -20,7 +21,7 @@ export class LevelCustom extends BaseLevel {
         } else if (data && data.config) {
             this.customConfig = data.config;
         } else {
-            const savedConfig = localStorage.getItem('customLevelConfig');
+            const savedConfig = storage.getItem('customLevelConfig');
             if (savedConfig) {
                 try {
                     this.customConfig = JSON.parse(savedConfig);

@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onGameEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 import { sheetScale } from '../../config/sprites';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
@@ -62,7 +64,7 @@ export class Level2Scene extends BaseLevel {
         this.setupFireSounds();
         this.createSnowElements();
         this.setupFireMechanics();
-        this.game.events.on('levelCompleted', () => {
+        onGameEvent(this, 'levelCompleted', () => {
             this.onLevelComplete();
         });
     }
@@ -96,9 +98,9 @@ export class Level2Scene extends BaseLevel {
     }
 
     private setupFireSounds(): void {
-        this.firewoodSound = this.sound.add('firewood', { volume: 0.8 });
-        this.catBurnedSound = this.sound.add('cat_burned', { volume: 0.7 });
-        this.burnedSound = this.sound.add('burned', { volume: 0.9 });
+        this.firewoodSound = addSceneSound(this, 'firewood', { volume: 0.8 });
+        this.catBurnedSound = addSceneSound(this, 'cat_burned', { volume: 0.7 });
+        this.burnedSound = addSceneSound(this, 'burned', { volume: 0.9 });
     }
 
     private createSnowElements(): void {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../utils/sound';
 import { sheetPx, sheetScale } from '../config/sprites';
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursor: any;
@@ -61,8 +62,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body?.setOffset(sheetPx('cat', 110), sheetPx('cat', 180));
     this.setDepth(3);
 
-    this.moveSound = scene.sound.add('footsteps');
-    this.hurtSound = scene.sound.add('hurt');
+    this.moveSound = addSceneSound(scene, 'footsteps');
+    this.hurtSound = addSceneSound(scene, 'hurt');
 
     this.createStaminaBar();
   }

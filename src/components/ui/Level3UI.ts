@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onGameEvent, onSceneEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 export class Level3UI extends Phaser.Scene {
     private batteryBar!: Phaser.GameObjects.Graphics;
     private batteryBarBg!: Phaser.GameObjects.Graphics;
@@ -25,9 +27,16 @@ export class Level3UI extends Phaser.Scene {
         this.load.audio('lowBatteryWarning', 'assets/global/audio/battery_low.mp3');
     }
 
+    /** Phaser reuses the scene instance, so state has to be reset on every launch. */
+    init() {
+        this.currentBattery = 80;
+        this.lowBatteryWarning = undefined;
+        this.lowBatteryTween = undefined;
+    }
+
     create() {
         this.adjustPosition();
-        this.lowBatterySound = this.sound.add('lowBatteryWarning').setVolume(0.8);
+        this.lowBatterySound = addSceneSound(this, 'lowBatteryWarning').setVolume(0.8);
 
         this.setupBatteryBar();
         this.setupEventListeners();
@@ -96,17 +105,17 @@ export class Level3UI extends Phaser.Scene {
                 this.resetBattery();
             }
         };
-        this.events.on('batteryCollected', (chargeAmount: number) => {
+        onSceneEvent(this, 'batteryCollected', (chargeAmount: number) => {
             this.chargeBattery(chargeAmount);
         });
 
-        this.events.on('batteryLevelChanged', (data: any) => {
+        onSceneEvent(this, 'batteryLevelChanged', (data: any) => {
             this.currentBattery = data.current;
             this.updateBatteryBar();
         });
 
-        this.game.events.on('levelStarted', resetBatteries);
-        this.game.events.on('levelReset', resetBatteries);
+        onGameEvent(this, 'levelStarted', resetBatteries);
+        onGameEvent(this, 'levelReset', resetBatteries);
     }
 
     private updateBatteryBar(): void {

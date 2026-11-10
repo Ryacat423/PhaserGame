@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../../utils/sound';
 import { SHEETS, SheetKey, sheetScale } from '../../config/sprites';
 interface SoundCollection {
     click?: Phaser.Sound.BaseSound;
@@ -227,9 +228,9 @@ export class UIManager {
     }
 
     initSounds(): void {
-        this.theme = this.scene.sound.add('theme', {loop: true});
-        this.meow = this.scene.sound.add('meow');
-        this.sounds.click = this.scene.sound.add('click', { volume: 0.3 });
+        this.theme = addSceneSound(this.scene, 'theme', {loop: true});
+        this.meow = addSceneSound(this.scene, 'meow');
+        this.sounds.click = addSceneSound(this.scene, 'click', { volume: 0.3 });
 
         if (!this.theme.isPlaying) {
             this.theme.play();

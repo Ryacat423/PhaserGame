@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { storage } from '../../utils/storage';
 export class CustomLevels extends Phaser.Scene {
     private customSlots: Phaser.GameObjects.Container[] = [];
     private savedLevels: any[] = [];
@@ -37,7 +38,7 @@ export class CustomLevels extends Phaser.Scene {
     }
 
     private loadCustomLevels(): void {
-        const saved = localStorage.getItem('customLevels');
+        const saved = storage.getItem('customLevels');
         if (saved) {
             try {
                 this.savedLevels = JSON.parse(saved);

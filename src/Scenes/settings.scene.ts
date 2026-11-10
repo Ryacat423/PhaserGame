@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { storage } from '../utils/storage';
 import { GameUI } from "../components/ui/GameUI";
 
 export class SettingScene extends Phaser.Scene {
@@ -371,7 +372,7 @@ export class SettingScene extends Phaser.Scene {
     }
 
     private loadSettings(): void {
-        const savedSettings = localStorage.getItem('gameSettings');
+        const savedSettings = storage.getItem('gameSettings');
         if (savedSettings) {
             const settings = JSON.parse(savedSettings);
             this.masterVolume = settings.masterVolume ?? 1;
@@ -391,7 +392,7 @@ export class SettingScene extends Phaser.Scene {
             isFullscreen: this.isFullscreen
         };
 
-        localStorage.setItem('gameSettings', JSON.stringify(settings));
+        storage.setItem('gameSettings', JSON.stringify(settings));
         this.game.events.emit('settingsUpdated', settings);
     }
 

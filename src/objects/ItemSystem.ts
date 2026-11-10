@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../utils/sound';
 import { Food } from "./Food";
 import { Poison } from "./Poison";
 import { Player } from "./Player";
@@ -24,9 +25,9 @@ export class ItemSystem {
         this.player = player;
         this.gameMap = gameMap;
         
-        this.eatSound = scene.sound.add('eat', { volume: 0.5 });
-        this.poisonSound = scene.sound.add('slow', { volume: 1}); 
-        this.lvlComplete = scene.sound.add('lvl-complete').setVolume(0.8);
+        this.eatSound = addSceneSound(scene, 'eat', { volume: 0.5 });
+        this.poisonSound = addSceneSound(scene, 'slow', { volume: 1}); 
+        this.lvlComplete = addSceneSound(scene, 'lvl-complete').setVolume(0.8);
     }
 
     public spawnItems(config: ItemSpawnConfig): void {

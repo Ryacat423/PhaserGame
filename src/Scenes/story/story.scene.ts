@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../../utils/sound';
 import { UIManager } from '../../components/ui/UIManager';
 
 /** A full bolt from the lightning spritesheet, used as the story's lightning icon. */
@@ -258,7 +259,7 @@ export class StoryScene extends Phaser.Scene {
                 return;
             }
             
-            const music = this.sound.add(musicConfig.key, { 
+            const music = addSceneSound(this, musicConfig.key, { 
                 loop: true,
                 volume: musicConfig.volume 
             });

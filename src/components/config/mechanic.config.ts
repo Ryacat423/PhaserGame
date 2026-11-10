@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../../utils/sound';
 // Create this file as: components/config/mechanic.config.ts
 
 import { SnowMechanic } from "../../mechanics/snow.mechanics";
@@ -108,9 +109,9 @@ export class Mechanics {
 
             create: () => {
                 // Setup sounds
-                warningSound = scene.sound.add('lightning_charge');
-                lightningStrike = scene.sound.add('lightning_strike');
-                rain = scene.sound.add('rain', { loop: true }).setVolume(0.1);
+                warningSound = addSceneSound(scene, 'lightning_charge');
+                lightningStrike = addSceneSound(scene, 'lightning_strike');
+                rain = addSceneSound(scene, 'rain', { loop: true }).setVolume(0.1);
                 rain.play();
 
                 // Create rain particles
@@ -164,6 +165,7 @@ export class Mechanics {
 
                     lightningWarning.clear();
                     lightningWarning.setVisible(true);
+                    scene.scene.get('Level4UI')?.events.emit('lightningWarning', WARNING_DURATION);
 
                     const updateWarning = () => {
                         if (!isLightningActive) return;
@@ -193,6 +195,7 @@ export class Mechanics {
                         lightningSprite.setVisible(true);
                         lightningSprite.play('strike');
                         lightningStrike.play();
+                        scene.scene.get('Level4UI')?.events.emit('lightningStrike');
 
                         scene.cameras.main.flash(200, 255, 255, 255, false);
 

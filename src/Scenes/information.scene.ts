@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { addSceneSound } from '../utils/sound';
 import { sheetScale } from '../config/sprites';
 export class InformationScene extends Phaser.Scene {
     constructor() {
@@ -28,9 +29,9 @@ export class InformationScene extends Phaser.Scene {
     }
 
     create(): void  {
-        this.click = this.sound.add('click');
-        this.meow = this.sound.add('meow');
-        this.bark = this.sound.add('bark-once');
+        this.click = addSceneSound(this, 'click');
+        this.meow = addSceneSound(this, 'meow');
+        this.bark = addSceneSound(this, 'bark-once');
 
         this.add.image(0, 0, 'information_bg')
             .setOrigin(0, 0)

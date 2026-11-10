@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onGameEvent, onSceneEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 import { UIManager } from '../../components/ui/UIManager';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
@@ -80,7 +82,7 @@ export abstract class BaseLevel extends Phaser.Scene {
             this.gameTheme.stop();
         }
         
-        this.gameTheme = this.sound.add(this.getThemeAudioKey(), { 
+        this.gameTheme = addSceneSound(this, this.getThemeAudioKey(), { 
             loop: true 
         }).setVolume(this.getThemeVolume());
         this.gameTheme.play({ loop: true });
@@ -142,24 +144,24 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     private setupBoxEventListeners(): void {
-        this.events.on('playerNearBox', (isNear: boolean) => {
+        onSceneEvent(this, 'playerNearBox', (isNear: boolean) => {
             const uiScene = this.scene.get('UIScene');
             if (uiScene && uiScene.scene.isActive()) {
                 uiScene.events.emit('playerNearBox', isNear);
             }
         });
         
-        this.events.on('hideButtonPressed', () => {
+        onSceneEvent(this, 'hideButtonPressed', () => {
             this.handleHideAction();
         });
     }
 
     private setupSceneEventListeners(): void {
-        this.events.on('beforeSceneRestart', () => {
+        onSceneEvent(this, 'beforeSceneRestart', () => {
             this.cleanupBeforeRestart();
         });
 
-        this.game.events.on('returnToWelcome', () => {
+        onGameEvent(this, 'returnToWelcome', () => {
             this.cleanupBeforeExit();
             this.stopLevelSpecificUIScenes();
             this.scene.stop('UIScene');

@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onSceneEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
@@ -62,8 +64,8 @@ export class Level3Scene extends BaseLevel {
     }
 
     private setupNightAmbience(): void {
-        this.ambience = this.sound.add('night-ambience', { loop: true, volume: 1 });
-        this.owlHoot = this.sound.add('owl-hoot', { loop: true, volume: 1 });
+        this.ambience = addSceneSound(this, 'night-ambience', { loop: true, volume: 1 });
+        this.owlHoot = addSceneSound(this, 'owl-hoot', { loop: true, volume: 1 });
         
         this.ambience.play();
         this.time.addEvent({
@@ -105,7 +107,7 @@ export class Level3Scene extends BaseLevel {
     }
 
     private setupBatteryEventListeners(): void {
-        this.events.on('batteryCollected', (chargeAmount: number) => {
+        onSceneEvent(this, 'batteryCollected', (chargeAmount: number) => {
             this.currentBattery = Math.min(this.maxBattery, this.currentBattery + chargeAmount);
             this.updateBatteryUI();
             this.updateFlashlightRadius();

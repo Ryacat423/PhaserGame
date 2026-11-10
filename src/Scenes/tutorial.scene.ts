@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onGameEvent, onSceneEvent } from '../utils/events';
+import { addSceneSound } from '../utils/sound';
 import { UIManager } from '../components/ui/UIManager';
 import { Player } from "../objects/Player";
 import { Dog } from "../objects/Dog";
@@ -33,7 +35,7 @@ export class TutorialScene extends Phaser.Scene {
             this.gameTheme.stop();
         }
         
-        this.gameTheme = this.sound.add('game_theme', { loop: true }).setVolume(0.8);
+        this.gameTheme = addSceneSound(this, 'game_theme', { loop: true }).setVolume(0.8);
         this.gameTheme.play();
 
         const background = this.add.image(0, 0, 'game_tutorial_map')
@@ -127,11 +129,11 @@ export class TutorialScene extends Phaser.Scene {
         mainCam.startFollow(this.player);
         mainCam.setZoom(1.5);
 
-        this.events.on('beforeSceneRestart', () => {
+        onSceneEvent(this, 'beforeSceneRestart', () => {
             this.cleanupBeforeRestart();
         });
 
-        this.game.events.on('returnToWelcome', () => {
+        onGameEvent(this, 'returnToWelcome', () => {
             this.cleanupBeforeExit();
             this.scene.stop('UIScene');
             this.scene.start('welcome');
@@ -143,11 +145,11 @@ export class TutorialScene extends Phaser.Scene {
     }
 
     private setupBoxEventListeners(): void {
-        this.events.on('playerNearBox', (isNear: boolean) => {
+        onSceneEvent(this, 'playerNearBox', (isNear: boolean) => {
             const uiScene = this.scene.get('UIScene');
             uiScene.events.emit('playerNearBox', isNear);
         });
-        this.events.on('hideButtonPressed', () => {
+        onSceneEvent(this, 'hideButtonPressed', () => {
             this.handleHideAction();
         });
     }

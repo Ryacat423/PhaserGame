@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { storage } from '../utils/storage';
 import { sheetScale } from '../config/sprites';
 export class LevelsScene extends Phaser.Scene {
     private back!: Phaser.GameObjects.Image;
@@ -158,7 +159,7 @@ export class LevelsScene extends Phaser.Scene {
     }
 
     private checkLevelUnlocked(level: number): boolean {
-        const progress = localStorage.getItem('gameProgress');
+        const progress = storage.getItem('gameProgress');
         if (progress) {
             try {
                 const parsed = JSON.parse(progress);

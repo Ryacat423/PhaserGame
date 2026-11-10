@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { onGameEvent } from '../../utils/events';
+import { addSceneSound } from '../../utils/sound';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { DogState, Dog } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
@@ -39,6 +41,10 @@ export class Level4Scene extends BaseLevel {
         this.load.audio('rain', 'assets/global/audio/rain.mp3');
         this.load.audio('lightning_charge', 'assets/global/audio/lightning_start.mp3');
         this.load.audio('lightning_strike', 'assets/global/audio/lightning_strike.mp3');
+    }
+
+    protected override getLevelSpecificUIScenes(): string[] {
+        return ['Level4UI'];
     }
 
     protected getThemeAudioKey(): string {
@@ -138,7 +144,7 @@ export class Level4Scene extends BaseLevel {
         this.setupLightningSystem();
         this.startLightningCycle();
 
-        this.game.events.on('levelCompleted', () => {
+        onGameEvent(this, 'levelCompleted', () => {
             this.onLevelComplete();
         });
     }
@@ -391,6 +397,7 @@ export class Level4Scene extends BaseLevel {
         this.warningPosition.y = this.player.y;
         
         this.showWarningAtPosition(this.warningPosition.x, this.warningPosition.y);
+        this.scene.get('Level4UI')?.events.emit('lightningWarning', this.WARNING_DURATION);
         this.warningTimer = this.time.addEvent({
             delay: this.WARNING_DURATION,
             callback: this.strikeLightning,
@@ -454,6 +461,7 @@ export class Level4Scene extends BaseLevel {
 
         this.lightningSprite.play('strike');
         this.lightningStrike.play();
+        this.scene.get('Level4UI')?.events.emit('lightningStrike');
 
         this.cameras.main.flash(200, 255, 255, 255, false);
         
@@ -553,9 +561,9 @@ export class Level4Scene extends BaseLevel {
     }
 
     private setupSounds(): void {
-        this.warningSound = this.sound.add('lightning_charge');
-        this.lightningStrike = this.sound.add('lightning_strike');
-        this.rain = this.sound.add('rain', {loop: true}).setVolume(.1);
+        this.warningSound = addSceneSound(this, 'lightning_charge');
+        this.lightningStrike = addSceneSound(this, 'lightning_strike');
+        this.rain = addSceneSound(this, 'rain', {loop: true}).setVolume(.1);
 
         if (!this.rain.isPlaying) {
             this.rain.play();
