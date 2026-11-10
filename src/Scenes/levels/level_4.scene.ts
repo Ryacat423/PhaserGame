@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
+import { LEVEL_4, LevelLayout } from '../../config/layouts';
 import { onGameEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
-import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
-import { DogState, Dog } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
 
 export class Level4Scene extends BaseLevel {
@@ -36,6 +35,10 @@ export class Level4Scene extends BaseLevel {
         super('level4');
     }
 
+    protected override getLayout(): LevelLayout {
+        return LEVEL_4;
+    }
+
     protected override preloadLevelAssets(): void {
         this.load.audio('level4_theme', 'assets/global/audio/rain_theme.mp3');
         this.load.audio('rain', 'assets/global/audio/rain.mp3');
@@ -63,80 +66,6 @@ export class Level4Scene extends BaseLevel {
         return 1;
     }
 
-    protected getPlayerSpawnPosition(): { x: number, y: number } {
-        return { x: 150, y: 500 };
-    }
-
-    protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
-        return [
-            { x: 250, y: 300, behavior: Dog.SLEEP },  
-            { x: 750, y: 150, behavior: Dog.ROAM },    
-            { x: 500, y: 280, behavior: Dog.SLEEP },  
-            { x: 600, y: 400, behavior: Dog.ROAM }      
-        ];
-    }
-
-    protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig {
-        return {
-            playerSpawn: { x: 150, y: 500 },
-            dogSpawn: { x: 250, y: 300 },
-            manualObstacles: [
-                { type: 'tree', x: 150, y: 50, scale: 0.2 },
-                { type: 'tree', x: 350, y: 70, scale: 0.18 },
-                { type: 'tree', x: 550, y: 60, scale: 0.2 },
-                { type: 'tree', x: 750, y: 50, scale: 0.19 },
-                { type: 'tree', x: 900, y: 70, scale: 0.2 },
-
-                { type: 'tree', x: 100, y: 200, scale: 0.15 },
-                { type: 'tree', x: 120, y: 350, scale: 0.15 },
-                
-                { type: 'tree', x: 400, y: 250, scale: 0.18 },
-                { type: 'tree', x: 450, y: 400, scale: 0.15 },
-                { type: 'tree', x: 650, y: 300, scale: 0.19 },
-
-                { type: 'tree', x: 850, y: 250, scale: 0.2 },
-                { type: 'tree', x: 900, y: 400, scale: 0.15 },
-
-                { type: 'tree', x: 300, y: 520, scale: 0.15 },
-                { type: 'tree', x: 600, y: 500, scale: 0.15 },
-                { type: 'tree', x: 800, y: 520, scale: 0.18 }
-            ],
-            randomObstacleZones: [
-                { zone: { x: 0, y: backgroundHeight - 80, width: backgroundWidth, height: 80 }, 
-                  type: 'tree', count: 5, minDistance: 100 }
-            ],
-            boxes: [
-                { x: 180, y: 380 }, 
-                { x: 380, y: 150 }, 
-                { x: 620, y: 250 },  
-                { x: 800, y: 450 }  
-            ],
-            foodCount: 20,
-            mapTexture: 'level3_map',
-            backgroundMusic: 'level4_theme'
-        };
-    }
-
-    protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
-        return {
-            foodCount: 20,
-            poisonCount: 8, 
-            minItemDistance: 70,
-            minObstacleDistance: 45,
-            minBoxDistance: 70,
-            minPlayerDistance: 120,
-            mapWidth: backgroundWidth,
-            mapHeight: backgroundHeight,
-            playerSpawn: { x: 150, y: 500 },
-            dogSpawns: [
-                { x: 250, y: 300 },
-                { x: 750, y: 150 },
-                { x: 500, y: 280 },
-                { x: 600, y: 400 }
-            ]
-        };
-    }
-
     protected override createLevelSpecificElements(): void {
         this.setupSounds();
         this.createMudPuddles();
@@ -152,16 +81,7 @@ export class Level4Scene extends BaseLevel {
     private createMudPuddles(): void {
         this.mudGraphics = this.add.graphics();
         
-        const mudPositions = [
-            { x: 200, y: 200, width: 80, height: 60 },
-            { x: 450, y: 180, width: 100, height: 70 },
-            { x: 700, y: 220, width: 90, height: 65 },
-            { x: 300, y: 350, width: 110, height: 75 },
-            { x: 550, y: 380, width: 85, height: 60 },
-            { x: 820, y: 340, width: 95, height: 70 },
-            { x: 250, y: 480, width: 100, height: 65 },
-            { x: 650, y: 460, width: 90, height: 70 }
-        ];
+        const mudPositions = LEVEL_4.mud;
 
         mudPositions.forEach((mud, index) => {
             this.drawMudPuddle(mud.x, mud.y, mud.width, mud.height);

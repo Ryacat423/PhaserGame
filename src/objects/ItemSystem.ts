@@ -42,10 +42,17 @@ export class ItemSystem {
         occupiedPositions.push(...config.dogSpawns);
         this.totalFoodCount = config.foodCount;
 
-        for (let i = 0; i < config.foodCount; i++) {
-            const position = this.findValidSpawnPosition(config, occupiedPositions);
+        // Fixed spots first; any count beyond them falls back to random placement.
+        occupiedPositions.push(...(config.foodPositions ?? []), ...(config.poisonPositions ?? []), ...(config.batteryPositions ?? []));
+        const foodCount = Math.max(config.foodCount, config.foodPositions?.length ?? 0);
+        this.totalFoodCount = foodCount;
+        for (let i = 0; i < foodCount; i++) {
+            const position = config.foodPositions?.[i] ?? this.findValidSpawnPosition(config, occupiedPositions);
             if (position) {
-                const texture = Phaser.Utils.Array.GetRandom(foodTextures);
+                // Fixed layouts cycle through the food types so every level shows the variety.
+                const texture = config.foodPositions?.[i]
+                    ? foodTextures[i % foodTextures.length]
+                    : Phaser.Utils.Array.GetRandom(foodTextures);
                 const food = new Food(this.scene, position.x, position.y, texture);
                 this.foods.push(food);
                 occupiedPositions.push(position);
@@ -53,10 +60,13 @@ export class ItemSystem {
             }
         }
 
-        for (let i = 0; i < config.poisonCount; i++) {
-            const position = this.findValidSpawnPosition(config, occupiedPositions);
+        const poisonCount = Math.max(config.poisonCount, config.poisonPositions?.length ?? 0);
+        for (let i = 0; i < poisonCount; i++) {
+            const position = config.poisonPositions?.[i] ?? this.findValidSpawnPosition(config, occupiedPositions);
             if (position) {
-                const texture = Phaser.Utils.Array.GetRandom(poisonTextures);
+                const texture = config.poisonPositions?.[i]
+                    ? poisonTextures[i % poisonTextures.length]
+                    : Phaser.Utils.Array.GetRandom(poisonTextures);
                 const poison = new Poison(this.scene, position.x, position.y, texture);
                 this.poisons.push(poison);
                 occupiedPositions.push(position);
@@ -65,24 +75,24 @@ export class ItemSystem {
             }
         }
 
-        if (config.batteryCount && config.batteryCount > 0) {
+        if (config.batteryPositions?.length || (config.batteryCount && config.batteryCount > 0)) {
             this.spawnBatteries(config, occupiedPositions);
         }
     }
     
     private spawnBatteries(config: ItemSpawnConfig, occupiedPositions: { x: number, y: number }[]): void {
-        for (let i = 0; i < config.batteryCount!; i++) {
-            const position = this.findValidSpawnPosition(config, occupiedPositions);
+        const batteryCount = Math.max(config.batteryCount ?? 0, config.batteryPositions?.length ?? 0);
+        for (let i = 0; i < batteryCount; i++) {
+            const position = config.batteryPositions?.[i] ?? this.findValidSpawnPosition(config, occupiedPositions);
             if (position) {
                 const batterySprite = new Battery(this.scene, position.x, position.y, 'battery');
-                batterySprite.setDepth(1);
                 this.scene.physics.add.existing(batterySprite);
                 
                 this.scene.tweens.add({
                     targets: batterySprite,
                     alpha: 0.6,
-                    scaleX: .2,
-                    scaleY: .2,
+                    scaleX: 0.36,
+                    scaleY: 0.36,
                     duration: 1500,
                     yoyo: true,
                     repeat: -1,

@@ -1,7 +1,7 @@
+import { CUSTOM_BASE, customItemSpots, customObstacles } from '../../config/layouts';
 import { storage } from '../../utils/storage';
-import { LevelConfiguration } from "../../components/config/level.config";
 import { Mechanics } from "../../components/config/mechanic.config";
-import { ItemSpawnConfig } from "../../interfaces/game.interfaces";
+import { ItemSpawnConfig, LevelConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
 
@@ -93,17 +93,14 @@ export class LevelCustom extends BaseLevel {
         return this.customConfig.map;
     }
 
-    protected getPlayerSpawnPosition(): { x: number, y: number } {
-        return { x: 300, y: 100 };
+    protected override getPlayerSpawnPosition(): { x: number, y: number } {
+        return CUSTOM_BASE.player;
     }
 
-    protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
-        const spawns = LevelConfiguration.generateDogSpawns(this.customConfig.spawnables.dog);
-        return spawns.map(spawn => ({
-            x: spawn.x,
-            y: spawn.y,
-            behavior: spawn.behavior === 'SLEEP' ? Dog.SLEEP : Dog.ROAM
-        }));
+    protected override getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
+        return CUSTOM_BASE.dogs
+            .slice(0, this.customConfig.spawnables.dog)
+            .map(d => ({ x: d.x, y: d.y, behavior: d.behavior === 'SLEEP' ? Dog.SLEEP : Dog.ROAM }));
     }
 
     protected override getLevelSpecificUIScenes(): string[] {
@@ -147,28 +144,41 @@ export class LevelCustom extends BaseLevel {
     }
 
     protected override createStaticElements(): void {
-        const staticElementsMap = {
-            'level1_map': () => this.createHouse(180, 200, true, 0.3),
-            'level2_map': () => this.createHouse(480, 500, true, 0.3),
-            'level3_map': () => {}
-        };
-        
-        const createElements = staticElementsMap[this.customConfig.map as keyof typeof staticElementsMap];
-        if (createElements) {
-            createElements();
+        if (this.customConfig.map !== 'level3_map') {
+            const { x, y, flip } = CUSTOM_BASE.house;
+            this.createHouse(x, y, flip);
         }
     }
 
-    protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): any {
-        return LevelConfiguration.createLevelConfig(this.customConfig, backgroundWidth, backgroundHeight);
+    protected override getLevelConfig(_backgroundWidth: number, _backgroundHeight: number): LevelConfig {
+        return {
+            playerSpawn: CUSTOM_BASE.player,
+            dogSpawn: CUSTOM_BASE.dogs[0],
+            manualObstacles: customObstacles(this.customConfig.map).map(o => ({ ...o, rotation: 0 })),
+            randomObstacleZones: [],
+            boxes: CUSTOM_BASE.boxes,
+            foodCount: this.customConfig.spawnables.foods,
+            mapTexture: this.customConfig.map
+        };
     }
 
+    /**
+     * Item spots come from a designed list for the map, used in order: food first, then poison,
+     * then batteries. Counts beyond the list fall back to spaced-out random placement.
+     */
     protected override getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
-        const dogSpawns = this.getDogSpawnPositions();
-        
-        const config: ItemSpawnConfig = {
-            foodCount: this.customConfig.spawnables.foods,
-            poisonCount: this.customConfig.spawnables.poison,
+        const { foods, poison, batteries } = this.customConfig.spawnables;
+        const batteryCount = this.hasMechanic('night') ? (batteries ?? 0) : 0;
+        const spots = customItemSpots(this.customConfig.map, this.hasMechanic('snow'));
+        const take = (from: number, count: number) => spots.slice(from, from + count);
+
+        return {
+            foodCount: foods,
+            poisonCount: poison,
+            batteryCount,
+            foodPositions: take(0, foods),
+            poisonPositions: take(foods, poison),
+            batteryPositions: take(foods + poison, batteryCount),
             minItemDistance: 70,
             minObstacleDistance: 45,
             minBoxDistance: 70,
@@ -176,15 +186,8 @@ export class LevelCustom extends BaseLevel {
             mapWidth: backgroundWidth,
             mapHeight: backgroundHeight,
             playerSpawn: this.getPlayerSpawnPosition(),
-            dogSpawns: dogSpawns.map(spawn => ({ x: spawn.x, y: spawn.y }))
+            dogSpawns: this.getDogSpawnPositions().map(spawn => ({ x: spawn.x, y: spawn.y }))
         };
-        
-        if (this.hasMechanic('night') && this.customConfig.spawnables.batteries) {
-            config.batteryCount = this.customConfig.spawnables.batteries;
-            console.log(`🔋 Spawning ${config.batteryCount} batteries (night mode)`);
-        }
-        
-        return config;
     }
 
     protected override cleanupLevelSpecific(): void {

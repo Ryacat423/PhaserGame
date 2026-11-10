@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sortOnce } from '../utils/depth';
 export class Poison extends Phaser.Physics.Arcade.Sprite {
     private pulseEffect: Phaser.Tweens.Tween;
 
@@ -10,7 +11,7 @@ export class Poison extends Phaser.Physics.Arcade.Sprite {
         
         this.setScale(0.15);
         this.setCollideWorldBounds(true);
-        this.setDepth(1);
+        sortOnce(this);
         
         this.setTint(0x8B008B);
         this.pulseEffect = scene.tweens.add({

@@ -52,6 +52,7 @@ export class GameMap {
         }
 
         const obstacle = new Obstacle(this.scene, obstacleData.x, obstacleData.y, config);
+        if (obstacleData.flip) obstacle.setFlipX(true);
         this.obstacles.push(obstacle);
     }
 

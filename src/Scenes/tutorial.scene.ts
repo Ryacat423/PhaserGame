@@ -1,225 +1,37 @@
-import Phaser from 'phaser';
-import { attachTouchControls } from '../components/ui/TouchControls';
-import { onGameEvent, onSceneEvent } from '../utils/events';
-import { addSceneSound } from '../utils/sound';
-import { UIManager } from '../components/ui/UIManager';
-import { Player } from "../objects/Player";
-import { Dog } from "../objects/Dog";
-import { GameMap } from "../objects/GameMap";
-import { ItemSystem } from "../objects/ItemSystem";
+import { TUTORIAL, LevelLayout } from '../config/layouts';
+import { BaseLevel } from './levels/base_level';
 
-import { ItemSpawnConfig, LevelConfig } from "../interfaces/game.interfaces";
-
-export class TutorialScene extends Phaser.Scene {
-    private player!: Player;
-    private dogs: Dog[] = [];
-    private gameMap!: GameMap;
-    private itemSystem!: ItemSystem;
-    private gameTheme!: Phaser.Sound.BaseSound;
-
+/**
+ * Practice level. It used to be a separate copy of the level code with random trees and food,
+ * and a roaming dog that started next to the cat. Note: no menu opens this scene yet.
+ */
+export class TutorialScene extends BaseLevel {
     constructor() {
-        super({ key: 'tutorial' });
+        super('tutorial');
     }
 
-    preload(): void {
-        UIManager.preloadGameplayAssets(this);
+    protected override getLayout(): LevelLayout {
+        return TUTORIAL;
+    }
+
+    protected getThemeAudioKey(): string {
+        return 'game_theme';
+    }
+
+    protected override getThemeAudioPath(): string {
+        return 'assets/global/audio/lvl-1-theme.mp3';
+    }
+
+    protected getBackgroundTextureKey(): string {
+        return 'game_tutorial_map';
+    }
+
+    protected override preloadLevelAssets(): void {
         this.load.image('game_tutorial_map', 'assets/scene/tutorial/tutorial_map.webp');
     }
 
-    create(): void {
-        UIManager.createAnimations(this);
-        if (!this.scene.isActive('UIScene')) {
-            this.scene.launch('UIScene');
-        }
-        attachTouchControls(this);
-
-        if (this.gameTheme && this.gameTheme.isPlaying) {
-            this.gameTheme.stop();
-        }
-        
-        this.gameTheme = addSceneSound(this, 'game_theme', { loop: true }).setVolume(0.8);
-        this.gameTheme.play();
-
-        const background = this.add.image(0, 0, 'game_tutorial_map')
-            .setOrigin(0)
-            .setDepth(0);
-
-        this.player = new Player(this, 500, 300);
-        this.player.setJumpEnabled(true)
-        this.add.existing(this.player);
-
-        const house = this.physics.add
-            .image(280, 290, 'dog_house')
-            .setDepth(0)
-            .setFlipX(true)
-            .setScale(0.3)
-            .setImmovable(true)
-            .setSize(200, 190)
-            .setOffset(120, 120);
-        house.body?.setAllowGravity(false);
-        this.physics.add.collider(this.player, house);
-        
-        const dog1 = new Dog(this, 300, 300, this.player, Dog.SLEEP);
-        const dog2 = new Dog(this, 500, 500, this.player, Dog.ROAM);
-        dog2.setTint(0xffcccc);
-
-        this.add.existing(dog1);
-        this.add.existing(dog2);
-
-        this.physics.add.collider(dog1, dog2);
-        this.dogs.push(dog1, dog2);
-        this.dogs.forEach(dog => {
-            this.physics.add.collider(dog, house);
-            this.physics.add.collider(this.player, dog, () => dog.onCollideWithPlayer());
-        });
-
-        this.gameMap = new GameMap(this, this.player);
-
-        const levelConfig: LevelConfig = {
-            playerSpawn: { x: 500, y: 300 },
-            dogSpawn: { x: 300, y: 300 },
-            manualObstacles: [
-                { type: 'tree', x: 150, y: 150, scale: 0.25 },
-                { type: 'tree', x: 700, y: 200, scale: 0.3 },
-                { type: 'tree', x: 400, y: 500, scale: 0.28 },
-            ],
-            randomObstacleZones: [
-                { zone: { x: 0, y: 0, width: background.width, height: 120 }, type: 'tree', count: 6, minDistance: 80 },
-                { zone: { x: 0, y: background.height - 120, width: background.width, height: 120 }, type: 'tree', count: 6, minDistance: 80 },
-                { zone: { x: 0, y: 120, width: 100, height: background.height - 240 }, type: 'tree', count: 4, minDistance: 70 },
-                { zone: { x: background.width - 100, y: 120, width: 100, height: background.height - 240 }, type: 'tree', count: 4, minDistance: 70 }
-            ],
-            boxes: [
-                { x: 600, y: 400 },
-                { x: 350, y: 450 },
-                { x: 750, y: 300 }
-            ],
-            foodCount: 10,
-            mapTexture: 'game_tutorial_map',
-            backgroundMusic: 'game_theme'
-        };
-
-        this.gameMap.setup(levelConfig);
-        this.gameMap.setupDogColliders(this.dogs);
-
-        this.itemSystem = new ItemSystem(this, this.player, this.gameMap);
-        
-        const itemConfig: ItemSpawnConfig = {
-            foodCount: 8,
-            poisonCount: 4,
-            minItemDistance: 60,
-            minObstacleDistance: 50,
-            minBoxDistance: 70,
-            minPlayerDistance: 80,
-            mapWidth: background.width,
-            mapHeight: background.height,
-            playerSpawn: { x: 500, y: 300 },
-            dogSpawns: [
-                { x: 300, y: 300 },
-                { x: 500, y: 500 }
-            ]
-        };
-        
-        this.itemSystem.spawnItems(itemConfig);
-
-        console.log(this.itemSystem)
-        this.setupBoxEventListeners();
-
-        // Camera
-        const mainCam = this.cameras.main;
-        mainCam.setBounds(0, 0, background.width, background.height);
-        mainCam.startFollow(this.player);
-        mainCam.setZoom(1.5);
-
-        onSceneEvent(this, 'beforeSceneRestart', () => {
-            this.cleanupBeforeRestart();
-        });
-
-        onGameEvent(this, 'returnToWelcome', () => {
-            this.cleanupBeforeExit();
-            this.scene.stop('UIScene');
-            this.scene.start('welcome');
-        });
-        
-        this.events.once('shutdown', () => {
-            this.cleanupBeforeExit();
-        });
-    }
-
-    private setupBoxEventListeners(): void {
-        onSceneEvent(this, 'playerNearBox', (isNear: boolean) => {
-            const uiScene = this.scene.get('UIScene');
-            uiScene.events.emit('playerNearBox', isNear);
-        });
-        onSceneEvent(this, 'hideButtonPressed', () => {
-            this.handleHideAction();
-        });
-    }
-
-    private handleHideAction(): void {
-        const nearbyBox = this.gameMap.getBoxes().find(box => box.getIsPlayerNearby());
-        nearbyBox?.toggleHiding();
-    }
-
-    private cleanupBeforeRestart(): void {
-        this.gameMap.getBoxes().forEach(box => {
-            if (typeof box.forceStopHiding === 'function') {
-                box.forceStopHiding();
-            }
-        });
-    
-        this.dogs.forEach(dog => {
-            dog.stopBark();
-        });
-    
-        if (this.itemSystem) {
-            this.itemSystem.clearAllItems();
-        }
-    }
-
-    private cleanupBeforeExit(): void {
-        if (this.gameTheme?.isPlaying) {
-            this.gameTheme.stop();
-        }
-        if (this.gameTheme) {
-            this.gameTheme.destroy();
-        }
-        
-        this.dogs.forEach(dog => {
-            dog.stopBark();
-        });
-        this.tweens.getTweens().forEach(tween => tween.stop());
-        
-        if (this.itemSystem) {
-            this.itemSystem.clearAllItems();
-        }
-        
-        this.gameMap.getBoxes().forEach(box => {
-            if (typeof box.forceStopHiding === 'function') {
-                box.forceStopHiding();
-            }
-        });
-        
-        this.children.removeAll();
-        this.sound.stopAll();
-    }
-
-    public getDogs(): Dog[] {
-        return this.dogs;
-    }
-    
-    public destroyDogs(): void {
-        this.dogs.forEach(dog => dog.destroy());
-        this.dogs = [];
-    }
-
-    public getItemSystem(): ItemSystem {
-        return this.itemSystem;
-    }
-
-    override update(time: number, delta: number): void {
-        this.player.update(time, delta);
-        this.dogs.forEach(dog => dog.update(time, delta));
-        this.gameMap.update();
+    protected override createLevelSpecificElements(): void {
+        // Pink marks the dog that roams, so you can tell it apart from the sleeper.
+        this.dogs.find((_, i) => TUTORIAL.dogs[i]?.behavior === 'ROAM')?.setTint(0xffcccc);
     }
 }

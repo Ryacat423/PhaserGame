@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sortOnce } from '../utils/depth';
 export class Food extends Phaser.Physics.Arcade.Sprite {
     private bobEffect: Phaser.Tweens.Tween;
     private sparkleEffect: Phaser.Tweens.Tween;
@@ -11,7 +12,7 @@ export class Food extends Phaser.Physics.Arcade.Sprite {
         
         this.setScale(0.25);
         this.setCollideWorldBounds(true);
-        this.setDepth(1);
+        sortOnce(this);
     
         this.bobEffect = scene.tweens.add({
             targets: this,

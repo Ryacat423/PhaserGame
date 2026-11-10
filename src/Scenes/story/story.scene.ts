@@ -56,10 +56,14 @@ export class StoryScene extends Phaser.Scene {
     }
 
 
+    /**
+     * Story scenes are full-screen cutscenes, so the gameplay HUD (lives, food counter, pause,
+     * reset and home buttons) goes away. It only used to hide the food counter, leaving buttons
+     * that did nothing during the story. The next level launches the HUD again when it starts.
+     */
     private hideGameUI(): void {
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene && uiScene.scene.isActive()) {
-            this.game.events.emit('hideUIForStory');
+        if (this.scene.manager.isActive('UIScene') || this.scene.manager.isPaused('UIScene')) {
+            this.scene.stop('UIScene');
         }
     }
 

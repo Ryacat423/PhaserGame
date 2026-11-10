@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sortOnce } from '../utils/depth';
 export type ObstacleType = 'tree' | 'rock' | 'bush' | 'bushsnow';
 
 export interface ObstacleConfig {
@@ -38,8 +39,6 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
             this.setAngle(Phaser.Math.Between(config.rotation.min, config.rotation.max));
         }
 
-        this.setDepth(config.depth || 10);
-
         this.setImmovable(true);
         
         if (config.hitbox) {
@@ -52,6 +51,7 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
         } else {
             this.setDefaultHitbox();
         }
+        sortOnce(this);
     }
     
     private setPercentageHitbox(hitbox: any): void {
@@ -64,20 +64,18 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
         this.body?.setOffset(offsetX, offsetY);
     }
     
+    /** Footprint of each texture as fractions of its size: [left, top, width, height]. */
+    private static readonly FOOTPRINTS: Record<ObstacleType, [number, number, number, number]> = {
+        tree: [0.18, 0.58, 0.64, 0.38],
+        bushsnow: [0.12, 0.52, 0.76, 0.38],
+        bush: [0.12, 0.5, 0.76, 0.46],
+        rock: [0.1, 0.3, 0.8, 0.6]
+    };
+
     private setDefaultHitbox(): void {
-        switch (this.obstacleType) {
-            case 'tree':
-                this.body?.setSize(this.width * 0.3, this.height * 0.2);
-                this.body?.setOffset(this.width * 0.35, this.height * 0.8);
-                break;
-            case 'rock':
-                this.body?.setSize(this.width * 0.8, this.height * 0.8);
-                this.body?.setOffset(this.width * 0.1, this.height * 0.1);
-                break;
-            default:
-                this.body?.setSize(this.width * 0.8, this.height * 0.8);
-                this.body?.setOffset(this.width * 0.1, this.height * 0.1);
-        }
+        const [left, top, width, height] = Obstacle.FOOTPRINTS[this.obstacleType];
+        this.body?.setSize(this.width * width, this.height * height);
+        this.body?.setOffset(this.width * left, this.height * top);
     }
     
     public getObstacleType(): ObstacleType {

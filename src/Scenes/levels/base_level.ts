@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import { groundDepth, sortOnce } from '../../utils/depth';
 import { attachTouchControls } from '../../components/ui/TouchControls';
 import { onGameEvent, onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
 import { UIManager } from '../../components/ui/UIManager';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
+import { LevelLayout } from "../../config/layouts";
 import { Dog, DogState } from "../../objects/Dog";
 import { GameMap } from "../../objects/GameMap";
 import { ItemSystem } from "../../objects/ItemSystem";
@@ -12,6 +14,7 @@ import { Player } from "../../objects/Player";
 export abstract class BaseLevel extends Phaser.Scene {
     protected player!: Player;
     protected dogs: Dog[] = [];
+    private solids: Phaser.Types.Physics.Arcade.ArcadeColliderType[] = [];
     protected gameMap!: GameMap;
     protected itemSystem!: ItemSystem;
     protected gameTheme!: Phaser.Sound.BaseSound;
@@ -22,14 +25,68 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     protected abstract getThemeAudioKey(): string;
-    protected abstract getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig;
-    protected abstract getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig;
     protected abstract getBackgroundTextureKey(): string;
-    protected abstract getPlayerSpawnPosition(): { x: number, y: number };
-    protected abstract getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[];
 
-    
-    protected createStaticElements(): void {}
+    /**
+     * The level's hand-placed layout (src/config/layouts.ts). The adventure levels provide one and
+     * everything below is built from it; custom levels generate their own and override the
+     * get*Config / spawn methods instead.
+     */
+    protected getLayout(): LevelLayout | null {
+        return null;
+    }
+
+    private requireLayout(): LevelLayout {
+        const layout = this.getLayout();
+        if (!layout) throw new Error(`${this.scene.key} needs getLayout() or its own spawn/config overrides`);
+        return layout;
+    }
+
+    protected getPlayerSpawnPosition(): { x: number, y: number } {
+        return this.requireLayout().player;
+    }
+
+    protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
+        return this.requireLayout().dogs.map(d => ({ x: d.x, y: d.y, behavior: d.behavior === 'SLEEP' ? Dog.SLEEP : Dog.ROAM }));
+    }
+
+    protected getLevelConfig(_backgroundWidth: number, _backgroundHeight: number): LevelConfig {
+        const layout = this.requireLayout();
+        return {
+            playerSpawn: layout.player,
+            dogSpawn: layout.dogs[0] ?? layout.player,
+            manualObstacles: layout.obstacles.map(o => ({ ...o, rotation: 0 })),
+            randomObstacleZones: [],
+            boxes: layout.boxes,
+            foodCount: layout.food.length,
+            mapTexture: this.getBackgroundTextureKey()
+        };
+    }
+
+    protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
+        const layout = this.requireLayout();
+        return {
+            foodCount: layout.food.length,
+            poisonCount: layout.poison.length,
+            batteryCount: layout.batteries?.length ?? 0,
+            foodPositions: layout.food,
+            poisonPositions: layout.poison,
+            batteryPositions: layout.batteries,
+            minItemDistance: 0,
+            minObstacleDistance: 0,
+            minBoxDistance: 0,
+            minPlayerDistance: 0,
+            mapWidth: backgroundWidth,
+            mapHeight: backgroundHeight,
+            playerSpawn: layout.player,
+            dogSpawns: layout.dogs
+        };
+    }
+
+    protected createStaticElements(): void {
+        const house = this.getLayout()?.house;
+        if (house) this.createHouse(house.x, house.y, house.flip ?? false);
+    }
     
     protected preloadLevelAssets(): void {}
     
@@ -50,6 +107,10 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     create(): void {
+        // Phaser reuses the scene object on restart, so per-run lists are reset here. Without
+        // this, every restart kept the previous run's destroyed dogs (and their colliders).
+        this.solids = [];
+        this.dogs = [];
         UIManager.createAnimations(this);
         this.setupUI();
         this.setupAudio();
@@ -117,7 +178,28 @@ export abstract class BaseLevel extends Phaser.Scene {
         }
         this.dogs.forEach(dog => {
             this.physics.add.collider(this.player, dog, () => dog.onCollideWithPlayer());
+            this.solids.forEach(solid => this.physics.add.collider(dog, solid));
         });
+    }
+
+    /** Makes `obj` block the cat and every dog. Safe to call before or after the dogs exist. */
+    public addSolid(obj: Phaser.Types.Physics.Arcade.ArcadeColliderType): void {
+        this.solids.push(obj);
+        this.physics.add.collider(this.player, obj);
+        this.dogs.forEach(dog => this.physics.add.collider(dog, obj));
+    }
+
+    /**
+     * A snowman or other prop whose bottom part is solid. `origin` matches how the image is
+     * placed; `foot` is the solid part as fractions of the texture [left, top, width, height].
+     */
+    public addSolidProp(image: Phaser.GameObjects.Image, foot: [number, number, number, number]): void {
+        const b = image.getBounds();
+        const body = this.physics.add.staticBody(
+            b.x + b.width * foot[0], b.y + b.height * foot[1], b.width * foot[2], b.height * foot[3]
+        );
+        image.setDepth(groundDepth(body.bottom));
+        this.addSolid(body as unknown as Phaser.Types.Physics.Arcade.ArcadeColliderType);
     }
 
     private setupGameMap(): void {
@@ -136,6 +218,11 @@ export abstract class BaseLevel extends Phaser.Scene {
     protected setupCamera(): void {
         const mainCam = this.cameras.main;
         mainCam.setBounds(0, 0, this.background.width, this.background.height);
+        // ?overview shows the whole map, for designing layouts.
+        if (import.meta.env.DEV && new URLSearchParams(location.search).has('overview')) {
+            mainCam.setZoom(1).centerOn(this.background.width / 2, this.background.height / 2);
+            return;
+        }
         mainCam.startFollow(this.player);
         mainCam.setZoom(1.5);
     }
@@ -251,18 +338,19 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     protected createHouse(x: number, y: number, flipX: boolean = false, scale: number = 0.3): Phaser.Physics.Arcade.Image {
+        // Footprint of the 435x391 texture: the walls and doorway, not the roof.
         const house = this.physics.add
             .image(x, y, 'dog_house')
-            .setDepth(0)
             .setFlipX(flipX)
             .setScale(scale)
             .setImmovable(true)
-            .setSize(200, 190)
-            .setOffset(120, 120);
-        
+            .setSize(300, 120)
+            .setOffset(flipX ? 63 : 72, 195);
+
         house.body?.setAllowGravity(false);
-        this.physics.add.collider(this.player, house);
-        
+        sortOnce(house);
+        this.addSolid(house);
+
         return house;
     }
 

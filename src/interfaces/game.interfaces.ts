@@ -7,6 +7,7 @@ export interface ManualObstacleData {
     y: number;
     scale?: number;
     rotation?: number;
+    flip?: boolean;
     hitbox?: {
         width?: number;
         height?: number;
@@ -42,6 +43,10 @@ export interface BoxPosition {
 }
 
 export interface ItemSpawnConfig {
+    /** Exact spots. When given, they replace random placement (and the counts follow them). */
+    foodPositions?: SpawnPoint[];
+    poisonPositions?: SpawnPoint[];
+    batteryPositions?: SpawnPoint[];
     foodCount: number;
     poisonCount: number;
     batteryCount?: number;

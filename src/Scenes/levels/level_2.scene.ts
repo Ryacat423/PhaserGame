@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
+import { LEVEL_2, LevelLayout } from '../../config/layouts';
 import { onGameEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
 import { sheetScale } from '../../config/sprites';
-import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
-import { Dog, DogState } from "../../objects/Dog";
+import { sortOnce } from '../../utils/depth';
 import { BaseLevel } from "./base_level";
 
 export class Level2Scene extends BaseLevel {
@@ -20,6 +20,10 @@ export class Level2Scene extends BaseLevel {
 
     constructor() {
         super('level2');
+    }
+
+    protected override getLayout(): LevelLayout {
+        return LEVEL_2;
     }
 
     protected override preloadLevelAssets(): void {
@@ -43,18 +47,6 @@ export class Level2Scene extends BaseLevel {
         return 'level2_map';
     }
 
-    protected getPlayerSpawnPosition(): { x: number, y: number } {
-        return { x: 200, y: 120 };
-    }
-
-    protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
-        return [
-            { x: 420, y: 520, behavior: Dog.SLEEP },  
-            { x: 750, y: 400, behavior: Dog.ROAM },  
-            { x: 600, y: 150, behavior: Dog.SLEEP } 
-        ];
-    }
-
     protected override getLevelSpecificUIScenes(): string[] {
         return ['Level2UI'];
     }
@@ -67,10 +59,6 @@ export class Level2Scene extends BaseLevel {
         onGameEvent(this, 'levelCompleted', () => {
             this.onLevelComplete();
         });
-    }
-
-    protected override createStaticElements(): void {
-        this.createHouse(500, 520, false, 0.3);
     }
 
     private onLevelComplete(): void {
@@ -110,30 +98,27 @@ export class Level2Scene extends BaseLevel {
             .play('blow')
             .setDepth(0);
 
-        this.physics.add.staticImage(50, 80, 'snowman')
-            .setOrigin(0)
-            .setScale(0.8)
-            .setDepth(0);
+        // Snowmen used to be static physics images with no collider, so the cat walked through them.
+        LEVEL_2.snowmen.forEach(({ x, y, flip }) => {
+            const snowman = this.add.image(x, y, 'snowman').setOrigin(0).setScale(0.8).setFlipX(flip ?? false);
+            this.addSolidProp(snowman, [0.22, 0.6, 0.56, 0.38]);
+        });
 
-        this.physics.add.staticImage(880, 480, 'snowman')
-            .setOrigin(0)
-            .setFlipX(true)
-            .setScale(0.8)
-            .setDepth(0);
-
-        this.fireSprite = this.add.sprite(500, 300, 'fire')
+        const { x, y } = LEVEL_2.fire;
+        this.fireSprite = this.add.sprite(x, y, 'fire')
             .play('sway')
-            .setScale(sheetScale('fire', 0.12))
-            .setDepth(2);
+            .setScale(sheetScale('fire', 0.12));
+        sortOnce(this.fireSprite);
     }
 
     private setupFireMechanics(): void {
-        this.fireProximityZone = this.physics.add.sprite(500, 300, '')
+        const { x, y } = LEVEL_2.fire;
+        this.fireProximityZone = this.physics.add.sprite(x, y, '')
             .setSize(140, 140)
             .setVisible(false);
         (this.fireProximityZone.body as Phaser.Physics.Arcade.Body).setImmovable(true);
 
-        this.fireCollisionZone = this.physics.add.sprite(500, 300, '')
+        this.fireCollisionZone = this.physics.add.sprite(x, y, '')
             .setSize(50, 50)
             .setVisible(false);
         (this.fireCollisionZone.body as Phaser.Physics.Arcade.Body).setImmovable(true);
@@ -223,62 +208,6 @@ export class Level2Scene extends BaseLevel {
         this.time.delayedCall(1000, () => {
             this.isFireInvincible = false;
         });
-    }
-
-    protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig {
-        return {
-            playerSpawn: { x: 200, y: 120 },
-            dogSpawn: { x: 350, y: 200 },
-            manualObstacles: [
-                { type: 'bushsnow', x: 100, y: 60, scale: 0.15 },
-                { type: 'bushsnow', x: 400, y: 50, scale: 0.15 },
-                { type: 'bushsnow', x: 700, y: 60, scale: 0.15 },
-                { type: 'bushsnow', x: 900, y: 55, scale: 0.15 },
-
-                { type: 'bushsnow', x: 80, y: 250, scale: 0.15 },
-                { type: 'bushsnow', x: 100, y: 400, scale: 0.15 },
-
-                { type: 'bushsnow', x: 380, y: 250, scale: 0.15 },
-                { type: 'bushsnow', x: 620, y: 250, scale: 0.15 },
-                { type: 'bushsnow', x: 450, y: 380, scale: 0.15 },
-                { type: 'bushsnow', x: 550, y: 380, scale: 0.15 },
-                
-                { type: 'bushsnow', x: 850, y: 200, scale: 0.15 },
-                { type: 'bushsnow', x: 900, y: 350, scale: 0.15 },
-
-                { type: 'bushsnow', x: 250, y: 520, scale: 0.15 },
-                { type: 'bushsnow', x: 700, y: 500, scale: 0.15 }
-            ],
-            randomObstacleZones: [],
-            boxes: [
-                { x: 150, y: 350 },   
-                { x: 500, y: 180 },   
-                { x: 780, y: 450 }, 
-                { x: 700, y: 300 } 
-            ],
-            foodCount: 10,
-            mapTexture: 'level2_map',
-            backgroundMusic: 'level2_theme'
-        };
-    }
-
-    protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
-        return {
-            foodCount: 10,
-            poisonCount: 6,
-            minItemDistance: 70,
-            minObstacleDistance: 45,
-            minBoxDistance: 60,
-            minPlayerDistance: 120,
-            mapWidth: backgroundWidth,
-            mapHeight: backgroundHeight,
-            playerSpawn: { x: 200, y: 120 },
-            dogSpawns: [
-                { x: 350, y: 200 },
-                { x: 750, y: 400 },
-                { x: 600, y: 150 }
-            ]
-        };
     }
 
     protected override cleanupLevelSpecific(): void {

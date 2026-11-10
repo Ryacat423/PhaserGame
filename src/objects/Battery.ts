@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sortOnce } from '../utils/depth';
 export class Battery extends Phaser.Physics.Arcade.Sprite {
     private chargeValue: number;
 
@@ -8,9 +9,10 @@ export class Battery extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
         
-        this.setScale(0.1);
+        // Was 0.1 (about 12x6 px), easy to miss even in the flashlight beam.
+        this.setScale(0.3);
         this.setCollideWorldBounds(true);
-        this.setDepth(1);
+        sortOnce(this);
         this.chargeValue = 25;
 
         this.setTint(0xFFD700);

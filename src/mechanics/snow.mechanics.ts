@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { CUSTOM_SNOW } from '../config/layouts';
+import { sortOnce } from '../utils/depth';
 import { addSceneSound } from '../utils/sound';
 import { sheetScale } from '../config/sprites';
 export class SnowMechanic {
@@ -44,17 +46,25 @@ export class SnowMechanic {
 
     private createSnowElements(): void {
         this.scene.add.sprite(0, 0, 'snow').setOrigin(0).setScale(sheetScale('snow', 1)).play('blow').setDepth(0);
-        this.scene.add.image(0, 30, 'snowman').setOrigin(0).setDepth(0);
-        this.scene.add.image(850, 450, 'snowman').setOrigin(0).setFlipX(true).setDepth(0);
-        this.fireSprite = this.scene.add.sprite(500, 150, 'fire').play('sway').setScale(sheetScale('fire', 0.1));
+        // Same snowmen and campfire as level 2, at spots the custom base layout keeps clear.
+        // Snowmen used to have no collision; the level makes their base solid.
+        const level = this.scene as unknown as { addSolidProp?: (img: Phaser.GameObjects.Image, foot: [number, number, number, number]) => void };
+        CUSTOM_SNOW.snowmen.forEach(({ x, y, flip }) => {
+            const snowman = this.scene.add.image(x, y, 'snowman').setOrigin(0).setScale(0.8).setFlipX(flip ?? false);
+            level.addSolidProp?.(snowman, [0.22, 0.6, 0.56, 0.38]);
+        });
+        const { x, y } = CUSTOM_SNOW.fire;
+        this.fireSprite = this.scene.add.sprite(x, y, 'fire').play('sway').setScale(sheetScale('fire', 0.12));
+        sortOnce(this.fireSprite);
     }
 
     private setupFireSystem(): void {
-        this.fireProximityZone = this.scene.physics.add.sprite(500, 150, '')
+        const { x, y } = CUSTOM_SNOW.fire;
+        this.fireProximityZone = this.scene.physics.add.sprite(x, y, '')
             .setSize(120, 120).setVisible(false);
         (this.fireProximityZone.body as Phaser.Physics.Arcade.Body).setImmovable(true);
         
-        this.fireCollisionZone = this.scene.physics.add.sprite(500, 150, '')
+        this.fireCollisionZone = this.scene.physics.add.sprite(x, y, '')
             .setSize(40, 40).setVisible(false);
         (this.fireCollisionZone.body as Phaser.Physics.Arcade.Body).setImmovable(true);
         

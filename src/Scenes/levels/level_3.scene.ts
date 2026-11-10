@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
+import { LEVEL_3, LevelLayout } from '../../config/layouts';
 import { onSceneEvent } from '../../utils/events';
 import { addSceneSound } from '../../utils/sound';
-import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
-import { Dog, DogState } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
 
 export class Level3Scene extends BaseLevel {
@@ -12,7 +11,6 @@ export class Level3Scene extends BaseLevel {
     private darkness!: Phaser.GameObjects.Graphics;
     private lightMask!: Phaser.GameObjects.Graphics;
     private flashlightRadius: number = 100;
-    private isLevelCompleted: boolean = false;
     
     private batteryDrainTimer!: Phaser.Time.TimerEvent;
     private currentBattery: number = 80;
@@ -21,6 +19,10 @@ export class Level3Scene extends BaseLevel {
 
     constructor() {
         super('level3');
+    }
+
+    protected override getLayout(): LevelLayout {
+        return LEVEL_3;
     }
 
     protected getThemeAudioKey(): string {
@@ -37,19 +39,6 @@ export class Level3Scene extends BaseLevel {
 
     protected getBackgroundTextureKey(): string {
         return 'level3_map';
-    }
-
-    protected getPlayerSpawnPosition(): { x: number, y: number } {
-        return { x: 150, y: 480 };
-    }
-
-    protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
-        return [
-            { x: 300, y: 280, behavior: Dog.SLEEP }, 
-            { x: 650, y: 150, behavior: Dog.ROAM },  
-            { x: 550, y: 400, behavior: Dog.ROAM },  
-            { x: 850, y: 320, behavior: Dog.SLEEP }  
-        ];
     }
 
     protected override getLevelSpecificUIScenes(): string[] {
@@ -172,66 +161,6 @@ export class Level3Scene extends BaseLevel {
             this.lightMask.fillStyle(0xffffff, 0.2);
             this.lightMask.fillCircle(playerX, playerY, radius);
         }
-    }
-
-    protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig {
-        return {
-            playerSpawn: { x: 150, y: 480 },
-            dogSpawn: { x: 300, y: 280 },
-            manualObstacles: [
-                { type: 'tree', x: 120, y: 60, scale: 0.2 },
-                { type: 'tree', x: 350, y: 50, scale: 0.19 },
-                { type: 'tree', x: 580, y: 60, scale: 0.2 },
-                { type: 'tree', x: 810, y: 55, scale: 0.19 },
-                
-                { type: 'bushsnow', x: 90, y: 220, scale: 0.15 },
-                { type: 'bushsnow', x: 110, y: 360, scale: 0.15 },
-                
-                { type: 'tree', x: 380, y: 220, scale: 0.18 },
-                { type: 'bushsnow', x: 450, y: 330, scale: 0.15 },
-                { type: 'tree', x: 550, y: 180, scale: 0.2 },
-                { type: 'bushsnow', x: 650, y: 280, scale: 0.15 },
-                { type: 'tree', x: 480, y: 480, scale: 0.19 },
-
-                { type: 'tree', x: 820, y: 200, scale: 0.2 },
-                { type: 'bushsnow', x: 880, y: 380, scale: 0.15 },
-
-                { type: 'bushsnow', x: 280, y: 520, scale: 0.15 },
-                { type: 'tree', x: 650, y: 500, scale: 0.18 },
-                { type: 'bushsnow', x: 850, y: 530, scale: 0.15 }
-            ],
-            randomObstacleZones: [],
-            boxes: [
-                { x: 180, y: 350 }, 
-                { x: 420, y: 150 }, 
-                { x: 700, y: 380 },  
-                { x: 850, y: 480 } 
-            ],
-            foodCount: 15,
-            mapTexture: 'level3_map',
-            backgroundMusic: 'level3_theme'
-        };
-    }
-
-    protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
-        return {
-            foodCount: 15,
-            poisonCount: 7,  
-            batteryCount: 10, 
-            minItemDistance: 70,
-            minObstacleDistance: 45,
-            minBoxDistance: 70,
-            minPlayerDistance: 120,
-            mapWidth: backgroundWidth,
-            mapHeight: backgroundHeight,
-            playerSpawn: { x: 150, y: 480 },
-            dogSpawns: [
-                { x: 300, y: 280 },
-                { x: 650, y: 150 },
-                { x: 550, y: 400 },
-                { x: 850, y: 320 }
-            ]
-        };
     }
 
     protected override cleanupLevelSpecific(): void {

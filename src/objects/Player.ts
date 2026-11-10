@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
+import { sortEveryFrame } from '../utils/depth';
 import { addSceneSound } from '../utils/sound';
-import { sheetPx, sheetScale } from '../config/sprites';
+import { sheetScale } from '../config/sprites';
 import { touchInput } from '../input/touchInput';
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursor: any;
@@ -59,9 +60,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.setScale(sheetScale('cat', 0.15));
     this.setCollideWorldBounds(true);
-    this.body?.setSize(sheetPx('cat', 220), sheetPx('cat', 220));
-    this.body?.setOffset(sheetPx('cat', 110), sheetPx('cat', 180));
-    this.setDepth(3);
+    // Footprint at the paws, in repacked-frame pixels (see src/config/sprites.ts).
+    this.body?.setSize(100, 52);
+    this.body?.setOffset(70, 176);
+    sortEveryFrame(this);
 
     this.moveSound = addSceneSound(scene, 'footsteps');
     this.hurtSound = addSceneSound(scene, 'hurt');

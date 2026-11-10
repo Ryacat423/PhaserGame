@@ -51,10 +51,13 @@ export class GameUI extends Phaser.Scene {
             .setOrigin(0)
             .setDepth(101);
 
-        this.avatarSprite = this.add.sprite(30, 40, 'cat')
-            .setScale(sheetScale('cat', 0.3))
+        // Centred in the round frame and clipped to it; it used to sit half off the top of the screen.
+        this.avatarSprite = this.add.sprite(55, 60, 'cat')
+            .setScale(sheetScale('cat', 0.2))
             .setDepth(102)
             .play('cat_idle');
+        const avatarMask = this.make.graphics({}, false).fillCircle(55, 55, 50);
+        this.avatarSprite.setMask(avatarMask.createGeometryMask());
         
         const frame = this.add.image(0, 0, 'game_frame')
             .setOrigin(0)
@@ -75,22 +78,25 @@ export class GameUI extends Phaser.Scene {
         this.setupLivesDisplay();
         this.setupFoodDisplay();
         this.setupHideButton();
-        this.setupEventListeners();        
-        this.loadSavedLives();
+        this.setupEventListeners();
+        // The level announces itself before this scene has started listening, so check lives
+        // here too; otherwise a game could start (and keep going) with 0 lives.
+        this.onSceneStart();
     }
 
     private setupLivesDisplay(): void {
-        this.livesIcon = this.add.image(100, 90, 'life')
-            .setScale(0.15)
+        // A small heart and count tucked under the frame, side by side instead of overlapping.
+        this.livesIcon = this.add.image(104, 96, 'life')
+            .setScale(0.11)
             .setDepth(102);
 
-        this.livesText = this.add.text(110, 93, `${this.playerLives}`, {
+        this.livesText = this.add.text(124, 96, `${this.playerLives}`, {
             fontSize: '20px',
             color: '#ffffff',
             fontFamily: 'Arial',
             stroke: '#000000',
-            strokeThickness: 2
-        }).setDepth(102);
+            strokeThickness: 3
+        }).setOrigin(0, 0.5).setDepth(102);
     }
 
     private determineGameMode(): 'adventure' | 'custom' {
@@ -273,61 +279,23 @@ export class GameUI extends Phaser.Scene {
     }
 
     private showGameOverScreen(): void {
-        const overlay = this.add.image(
-            this.scale.width / 2, 
-            this.scale.height / 2, 
-            'game-over'
-        ).setDepth(200);
-
-        const homeBtn = this.add.image(
-            400,
-            500,
-            'game-home'
-        )
-        .setInteractive()
-        .setDepth(202);
-
-        const tryAgainBtn = this.add.image(
-            620,
-            500,
-            'game-replay'
-        )
-        .setInteractive()
-        .setDepth(202);
-        
-        const gameOverElements = [overlay, tryAgainBtn, homeBtn];
-        this.data.set('gameOverOverlay', gameOverElements);
-
-        tryAgainBtn.on('pointerdown', () => {
-            this.cleanupGameOverScreen();
-            this.resetLivesAndRestart();
-        });
-
-        homeBtn.on('pointerdown', () => {
-            this.cleanupGameOverScreen();
-            this.stopAllDogs();
-            this.game.events.emit('returnToWelcome');
-        });
-
-        [tryAgainBtn, homeBtn].forEach(btn => {
-            btn.on('pointerover', () => {
-                this.tweens.add({
-                    targets: btn,
-                    scaleX: 1.1,
-                    scaleY: 1.1,
-                    duration: 100
-                });
-            });
-
-            btn.on('pointerout', () => {
-                this.tweens.add({
-                    targets: btn,
-                    scaleX: 1,
-                    scaleY: 1,
-                    duration: 100
-                });
-            });
-        });
+        this.showResultPanel('gameOverOverlay', 'game-over', [
+            {
+                texture: 'game-home',
+                onClick: () => {
+                    this.cleanupGameOverScreen();
+                    this.stopAllDogs();
+                    this.game.events.emit('returnToWelcome');
+                }
+            },
+            {
+                texture: 'game-replay',
+                onClick: () => {
+                    this.cleanupGameOverScreen();
+                    this.resetLivesAndRestart();
+                }
+            }
+        ]);
     }
 
     private cleanupGameOverScreen(): void {
@@ -360,89 +328,13 @@ export class GameUI extends Phaser.Scene {
         return true;
     }
 
+    /**
+     * Starting a level with no lives left shows the same wooden game-over panel as losing your
+     * last life, with Replay (refill lives and play this level) and Home. It used to be a plain
+     * text screen whose Reset button sent you back to the title screen.
+     */
     private showNoLivesWarning(): void {
-        const overlay = this.add.rectangle(
-            this.scale.width / 2,
-            this.scale.height / 2,
-            this.scale.width,
-            this.scale.height,
-            0x000000,
-            0.8
-        ).setDepth(200);
-
-        const warning = this.add.text(
-            this.scale.width / 2,
-            this.scale.height / 2 - 50,
-            'NO LIVES REMAINING!',
-            {
-                fontSize: '36px',
-                color: '#ff4444',
-                fontFamily: 'Arial Black',
-                stroke: '#000000',
-                strokeThickness: 4
-            }
-        ).setOrigin(0.5).setDepth(201);
-
-        const message = this.add.text(
-            this.scale.width / 2,
-            this.scale.height / 2,
-            'Reset your lives to continue playing',
-            {
-                fontSize: '20px',
-                color: '#ffffff',
-                fontFamily: 'Arial'
-            }
-        ).setOrigin(0.5).setDepth(201);
-
-        const resetBtn = this.add.text(
-            this.scale.width / 2,
-            this.scale.height / 2 + 60,
-            'RESET LIVES',
-            {
-                fontSize: '24px',
-                color: '#ffffff',
-                fontFamily: 'Arial Black',
-                backgroundColor: '#00ff00',
-                padding: { x: 20, y: 10 }
-            }
-        ).setOrigin(0.5).setDepth(201).setInteractive();
-
-        const homeBtn = this.add.text(
-            this.scale.width / 2,
-            this.scale.height / 2 + 120,
-            'MAIN MENU',
-            {
-                fontSize: '20px',
-                color: '#ffffff',
-                fontFamily: 'Arial',
-                backgroundColor: '#333333',
-                padding: { x: 20, y: 10 }
-            }
-        ).setOrigin(0.5).setDepth(201).setInteractive();
-
-        resetBtn.on('pointerdown', () => {
-            overlay.destroy();
-            warning.destroy();
-            message.destroy();
-            resetBtn.destroy();
-            homeBtn.destroy();
-            this.resetLives();
-            this.game.events.emit('returnToWelcome');
-        });
-
-        homeBtn.on('pointerdown', () => {
-            overlay.destroy();
-            warning.destroy();
-            message.destroy();
-            resetBtn.destroy();
-            homeBtn.destroy();
-            this.game.events.emit('returnToWelcome');
-        });
-
-        [resetBtn, homeBtn].forEach(btn => {
-            btn.on('pointerover', () => btn.setScale(1.1));
-            btn.on('pointerout', () => btn.setScale(1));
-        });
+        this.showGameOverScreen();
     }
 
     public onSceneStart(): void {
@@ -905,91 +797,76 @@ export class GameUI extends Phaser.Scene {
     }
 
     private showLevelCompleteScreen(): void {
-        const overlay = this.add.image(
-            this.scale.width / 2, 
-            this.scale.height / 2, 
-            'game-complete'
-        ).setDepth(200);
-
-        const statsText = this.add.text(
-            640,
-            385,
-            `${this.playerLives}`,
+        this.showResultPanel('completeOverlay', 'game-complete', [
             {
-                fontSize: '50px',
-                color: '#ffffff',
-                stroke: '#000000ff',
-                strokeThickness: 3.5,
-                fontFamily: 'Arial',
+                texture: 'game-home',
+                onClick: () => {
+                    this.cleanupCompleteScreen();
+                    this.stopAllDogs();
+                    this.game.events.emit('returnToWelcome');
+                }
+            },
+            {
+                texture: 'game-replay',
+                onClick: () => {
+                    this.cleanupCompleteScreen();
+                    this.stopAllDogs();
+                    this.resetCurrentLevel();
+                }
+            },
+            {
+                texture: 'game-next',
+                onClick: () => {
+                    this.cleanupCompleteScreen();
+                    this.stopAllDogs();
+                    this.goToNextLevel();
+                }
             }
-        ).setOrigin(0.5).setDepth(202);
-
-        const homeBtn = this.add.image(
-            270,
-            550,
-            'game-home'
-        )
-        .setInteractive()
-        .setDepth(202);
-
-        const replayBtn = this.add.image(
-            500,
-            550,
-            'game-replay'
-        )
-        .setInteractive()
-        .setDepth(202);
-
-        const nextBtn = this.add.image(
-            720,
-            550,
-            'game-next'
-        )
-        .setInteractive()
-        .setDepth(202);
-
-        const completeElements = [overlay, statsText, homeBtn, nextBtn, replayBtn];
-        this.data.set('completeOverlay', completeElements);
-
-        homeBtn.on('pointerdown', () => {
-            this.cleanupCompleteScreen();
-            this.stopAllDogs();
-            this.game.events.emit('returnToWelcome');
-        });
-
-        nextBtn.on('pointerdown', () => {
-            this.cleanupCompleteScreen();
-            this.stopAllDogs();
-            this.goToNextLevel();
-        });
-
-        replayBtn.on('pointerdown', () => {
-            this.cleanupCompleteScreen();
-            this.stopAllDogs();
-            this.resetCurrentLevel();
-        });
-
-        [homeBtn, nextBtn, replayBtn].forEach(btn => {
-            btn.on('pointerover', () => {
-                this.tweens.add({
-                    targets: btn,
-                    scaleX: 1.1,
-                    scaleY: 1.1,
-                    duration: 100
-                });
-            });
-
-            btn.on('pointerout', () => {
-                this.tweens.add({
-                    targets: btn,
-                    scaleX: 1,
-                    scaleY: 1,
-                    duration: 100
-                });
-            });
-        });
+        ]);
 
         this.updateGameProgress();
+    }
+
+    /**
+     * The wooden result panels (level complete, game over): a dim backdrop that blocks clicks to
+     * the game, the panel art, the lives count after its "REMAINING:" label, and a row of buttons
+     * on the parchment. The buttons used to sit on the panel's bottom edge, partly off it.
+     */
+    private showResultPanel(
+        dataKey: string,
+        texture: string,
+        buttons: { texture: string; onClick: () => void }[]
+    ): void {
+        if (this.data.get(dataKey)) return;
+        const cx = this.scale.width / 2;
+
+        const dim = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.55)
+            .setOrigin(0)
+            .setDepth(199)
+            .setInteractive();
+        const panel = this.add.image(cx, this.scale.height / 2, texture).setDepth(200);
+        const lives = this.add.text(640, 385, `${this.playerLives}`, {
+            fontSize: '44px',
+            fontFamily: 'Arial Black',
+            color: '#ffffff',
+            stroke: '#5a3a1a',
+            strokeThickness: 8
+        }).setOrigin(0, 0.5).setDepth(201);
+
+        const spacing = 185;
+        const firstX = cx - ((buttons.length - 1) * spacing) / 2;
+        const buttonImages = buttons.map(({ texture: key, onClick }, i) => {
+            const btn = this.add.image(firstX + i * spacing, 482, key)
+                .setScale(0.78)
+                .setDepth(202)
+                .setInteractive({ useHandCursor: true });
+            btn.on('pointerover', () => this.tweens.add({ targets: btn, scale: 0.86, duration: 100 }));
+            btn.on('pointerout', () => this.tweens.add({ targets: btn, scale: 0.78, duration: 100 }));
+            btn.on('pointerdown', onClick);
+            return btn;
+        });
+
+        this.data.set(dataKey, [dim, panel, lives, ...buttonImages]);
     }
 
     private cleanupCompleteScreen(): void {
@@ -1187,39 +1064,43 @@ export class GameUI extends Phaser.Scene {
         }
     }
 
+    /** HUD scenes that run alongside a level and have timers of their own. */
+    private static readonly LEVEL_HUDS = ['Level2UI', 'Level3UI', 'Level4UI'];
+
+    /**
+     * Pauses the level scene and its HUD scenes outright. It used to pause only physics, tweens
+     * and animations, so timers kept going: the cold meter filled, the flashlight drained and
+     * lightning kept striking while the pause menu was open.
+     */
     private pauseGame() {
         const gameScene = this.getActiveGameScene();
-        if (gameScene) {
-            if (gameScene.physics && gameScene.physics.world) {
-                gameScene.physics.world.pause();
-            }
-            if (gameScene.tweens) {
-                gameScene.tweens.pauseAll();
-            }
-            if (gameScene.anims) {
-                gameScene.anims.pauseAll();
-            }
-            
-            this.isPaused = true;
-        }
+        if (!gameScene) return;
+
+        if (gameScene.scene.isActive()) gameScene.scene.pause();
+        GameUI.LEVEL_HUDS.forEach(key => {
+            if (this.scene.manager.isActive(key)) this.scene.pause(key);
+        });
+        // Menus and result panels draw above the level HUDs.
+        this.scene.bringToTop();
+        this.isPaused = true;
     }
 
     private resumeGame() {
         const gameScene = this.getActiveGameScene();
-        if (gameScene) {
-            if (gameScene.physics && gameScene.physics.world) {
-                gameScene.physics.world.resume();
-            }
-            if (gameScene.tweens) {
-                gameScene.tweens.resumeAll();
-            }
-            if (gameScene.anims) {
-                gameScene.anims.resumeAll();
-            }
-            
-            this.isPaused = false;
-            this.hidePauseOverlay();
-        }
+        if (!gameScene) return;
+
+        if (gameScene.scene.isPaused()) gameScene.scene.resume();
+        // Back to the in-game order: level HUD bars above this scene's frame, touch controls on top.
+        // Scene operations are queued, so decide from the state before resuming.
+        GameUI.LEVEL_HUDS.forEach(key => {
+            const paused = this.scene.manager.isPaused(key);
+            if (!paused && !this.scene.manager.isActive(key)) return;
+            if (paused) this.scene.resume(key);
+            this.scene.bringToTop(key);
+        });
+        if (this.scene.manager.isActive('TouchControls')) this.scene.bringToTop('TouchControls');
+        this.isPaused = false;
+        this.hidePauseOverlay();
     }
 
     private showPauseOverlay() {
@@ -1296,7 +1177,8 @@ export class GameUI extends Phaser.Scene {
                     scene.scene.key !== 'settings' &&
                     scene.scene.key !== 'StoryScene' &&
                     !scene.scene.key.includes('UI') &&
-                    scene.scene.isActive()
+                    scene.scene.key !== 'TouchControls' &&
+                    (scene.scene.isActive() || scene.scene.isPaused())
         );
         
         return gameScenes.length > 0 ? gameScenes[0] : null;

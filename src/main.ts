@@ -35,7 +35,8 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   physics: {
     default: 'arcade',
-    arcade: { gravity: { x: 0, y: 0 } }
+    // Add ?debug to the URL to draw every physics body and its velocity.
+    arcade: { gravity: { x: 0, y: 0 }, debug: new URLSearchParams(location.search).has('debug') }
   },
   scene: [
     WelcomeScene,
