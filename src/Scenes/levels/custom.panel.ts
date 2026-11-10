@@ -83,8 +83,6 @@ export class CustomPanel extends Phaser.Scene {
     preload(): void {
         this.load.image('checkbox', 'assets/scene/levels/4/checkbox.webp');
         this.load.image('checkmark', 'assets/scene/levels/4/checkmark.webp');
-        this.load.image('save_btn', 'assets/scene/levels/4/save_btn.png');
-        this.load.image('delete_btn', 'assets/scene/levels/4/delete_btn.png');
     }
 
     create(): void {

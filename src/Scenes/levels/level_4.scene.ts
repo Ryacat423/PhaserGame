@@ -36,7 +36,7 @@ export class Level4Scene extends BaseLevel {
 
     protected override preloadLevelAssets(): void {
         this.load.audio('level4_theme', 'assets/global/audio/rain_theme.mp3');
-        this.load.audio('rain', 'assets/global/audio/rain.wav');
+        this.load.audio('rain', 'assets/global/audio/rain.mp3');
         this.load.audio('lightning_charge', 'assets/global/audio/lightning_start.mp3');
         this.load.audio('lightning_strike', 'assets/global/audio/lightning_strike.mp3');
     }

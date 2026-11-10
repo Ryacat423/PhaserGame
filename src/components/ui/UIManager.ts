@@ -39,7 +39,7 @@ export class UIManager {
         scene.load.image('game-next', 'assets/global/ui/nxt-button.webp');
 
         scene.load.audio('theme', 'assets/global/audio/welcome_bg.mp3');
-        scene.load.audio('click', 'assets/global/audio/ui_click.ogg');
+        scene.load.audio('click', 'assets/global/audio/ui_click.mp3');
         scene.load.audio('meow', 'assets/global/audio/meow.mp3');
 
         UIManager.loadSheet(scene, 'cat_idle', 'assets/sprites/cat_idle.webp');
@@ -78,20 +78,20 @@ export class UIManager {
 
         scene.load.audio('game_theme', 'assets/global/audio/lvl-1-theme.mp3');
         scene.load.audio('bark', 'assets/global/audio/dog_bark.mp3');
-        scene.load.audio('bark-once', 'assets/global/audio/bark_once.wav');
-        scene.load.audio('footsteps', 'assets/global/audio/footsteps.wav');
-        scene.load.audio('eat', 'assets/global/audio/eat_v1.wav');
-        scene.load.audio('meow_2', 'assets/global/audio/meow_2.wav');
+        scene.load.audio('bark-once', 'assets/global/audio/bark_once.mp3');
+        scene.load.audio('footsteps', 'assets/global/audio/footsteps.mp3');
+        scene.load.audio('eat', 'assets/global/audio/eat_v1.mp3');
+        scene.load.audio('meow_2', 'assets/global/audio/meow_2.mp3');
         scene.load.audio('slow', 'assets/global/audio/slow.mp3');
-        scene.load.audio('hurt', 'assets/global/audio/hurt.wav');
-        scene.load.audio('lvl-complete', 'assets/global/audio/lvl-complete.wav');
+        scene.load.audio('hurt', 'assets/global/audio/hurt.mp3');
+        scene.load.audio('lvl-complete', 'assets/global/audio/lvl-complete.mp3');
         scene.load.audio('night-ambience', 'assets/global/audio/night-ambience.mp3');
         scene.load.audio('owl-hoot', 'assets/global/audio/owl-hoot.mp3');
         scene.load.audio('firewood', 'assets/global/audio/firewood.mp3');
         scene.load.audio('cat_burned', 'assets/global/audio/cat_burned.mp3');
         scene.load.audio('burned', 'assets/global/audio/burn.mp3');
 
-        scene.load.audio('level1_theme', 'assets/global/audio/gameplay.ogg');
+        scene.load.audio('level1_theme', 'assets/global/audio/gameplay.mp3');
         scene.load.audio('level2_theme', 'assets/global/audio/lvl-2-theme.mp3');
         scene.load.audio('level3_theme', 'assets/global/audio/night-theme.mp3');
         scene.load.audio('level4_theme', 'assets/global/audio/rain_theme.mp3');

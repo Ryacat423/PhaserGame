@@ -10,7 +10,7 @@ export class Level1Scene extends BaseLevel {
     }
 
     protected override preloadLevelAssets(): void {
-        this.load.audio('level1_theme', 'assets/global/audio/gameplay.ogg');
+        this.load.audio('level1_theme', 'assets/global/audio/gameplay.mp3');
     }
 
     protected getThemeAudioKey(): string {
@@ -18,7 +18,7 @@ export class Level1Scene extends BaseLevel {
     }
 
     protected override getThemeAudioPath(): string {
-        return 'assets/global/audio/gameplay.ogg';
+        return 'assets/global/audio/gameplay.mp3';
     }
 
     protected getBackgroundTextureKey(): string {

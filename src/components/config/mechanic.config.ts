@@ -37,7 +37,7 @@ export class Mechanics {
             },
             'none': {
                 audioKey: 'level1_theme',
-                audioPath: 'assets/global/audio/gameplay.ogg',
+                audioPath: 'assets/global/audio/gameplay.mp3',
                 volume: 0.8,
                 uiScenes: []
             }
@@ -101,7 +101,7 @@ export class Mechanics {
 
         return {
             preload: () => {
-                scene.load.audio('rain', 'assets/global/audio/rain.wav');
+                scene.load.audio('rain', 'assets/global/audio/rain.mp3');
                 scene.load.audio('lightning_charge', 'assets/global/audio/lightning_start.mp3');
                 scene.load.audio('lightning_strike', 'assets/global/audio/lightning_strike.mp3');
             },

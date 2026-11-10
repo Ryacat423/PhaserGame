@@ -38,7 +38,7 @@ export class GameUI extends Phaser.Scene {
         this.load.image('act-btn-resume', 'assets/global/ui/act-btn-resume.webp');
         this.load.image('act-btn-settings', 'assets/global/ui/act-btn-settings.webp');
         this.load.image('act-btn-mainmenu', 'assets/global/ui/act-btn-mainmenu.webp');
-        this.load.audio('out', 'assets/global/audio/out.wav');
+        this.load.audio('out', 'assets/global/audio/out.mp3');
 
         this.load.image('life', 'assets/global/ui/heart_life.webp');
     }

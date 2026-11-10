@@ -1,13 +1,14 @@
 // One-time asset optimization. The originals stay in git history (commit before 'Optimize assets').
 //
 //   node scripts/optimize-assets.mjs            # images: repack sheets, convert to WebP, drop unused
-//   node scripts/optimize-assets.mjs --audio    # audio: re-encode to MP3 with ffmpeg (needs ffmpeg on PATH)
+//   node scripts/optimize-assets.mjs --audio    # audio: re-encode to MP3 with ffmpeg (uses ffmpeg-static)
 //
 // After running, src/ references are rewritten to the new file names.
 import sharp from 'sharp';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import ffmpegPath from 'ffmpeg-static';
 
 const root = path.resolve(import.meta.dirname, '..');
 const pub = path.join(root, 'public');
@@ -121,7 +122,7 @@ function encodeAudio(input) {
   const isMusic = fs.statSync(input).size > 400 * 1024;
   const out = input.replace(/\.(wav|mp3|ogg)$/i, '.mp3');
   const tmp = `${out}.tmp.mp3`;
-  execFileSync('ffmpeg', [
+  execFileSync(ffmpegPath, [
     '-y', '-loglevel', 'error', '-i', input, '-vn',
     '-ac', isMusic ? '2' : '1', '-ar', '44100',
     '-c:a', 'libmp3lame', '-b:a', isMusic ? '96k' : '64k', tmp

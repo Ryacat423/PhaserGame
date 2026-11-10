@@ -245,7 +245,7 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     protected getThemeAudioPath(): string {
-        return `assets/global/audio/${this.getThemeAudioKey()}.ogg`;
+        return `assets/global/audio/${this.getThemeAudioKey()}.mp3`;
     }
 
     protected createHouse(x: number, y: number, flipX: boolean = false, scale: number = 0.3): Phaser.Physics.Arcade.Image {
