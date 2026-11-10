@@ -14,7 +14,7 @@ export class CustomLevels extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('bglevel', 'assets/scene/levels/levelbg.png');
+        this.load.image('bglevel', 'assets/scene/levels/levelbg.webp');
     }
     
     create(): void {

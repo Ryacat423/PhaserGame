@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetScale } from '../config/sprites';
 export class LevelsScene extends Phaser.Scene {
     private back!: Phaser.GameObjects.Image;
     private level1!: Phaser.GameObjects.Image;
@@ -17,13 +18,13 @@ export class LevelsScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('bglevel', 'assets/scene/levels/levelbg.png');
-        this.load.image('level_1', 'assets/scene/levels/level_1.png');
-        this.load.image('level_2', 'assets/scene/levels/level_2.png');
-        this.load.image('level_3', 'assets/scene/levels/level_3.png');
-        this.load.image('level_4', 'assets/scene/levels/level_4.png');
+        this.load.image('bglevel', 'assets/scene/levels/levelbg.webp');
+        this.load.image('level_1', 'assets/scene/levels/level_1.webp');
+        this.load.image('level_2', 'assets/scene/levels/level_2.webp');
+        this.load.image('level_3', 'assets/scene/levels/level_3.webp');
+        this.load.image('level_4', 'assets/scene/levels/level_4.webp');
         // this.load.image('custom_slot', 'assets/scene/levels/custom_slot.png');
-        this.load.image('lock_icon', 'assets/scene/levels/lock.png');
+        this.load.image('lock_icon', 'assets/scene/levels/lock.webp');
     }
 
     create(): void {
@@ -32,7 +33,7 @@ export class LevelsScene extends Phaser.Scene {
             .setAlpha(.78)
             .setDisplaySize(this.scale.width, this.scale.height);
 
-        this.add.sprite(400, 280, 'snow').setScale(.164).play('blow').setDepth(10);
+        this.add.sprite(400, 280, 'snow').setScale(sheetScale('snow', 0.164)).play('blow').setDepth(10);
 
         this.add.text(this.scale.width / 2, 100, 'SELECT LEVEL', {
             fontSize: '32px',

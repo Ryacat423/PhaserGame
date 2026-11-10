@@ -1,4 +1,8 @@
 import Phaser from 'phaser';
+import { UIManager } from '../../components/ui/UIManager';
+
+/** A full bolt from the lightning spritesheet, used as the story's lightning icon. */
+const LIGHTNING_ICON_FRAME = 8;
 interface StoryDialogue {
     speaker: string;
     text: string;
@@ -33,18 +37,14 @@ export class StoryScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('story_bg_meadow', 'assets/scene/levels/1/map.png');
-        this.load.image('story_bg_snow', 'assets/scene/levels/2/map.png');
-        this.load.image('story_bg_night', 'assets/scene/levels/3/map.png');
-        this.load.image('story_bg_storm', 'assets/scene/levels/5/map.png');
+        UIManager.preloadGameplayAssets(this);
 
         this.load.audio('meow-click', 'assets/global/audio/meow-click.mp3');
 
-        this.load.image('box_icon', 'assets/global/bg/box.png');
-        this.load.image('snowflake_large', 'assets/scene/levels/2/snowflake.png');
-        this.load.image('flashlight_icon', 'assets/scene/levels/3/battery.png');
-        this.load.image('lightning_icon', 'assets/sprites/lightning.png');
-        this.load.image('poison_icon', 'assets/global/food/poison.png');
+        this.load.image('box_icon', 'assets/global/bg/box.webp');
+        this.load.image('snowflake_large', 'assets/scene/levels/2/snowflake.webp');
+        this.load.image('flashlight_icon', 'assets/scene/levels/3/battery.webp');
+        this.load.image('poison_icon', 'assets/global/food/poison.webp');
     }
 
     init(data: { level: string }) {
@@ -86,7 +86,7 @@ export class StoryScene extends Phaser.Scene {
     private setupLevelStories(): void {
         this.levelStories = new Map();
         this.levelStories.set('level1', {
-            background: 'story_bg_meadow',
+            background: 'level1_map',
             dialogues: [
                 {
                     speaker: 'Mingming',
@@ -135,7 +135,7 @@ export class StoryScene extends Phaser.Scene {
         });
 
         this.levelStories.set('level2', {
-            background: 'story_bg_snow',
+            background: 'level2_map',
             dialogues: [
                 {
                     speaker: 'Mingming',
@@ -173,7 +173,7 @@ export class StoryScene extends Phaser.Scene {
         });
 
         this.levelStories.set('level3', {
-            background: 'story_bg_night',
+            background: 'level3_map',
             dialogues: [
                 {
                     speaker: 'Mingming',
@@ -205,7 +205,7 @@ export class StoryScene extends Phaser.Scene {
         });
 
         this.levelStories.set('level4', {
-            background: 'story_bg_storm',
+            background: 'level4_map',
             dialogues: [
                 {
                     speaker: 'Mingming',
@@ -482,7 +482,8 @@ export class StoryScene extends Phaser.Scene {
             });
         }
         else if (dialogue.image) {
-            const imageScale = dialogue.image === 'lightning_icon' ? 0.3 : 
+            const isLightning = dialogue.image === 'lightning_icon';
+            const imageScale = isLightning ? 0.5 : 
                               dialogue.image === 'box_icon' ? 0.9 :
                               dialogue.image === 'flashlight_icon' ? 0.4 :
                               dialogue.image === 'poison_icon' ? 0.9 : 0.1;
@@ -490,7 +491,8 @@ export class StoryScene extends Phaser.Scene {
             this.characterImage = this.add.image(
                 this.scale.width / 2,
                 this.scale.height / 2 - 80,
-                dialogue.image
+                isLightning ? 'lightning' : dialogue.image,
+                isLightning ? LIGHTNING_ICON_FRAME : undefined
             )
             .setScale(imageScale)
             .setDepth(5);

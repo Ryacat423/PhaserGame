@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetPx, sheetScale } from '../config/sprites';
 import { Player } from "./Player";
 
 export type DogState = 'SLEEP' | 'CHASE' | 'ROAM' | 'RETURN_HOME' | 'PATROL' | 'ALERT' | 'SEARCH';
@@ -135,12 +136,12 @@ export class Dog extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this as Phaser.GameObjects.GameObject);
         scene.physics.add.existing(this as Phaser.GameObjects.GameObject);
         
-        this.setScale(0.09);
+        this.setScale(sheetScale('dog', 0.09));
         this.setDepth(2);
         this.setCollideWorldBounds(true);
         
-        this.body?.setSize(400, 300);
-        this.body?.setOffset(350, 550);
+        this.body?.setSize(sheetPx('dog', 400), sheetPx('dog', 300));
+        this.body?.setOffset(sheetPx('dog', 350), sheetPx('dog', 550));
     
         if (this.body && this.body instanceof Phaser.Physics.Arcade.Body) {
             this.body.setBounce(0.1, 0.1);

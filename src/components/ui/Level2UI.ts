@@ -28,7 +28,7 @@ export class Level2UI extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('snowflake_icon', 'assets/scene/levels/2/snowflake.png');
+        this.load.image('snowflake_icon', 'assets/scene/levels/2/snowflake.webp');
 
         this.load.audio('almostFreeze', 'assets/global/audio/almost_cold.mp3');
         this.load.audio('freeze', 'assets/global/audio/freezing.mp3');

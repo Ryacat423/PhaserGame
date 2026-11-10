@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import { sheetScale } from '../config/sprites';
 import { Player } from "./Player";
 
 export class Box extends Phaser.Physics.Arcade.Sprite {
+    private static readonly BOX_SCALE = 0.3;
     private player: Player;
     private isPlayerNearby: boolean = false;
     private isPlayerHiding: boolean = false;
@@ -23,7 +25,7 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
 
         scene.add.existing(this);
         
-        this.setScale(0.3);
+        this.setScale(Box.BOX_SCALE);
         this.setDepth(1);
         this.setOrigin(0.5, 0.5);
 
@@ -143,6 +145,7 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         const originalY = this.y;
 
         this.setTexture(this.hideTexture, 0);
+        this.setScale(sheetScale('cat', Box.BOX_SCALE));
         this.setPosition(originalX, originalY);
         this.setOrigin(0.46, 0.75);
         if (this.scene.anims.exists('cat_hide')) {
@@ -170,7 +173,8 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         }
         
         this.player.setHiding(false);
-        this.setTexture(this.originalTexture, );
+        this.setTexture(this.originalTexture, 0);
+        this.setScale(Box.BOX_SCALE);
         this.stop();
         
         this.setOrigin(0.5, 0.5);
@@ -196,6 +200,8 @@ export class Box extends Phaser.Physics.Arcade.Sprite {
         
         this.player.setHiding(false);
         this.setTexture(this.originalTexture, 0);
+        this.setScale(Box.BOX_SCALE);
+        this.setOrigin(0.5, 0.5);
         this.stop();
     }
 

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetScale } from '../config/sprites';
 export class InformationScene extends Phaser.Scene {
     constructor() {
         super({key: 'information'})
@@ -21,9 +22,9 @@ export class InformationScene extends Phaser.Scene {
     bark!: Phaser.Sound.BaseSound;
 
     preload(): void {
-        this.load.image('cat_info', 'assets/scene/information/cat_frame.png');
-        this.load.image('dog_info', 'assets/scene/information/dog_frame.png');
-        this.load.image('information_bg', 'assets/scene/information/bg3.jpg');
+        this.load.image('cat_info', 'assets/scene/information/cat_frame.webp');
+        this.load.image('dog_info', 'assets/scene/information/dog_frame.webp');
+        this.load.image('information_bg', 'assets/scene/information/bg3.webp');
     }
 
     create(): void  {
@@ -79,7 +80,7 @@ export class InformationScene extends Phaser.Scene {
 
         if (index === 0) {
             this.cat = this.add.sprite(340, 240, 'cat')
-                .setScale(.4)
+                .setScale(sheetScale('cat', 0.4))
                 .play('cat_walk')
                 .setInteractive();
 
@@ -89,7 +90,7 @@ export class InformationScene extends Phaser.Scene {
             
         } else {
             this.dog = this.add.sprite(340, 240, 'dog')
-                .setScale(.2)
+                .setScale(sheetScale('dog', 0.2))
                 .play('dog_idle')
                 .setInteractive();
             this.dog.on('pointerdown', () => {

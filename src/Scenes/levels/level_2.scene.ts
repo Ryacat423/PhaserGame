@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetScale } from '../../config/sprites';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
 import { BaseLevel } from "./base_level";
@@ -20,8 +21,8 @@ export class Level2Scene extends BaseLevel {
     }
 
     protected override preloadLevelAssets(): void {
-        this.load.image('snowman', 'assets/scene/levels/2/snowman.png');
-        this.load.image('ice', 'assets/scene/levels/2/slippery.png');
+        this.load.image('snowman', 'assets/scene/levels/2/snowman.webp');
+        this.load.image('ice', 'assets/scene/levels/2/slippery.webp');
     }
 
     protected getThemeAudioKey(): string {
@@ -103,6 +104,7 @@ export class Level2Scene extends BaseLevel {
     private createSnowElements(): void {
         this.add.sprite(0, 0, 'snow')
             .setOrigin(0)
+            .setScale(sheetScale('snow', 1))
             .play('blow')
             .setDepth(0);
 
@@ -119,7 +121,7 @@ export class Level2Scene extends BaseLevel {
 
         this.fireSprite = this.add.sprite(500, 300, 'fire')
             .play('sway')
-            .setScale(.12)
+            .setScale(sheetScale('fire', 0.12))
             .setDepth(2);
     }
 

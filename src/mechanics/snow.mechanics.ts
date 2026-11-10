@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetScale } from '../config/sprites';
 export class SnowMechanic {
     private scene: Phaser.Scene;
     private player: any;
@@ -25,7 +26,7 @@ export class SnowMechanic {
             this.scene.load.audio('burned', 'assets/global/audio/burn.mp3');
         }
         
-        this.scene.load.image('snowman', 'assets/scene/levels/2/snowman.png');
+        this.scene.load.image('snowman', 'assets/scene/levels/2/snowman.webp');
     }
 
     create(): void {
@@ -41,10 +42,10 @@ export class SnowMechanic {
     }
 
     private createSnowElements(): void {
-        this.scene.add.sprite(0, 0, 'snow').setOrigin(0).play('blow').setDepth(0);
+        this.scene.add.sprite(0, 0, 'snow').setOrigin(0).setScale(sheetScale('snow', 1)).play('blow').setDepth(0);
         this.scene.add.image(0, 30, 'snowman').setOrigin(0).setDepth(0);
         this.scene.add.image(850, 450, 'snowman').setOrigin(0).setFlipX(true).setDepth(0);
-        this.fireSprite = this.scene.add.sprite(500, 150, 'fire').play('sway').setScale(0.1);
+        this.fireSprite = this.scene.add.sprite(500, 150, 'fire').play('sway').setScale(sheetScale('fire', 0.1));
     }
 
     private setupFireSystem(): void {

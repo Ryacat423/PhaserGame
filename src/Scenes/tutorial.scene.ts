@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { UIManager } from '../components/ui/UIManager';
 import { Player } from "../objects/Player";
 import { Dog } from "../objects/Dog";
 import { GameMap } from "../objects/GameMap";
@@ -18,10 +19,12 @@ export class TutorialScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('game_tutorial_map', 'assets/scene/tutorial/tutorial_map.png');
+        UIManager.preloadGameplayAssets(this);
+        this.load.image('game_tutorial_map', 'assets/scene/tutorial/tutorial_map.webp');
     }
 
     create(): void {
+        UIManager.createAnimations(this);
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }

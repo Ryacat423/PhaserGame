@@ -14,14 +14,14 @@ export class WelcomeScene extends Phaser.Scene {
     }
 
     preload(): void {
-        UIManager.preloadAssets(this);
+        UIManager.preloadMenuAssets(this);
 
-        this.load.image('welcome-bg', 'assets/scene/welcome/bg1.png');
-        this.load.image('btn-start', 'assets/scene/welcome/start_button.png');
-        this.load.image('btn-tutorial', 'assets/scene/welcome/tutorial_button.png');
+        this.load.image('welcome-bg', 'assets/scene/welcome/bg1.webp');
+        this.load.image('btn-start', 'assets/scene/welcome/start_button.webp');
+        this.load.image('btn-tutorial', 'assets/scene/welcome/tutorial_button.webp');
 
-        this.load.image('title', 'assets/scene/welcome/game_title.png');
-        this.load.image('dog_house', 'assets/scene/welcome/dog_house.png');
+        this.load.image('title', 'assets/scene/welcome/game_title.webp');
+        this.load.image('dog_house', 'assets/scene/welcome/dog_house.webp');
     }
 
     create(): void {
@@ -31,7 +31,18 @@ export class WelcomeScene extends Phaser.Scene {
         this.uiManager.playDogSleep(315, 380, 0.2, 10);
 
         this.createUI();
+        this.loadGameplayInBackground();
         this.catIdleSprite();
+    }
+
+    /**
+     * Starts downloading level assets once the menu is on screen, so the first screen only waits
+     * for what it shows and levels still open without a wait.
+     */
+    private loadGameplayInBackground(): void {
+        UIManager.preloadGameplayAssets(this);
+        this.load.once(Phaser.Loader.Events.COMPLETE, () => UIManager.createAnimations(this));
+        this.load.start();
     }
 
     createUI(): void {

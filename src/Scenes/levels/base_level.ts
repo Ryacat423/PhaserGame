@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { UIManager } from '../../components/ui/UIManager';
 import { LevelConfig, ItemSpawnConfig } from "../../interfaces/game.interfaces";
 import { Dog, DogState } from "../../objects/Dog";
 import { GameMap } from "../../objects/GameMap";
@@ -40,11 +41,13 @@ export abstract class BaseLevel extends Phaser.Scene {
     protected updateLevelSpecific(time: number, delta: number): void {}
 
     preload(): void {
+        UIManager.preloadGameplayAssets(this);
         this.load.audio(this.getThemeAudioKey(), this.getThemeAudioPath());
         this.preloadLevelAssets();
     }
 
     create(): void {
+        UIManager.createAnimations(this);
         this.setupUI();
         this.setupAudio();
         this.createBackground();

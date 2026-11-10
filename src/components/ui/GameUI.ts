@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetScale } from '../../config/sprites';
 export class GameUI extends Phaser.Scene {
     private uiElements: Phaser.GameObjects.GameObject[] = [];
     private home!: Phaser.GameObjects.Image;
@@ -27,19 +28,19 @@ export class GameUI extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('avatar_frame', 'assets/global/ui/avatar-frame.png');
-        this.load.image('game_frame', 'assets/scene/tutorial/frame.png');
-        this.load.image('movement_modal', 'assets/scene/tutorial/movement.png');
-        this.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.png');
-        this.load.image('btn-hide', 'assets/global/ui/btn-hide.png');
+        this.load.image('avatar_frame', 'assets/global/ui/avatar-frame.webp');
+        this.load.image('game_frame', 'assets/scene/tutorial/frame.webp');
+        this.load.image('movement_modal', 'assets/scene/tutorial/movement.webp');
+        this.load.image('btn-hide-disabled', 'assets/global/ui/hide_disabled.webp');
+        this.load.image('btn-hide', 'assets/global/ui/btn-hide.webp');
         
-        this.load.image('pause-overlay', 'assets/global/ui/pause-overlay.png');
-        this.load.image('act-btn-resume', 'assets/global/ui/act-btn-resume.png');
-        this.load.image('act-btn-settings', 'assets/global/ui/act-btn-settings.png');
-        this.load.image('act-btn-mainmenu', 'assets/global/ui/act-btn-mainmenu.png');
+        this.load.image('pause-overlay', 'assets/global/ui/pause-overlay.webp');
+        this.load.image('act-btn-resume', 'assets/global/ui/act-btn-resume.webp');
+        this.load.image('act-btn-settings', 'assets/global/ui/act-btn-settings.webp');
+        this.load.image('act-btn-mainmenu', 'assets/global/ui/act-btn-mainmenu.webp');
         this.load.audio('out', 'assets/global/audio/out.wav');
 
-        this.load.image('life', 'assets/global/ui/heart_life.png');
+        this.load.image('life', 'assets/global/ui/heart_life.webp');
     }
 
     create() {
@@ -48,7 +49,7 @@ export class GameUI extends Phaser.Scene {
             .setDepth(101);
 
         this.avatarSprite = this.add.sprite(30, 40, 'cat')
-            .setScale(.3)
+            .setScale(sheetScale('cat', 0.3))
             .setDepth(102)
             .play('cat_idle');
         
@@ -786,7 +787,7 @@ export class GameUI extends Phaser.Scene {
             this.scale.height / 2 - 20,
             'cat'
         )
-        .setScale(0.4)
+        .setScale(sheetScale('cat', 0.4))
         .setDepth(202)
         .play('cat_jump');
 

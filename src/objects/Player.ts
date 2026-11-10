@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sheetPx, sheetScale } from '../config/sprites';
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursor: any;
   hideKey: Phaser.Input.Keyboard.Key;
@@ -54,10 +55,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.hideKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.setScale(0.15);
+    this.setScale(sheetScale('cat', 0.15));
     this.setCollideWorldBounds(true);
-    this.body?.setSize(220, 220);
-    this.body?.setOffset(110, 180);
+    this.body?.setSize(sheetPx('cat', 220), sheetPx('cat', 220));
+    this.body?.setOffset(sheetPx('cat', 110), sheetPx('cat', 180));
     this.setDepth(3);
 
     this.moveSound = scene.sound.add('footsteps');
@@ -126,8 +127,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.scene.tweens.add({
       targets: this,
-      scaleX: 0.18,
-      scaleY: 0.18,
+      scaleX: sheetScale('cat', 0.18),
+      scaleY: sheetScale('cat', 0.18),
       duration: this.jumpDuration / 2,
       ease: 'Quad.easeOut',
       yoyo: true,
@@ -143,7 +144,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       },
       onComplete: () => {
         this.isJumping = false;
-        this.setScale(0.15);
+        this.setScale(sheetScale('cat', 0.15));
         if (this.body) {
           this.body.checkCollision.none = false;
         }
