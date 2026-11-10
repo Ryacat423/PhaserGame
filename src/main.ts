@@ -11,6 +11,8 @@ import { Level4Scene } from './Scenes/levels/level_4.scene';
 import { CustomPanel } from './Scenes/levels/custom.panel';
 import { LevelCustom } from './Scenes/levels/level_custom';
 import { CustomLevels } from './Scenes/levels/custom_levels';
+import { StoryScene } from './Scenes/story/story.scene';
+import { SettingScene } from './Scenes/settings.scene';
 import { GameUI } from './components/ui/GameUI';
 import { Level2UI } from './components/ui/Level2UI';
 import { Level3UI } from './components/ui/Level3UI';
@@ -33,9 +35,11 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [
     WelcomeScene,
     LevelsScene,
+    SettingScene,
     CustomLevels,
     TutorialScene,
     InformationScene,
+    StoryScene,
     Level1Scene,
     Level2Scene,
     Level3Scene,

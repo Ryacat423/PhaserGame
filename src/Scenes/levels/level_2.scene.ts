@@ -13,6 +13,7 @@ export class Level2Scene extends BaseLevel {
     private firewoodSound!: Phaser.Sound.BaseSound;
     private catBurnedSound!: Phaser.Sound.BaseSound;
     private burnedSound!: Phaser.Sound.BaseSound;
+    private isLevelCompleted: boolean = false;
 
     constructor() {
         super('level2');
@@ -40,14 +41,14 @@ export class Level2Scene extends BaseLevel {
     }
 
     protected getPlayerSpawnPosition(): { x: number, y: number } {
-        return { x: 300, y: 100 };
+        return { x: 200, y: 120 };
     }
 
     protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
         return [
-            { x: 200, y: 200, behavior: Dog.SLEEP },
-            { x: 800, y: 400, behavior: Dog.ROAM },
-            { x: 500, y: 500, behavior: Dog.SLEEP }
+            { x: 420, y: 520, behavior: Dog.SLEEP },  
+            { x: 750, y: 400, behavior: Dog.ROAM },  
+            { x: 600, y: 150, behavior: Dog.SLEEP } 
         ];
     }
 
@@ -60,10 +61,24 @@ export class Level2Scene extends BaseLevel {
         this.setupFireSounds();
         this.createSnowElements();
         this.setupFireMechanics();
+        this.game.events.on('levelCompleted', () => {
+            this.onLevelComplete();
+        });
     }
 
     protected override createStaticElements(): void {
-        this.createHouse(480, 500, true, 0.3);
+        this.createHouse(500, 520, false, 0.3);
+    }
+
+    private onLevelComplete(): void {
+        this.isLevelCompleted = true;
+        if (this.fireCheckTimer) {
+            this.fireCheckTimer.destroy();
+        }
+
+        if (this.firewoodSound && this.firewoodSound.isPlaying) {
+            this.firewoodSound.stop();
+        }
     }
 
     private resetFireMechanics(): void {
@@ -91,31 +106,34 @@ export class Level2Scene extends BaseLevel {
             .play('blow')
             .setDepth(0);
 
-        let snowman1 = this.physics.add.staticImage(0, 30, 'snowman')
+        this.physics.add.staticImage(50, 80, 'snowman')
             .setOrigin(0)
+            .setScale(0.8)
             .setDepth(0);
 
-        let snowman2 = this.physics.add.staticImage(850, 450, 'snowman')
+        this.physics.add.staticImage(880, 480, 'snowman')
             .setOrigin(0)
             .setFlipX(true)
+            .setScale(0.8)
             .setDepth(0);
 
-        this.fireSprite = this.add.sprite(500, 150, 'fire')
+        this.fireSprite = this.add.sprite(500, 300, 'fire')
             .play('sway')
-            .setScale(.1);
-
-        let slip1 = this.add.image(200, 250, 'ice')
+            .setScale(.12)
+            .setDepth(2);
     }
 
     private setupFireMechanics(): void {
-        this.fireProximityZone = this.physics.add.sprite(500, 150, '')
-            .setSize(120, 120)
+        this.fireProximityZone = this.physics.add.sprite(500, 300, '')
+            .setSize(140, 140)
             .setVisible(false);
         (this.fireProximityZone.body as Phaser.Physics.Arcade.Body).setImmovable(true);
-        this.fireCollisionZone = this.physics.add.sprite(500, 150, '')
-            .setSize(40, 40)
+
+        this.fireCollisionZone = this.physics.add.sprite(500, 300, '')
+            .setSize(50, 50)
             .setVisible(false);
         (this.fireCollisionZone.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+        
         this.physics.add.overlap(this.player, this.fireProximityZone, () => {
             this.handleFireProximity(true);
         });
@@ -134,7 +152,7 @@ export class Level2Scene extends BaseLevel {
                     this.fireSprite.x, this.fireSprite.y
                 );
                 
-                if (distance > 60) {
+                if (distance > 70) {
                     this.handleFireProximity(false);
                 }
             },
@@ -144,6 +162,7 @@ export class Level2Scene extends BaseLevel {
     }
 
     private handleFireProximity(isNear: boolean): void {
+        if (this.isLevelCompleted) return; 
         const level2UI = this.scene.get('Level2UI');
         if (level2UI && typeof (level2UI as any).setPlayerNearFire === 'function') {
             (level2UI as any).setPlayerNearFire(isNear);
@@ -154,7 +173,7 @@ export class Level2Scene extends BaseLevel {
     }
 
     private handleFireCollision(): void {
-        if (this.isFireInvincible) return;
+        if (this.isLevelCompleted || this.isFireInvincible) return;
 
         this.isFireInvincible = true;
         const level2UI = this.scene.get('Level2UI');
@@ -204,20 +223,36 @@ export class Level2Scene extends BaseLevel {
 
     protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig {
         return {
-            playerSpawn: { x: 100, y: 100 },
-            dogSpawn: { x: 200, y: 200 },
+            playerSpawn: { x: 200, y: 120 },
+            dogSpawn: { x: 350, y: 200 },
             manualObstacles: [
-                { type: 'bushsnow', x: 300, y: 150, scale: 0.1 }
+                { type: 'bushsnow', x: 100, y: 60, scale: 0.15 },
+                { type: 'bushsnow', x: 400, y: 50, scale: 0.15 },
+                { type: 'bushsnow', x: 700, y: 60, scale: 0.15 },
+                { type: 'bushsnow', x: 900, y: 55, scale: 0.15 },
+
+                { type: 'bushsnow', x: 80, y: 250, scale: 0.15 },
+                { type: 'bushsnow', x: 100, y: 400, scale: 0.15 },
+
+                { type: 'bushsnow', x: 380, y: 250, scale: 0.15 },
+                { type: 'bushsnow', x: 620, y: 250, scale: 0.15 },
+                { type: 'bushsnow', x: 450, y: 380, scale: 0.15 },
+                { type: 'bushsnow', x: 550, y: 380, scale: 0.15 },
+                
+                { type: 'bushsnow', x: 850, y: 200, scale: 0.15 },
+                { type: 'bushsnow', x: 900, y: 350, scale: 0.15 },
+
+                { type: 'bushsnow', x: 250, y: 520, scale: 0.15 },
+                { type: 'bushsnow', x: 700, y: 500, scale: 0.15 }
             ],
-            randomObstacleZones: [
-                { zone: { x: 0, y: 0, width: backgroundWidth, height: 100 }, type: 'bushsnow', count: 4, minDistance: 200 }
-            ],
+            randomObstacleZones: [],
             boxes: [
-                { x: 150, y: 300 },
-                { x: 750, y: 450 },
-                { x: 650, y: 150 }
+                { x: 150, y: 350 },   
+                { x: 500, y: 180 },   
+                { x: 780, y: 450 }, 
+                { x: 700, y: 300 } 
             ],
-            foodCount: 12,
+            foodCount: 10,
             mapTexture: 'level2_map',
             backgroundMusic: 'level2_theme'
         };
@@ -225,24 +260,25 @@ export class Level2Scene extends BaseLevel {
 
     protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
         return {
-            foodCount: 1,
+            foodCount: 10,
             poisonCount: 6,
             minItemDistance: 70,
             minObstacleDistance: 45,
             minBoxDistance: 60,
-            minPlayerDistance: 100,
+            minPlayerDistance: 120,
             mapWidth: backgroundWidth,
             mapHeight: backgroundHeight,
-            playerSpawn: { x: 100, y: 100 },
+            playerSpawn: { x: 200, y: 120 },
             dogSpawns: [
-                { x: 200, y: 200 },
-                { x: 800, y: 400 },
-                { x: 400, y: 500 }
+                { x: 350, y: 200 },
+                { x: 750, y: 400 },
+                { x: 600, y: 150 }
             ]
         };
     }
 
     protected override cleanupLevelSpecific(): void {
+        this.isLevelCompleted = false;
         this.resetFireMechanics();
     }
 

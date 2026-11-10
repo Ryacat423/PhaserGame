@@ -25,8 +25,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private lastJumpTime: number = 0;
   private jumpSpeedBoost: number = 1.5;
   
-  private maxStamina: number = 100;
-  private currentStamina: number = 100;
+  private maxStamina: number = 50;
+  private currentStamina: number = 50;
   private staminaCostPerJump: number = 25;
   private staminaRegenRate: number = 15;
   

@@ -82,11 +82,22 @@ export class UIManager {
         scene.load.audio('firewood', 'assets/global/audio/firewood.mp3');
         scene.load.audio('cat_burned', 'assets/global/audio/cat_burned.mp3');
         scene.load.audio('burned', 'assets/global/audio/burn.mp3');
-        
+
+        scene.load.audio('level1_theme', 'assets/global/audio/gameplay.ogg');
+        scene.load.audio('level2_theme', 'assets/global/audio/lvl-2-theme.mp3');
+        scene.load.audio('level3_theme', 'assets/global/audio/night-theme.mp3');
+        scene.load.audio('level4_theme', 'assets/global/audio/rain_theme.mp3');
+
         //Video
         scene.load.video('pool', 'assets/scene/levels/5/pool.mp4');
         
         // Global Sprites
+        
+        scene.load.spritesheet('cat_idle', 'assets/sprites/cat_idle.png', {
+            frameWidth: 125,
+            frameHeight: 150
+        });
+
         scene.load.spritesheet('dog', 'assets/sprites/dog_sprite.png', {
             frameWidth: 1005,
             frameHeight: 950
@@ -114,8 +125,6 @@ export class UIManager {
     }
 
     createAnimations(): void {
-        // Create animations only if they don't exist
-        // Use the global AnimationManager to ensure animations persist across scenes
         const anims = this.scene.game.anims;
         
         if (!anims.exists('dog_idle')) {
@@ -203,6 +212,26 @@ export class UIManager {
                 key: 'strike',
                 frames: anims.generateFrameNumbers('lightning', {start:0, end: 22 }),
                 frameRate: 20
+            });
+        }
+
+        if(!anims.exists('idle')){
+            anims.create({
+                key: 'idle',
+                frames: anims.generateFrameNumbers('cat_idle', {
+                    frames: [1, 1, 1, 2, 2, 3, 3, 3]
+                }),
+                frameRate: 12,
+                repeat: -1
+            });
+    
+            anims.create({
+                key: 'blink',
+                frames: anims.generateFrameNumbers('cat_idle', {
+                    frames: [4, 5, 6, 7, 8, 5, 4]
+                }),
+                frameRate: 12,
+                repeat: 0
             });
         }
     }

@@ -96,7 +96,7 @@ export class LevelsScene extends Phaser.Scene {
 
         this.level1.once('pointerdown', () => {
             this.scene.stop();
-            this.scene.start('level1');
+            this.scene.start('StoryScene', { level: 'level1' });
         });
 
         this.level2.once('pointerdown', () => {

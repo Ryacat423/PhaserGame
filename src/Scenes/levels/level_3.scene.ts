@@ -10,6 +10,7 @@ export class Level3Scene extends BaseLevel {
     private darkness!: Phaser.GameObjects.Graphics;
     private lightMask!: Phaser.GameObjects.Graphics;
     private flashlightRadius: number = 100;
+    private isLevelCompleted: boolean = false;
     
     private batteryDrainTimer!: Phaser.Time.TimerEvent;
     private currentBattery: number = 80;
@@ -37,14 +38,15 @@ export class Level3Scene extends BaseLevel {
     }
 
     protected getPlayerSpawnPosition(): { x: number, y: number } {
-        return { x: 300, y: 100 };
+        return { x: 150, y: 480 };
     }
 
     protected getDogSpawnPositions(): { x: number, y: number, behavior: DogState }[] {
         return [
-            { x: 200, y: 200, behavior: Dog.SLEEP },
-            { x: 800, y: 400, behavior: Dog.ROAM },
-            { x: 500, y: 500, behavior: Dog.SLEEP }
+            { x: 300, y: 280, behavior: Dog.SLEEP }, 
+            { x: 650, y: 150, behavior: Dog.ROAM },  
+            { x: 550, y: 400, behavior: Dog.ROAM },  
+            { x: 850, y: 320, behavior: Dog.SLEEP }  
         ];
     }
 
@@ -172,26 +174,38 @@ export class Level3Scene extends BaseLevel {
 
     protected getLevelConfig(backgroundWidth: number, backgroundHeight: number): LevelConfig {
         return {
-            playerSpawn: { x: 300, y: 100 },
-            dogSpawn: { x: 200, y: 200 },
+            playerSpawn: { x: 150, y: 480 },
+            dogSpawn: { x: 300, y: 280 },
             manualObstacles: [
-                { type: 'tree', x: 300, y: 150, scale: 0.2 }
+                { type: 'tree', x: 120, y: 60, scale: 0.2 },
+                { type: 'tree', x: 350, y: 50, scale: 0.19 },
+                { type: 'tree', x: 580, y: 60, scale: 0.2 },
+                { type: 'tree', x: 810, y: 55, scale: 0.19 },
+                
+                { type: 'bushsnow', x: 90, y: 220, scale: 0.15 },
+                { type: 'bushsnow', x: 110, y: 360, scale: 0.15 },
+                
+                { type: 'tree', x: 380, y: 220, scale: 0.18 },
+                { type: 'bushsnow', x: 450, y: 330, scale: 0.15 },
+                { type: 'tree', x: 550, y: 180, scale: 0.2 },
+                { type: 'bushsnow', x: 650, y: 280, scale: 0.15 },
+                { type: 'tree', x: 480, y: 480, scale: 0.19 },
+
+                { type: 'tree', x: 820, y: 200, scale: 0.2 },
+                { type: 'bushsnow', x: 880, y: 380, scale: 0.15 },
+
+                { type: 'bushsnow', x: 280, y: 520, scale: 0.15 },
+                { type: 'tree', x: 650, y: 500, scale: 0.18 },
+                { type: 'bushsnow', x: 850, y: 530, scale: 0.15 }
             ],
-            randomObstacleZones: [
-                { 
-                    zone: { x: 300, y: 200, width: 200, height: 200 }, 
-                    type: 'tree', 
-                    count: 3, 
-                    minDistance: 80 
-                }
-            ],
+            randomObstacleZones: [],
             boxes: [
-                { x: 150, y: 300 },
-                { x: 450, y: 200 },
-                { x: 750, y: 350 },
-                { x: 650, y: 150 }
+                { x: 180, y: 350 }, 
+                { x: 420, y: 150 }, 
+                { x: 700, y: 380 },  
+                { x: 850, y: 480 } 
             ],
-            foodCount: 3,
+            foodCount: 15,
             mapTexture: 'level3_map',
             backgroundMusic: 'level3_theme'
         };
@@ -199,20 +213,21 @@ export class Level3Scene extends BaseLevel {
 
     protected getItemConfig(backgroundWidth: number, backgroundHeight: number): ItemSpawnConfig {
         return {
-            foodCount: 1,
-            poisonCount: 6,
-            batteryCount: 10,
+            foodCount: 15,
+            poisonCount: 7,  
+            batteryCount: 10, 
             minItemDistance: 70,
             minObstacleDistance: 45,
             minBoxDistance: 70,
-            minPlayerDistance: 100,
+            minPlayerDistance: 120,
             mapWidth: backgroundWidth,
             mapHeight: backgroundHeight,
-            playerSpawn: { x: 300, y: 100 },
+            playerSpawn: { x: 150, y: 480 },
             dogSpawns: [
-                { x: 200, y: 200 },
-                { x: 800, y: 400 },
-                { x: 500, y: 500 }
+                { x: 300, y: 280 },
+                { x: 650, y: 150 },
+                { x: 550, y: 400 },
+                { x: 850, y: 320 }
             ]
         };
     }
@@ -247,9 +262,6 @@ export class Level3Scene extends BaseLevel {
 
     protected override updateLevelSpecific(time: number, delta: number): void {
         this.updateFlashlightMask();
-        // if (this.currentBattery <= 0) {
-        //     this.handleBatteryDrained();
-        // }
     }
 
     public getCurrentBattery(): number {
@@ -259,11 +271,4 @@ export class Level3Scene extends BaseLevel {
     public getMaxBattery(): number {
         return this.maxBattery;
     }
-
-    // private handleBatteryDrained(): void {
-    //     if (this.batteryDrainTimer) {
-    //         this.batteryDrainTimer.destroy();
-    //     }
-    //     // Handle battery drained game over logic here
-    // }
 }

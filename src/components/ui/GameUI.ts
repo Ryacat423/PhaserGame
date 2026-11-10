@@ -13,12 +13,14 @@ export class GameUI extends Phaser.Scene {
     private avatarSprite!: Phaser.GameObjects.Sprite;
     private avatarFrame!: Phaser.GameObjects.Image;
     private maxLives: number = 9;
-    private playerLives: number = 1;
+    private playerLives: number = 9;
     private livesText!: Phaser.GameObjects.Text;
     private livesIcon!: Phaser.GameObjects.Image;
     private avatarTintTween?: Phaser.Tweens.Tween;
 
+    private outSound!: Phaser.Sound.BaseSound;
     private foodCounterText!: Phaser.GameObjects.Text;
+    private currentGameMode: 'adventure' | 'custom' = 'adventure';
     
     constructor() {
         super({ key: 'UIScene' });
@@ -35,6 +37,7 @@ export class GameUI extends Phaser.Scene {
         this.load.image('act-btn-resume', 'assets/global/ui/act-btn-resume.png');
         this.load.image('act-btn-settings', 'assets/global/ui/act-btn-settings.png');
         this.load.image('act-btn-mainmenu', 'assets/global/ui/act-btn-mainmenu.png');
+        this.load.audio('out', 'assets/global/audio/out.wav');
 
         this.load.image('life', 'assets/global/ui/heart_life.png');
     }
@@ -54,7 +57,7 @@ export class GameUI extends Phaser.Scene {
             .setDisplaySize(this.scale.width, this.scale.height)
             .setDepth(100);
 
-        const assetKeys: string[] = ['btn-home', 'btn-settings', 'btn-reset', 'btn-pause'];
+        const assetKeys: string[] = ['btn-home', 'btn-reset', 'btn-pause'];
         this.setupUIButtons(assetKeys);
         
         this.hideButton = this.add.image(this.scale.width - 60, this.scale.height - 60, 'btn-hide-disabled')
@@ -62,7 +65,8 @@ export class GameUI extends Phaser.Scene {
             .setDepth(101)
             .setAlpha(0.5)
             .setInteractive();
-            
+        
+        this.outSound = this.sound.add('out');
         this.uiElements.push(frame, this.home, this.settings, this.reset, this.help, this.hideButton);
         this.setupLivesDisplay();
         this.setupFoodDisplay();
@@ -85,8 +89,23 @@ export class GameUI extends Phaser.Scene {
         }).setDepth(102);
     }
 
+    private determineGameMode(): 'adventure' | 'custom' {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene && gameScene.scene.key === 'level-custom') {
+            return 'custom';
+        }
+        return 'adventure';
+    }
+
+    private getLifeStorageKey(): string {
+        return this.currentGameMode === 'custom' ? 'playerLivesCustom' : 'playerLivesAdventure';
+    }
+
     private loadSavedLives(): void {
-        const savedLives = localStorage.getItem('playerLives');
+        this.currentGameMode = this.determineGameMode();
+        const storageKey = this.getLifeStorageKey();
+        const savedLives = localStorage.getItem(storageKey);
+        
         if (savedLives) {
             try {
                 this.playerLives = parseInt(savedLives);
@@ -101,16 +120,8 @@ export class GameUI extends Phaser.Scene {
     }
 
     private saveLives(): void {
-        localStorage.setItem('playerLives', this.playerLives.toString());
-    }
-
-    private initializeLives(): void {
-        const savedLives = localStorage.getItem('playerLives');
-        if (!savedLives) {
-            this.playerLives = this.maxLives;
-            this.saveLives();
-        }
-        this.updateLivesDisplay();
+        const storageKey = this.getLifeStorageKey();
+        localStorage.setItem(storageKey, this.playerLives.toString());
     }
 
     private updateLivesDisplay(): void {
@@ -141,7 +152,7 @@ export class GameUI extends Phaser.Scene {
             this.createDamageEffect(amount);
             
             if (this.playerLives <= 0) {
-                console.log('Game Over!');
+                this.outSound.play();
                 this.onGameOver();
             }
         }
@@ -188,8 +199,73 @@ export class GameUI extends Phaser.Scene {
     }
 
     private onGameOver(): void {
+        this.forcePlayerOutOfBox();
+        this.stopAllDogs();
+        this.stopAllGameActivity();
         this.showGameOverScreen();
-        this.togglePause();
+        this.pauseGame();
+    }
+
+    private stopAllDogs(): void {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene && typeof (gameScene as any).getDogs === 'function') {
+            const dogs = (gameScene as any).getDogs();
+            dogs.forEach((dog: any) => {
+                if (dog && typeof dog.stopBark === 'function') {
+                    dog.stopBark();
+                }
+            });
+        }
+    }
+
+    private stopAllGameActivity(): void {
+        const gameScene = this.getActiveGameScene();
+        if (!gameScene) return;
+        if (gameScene.time) {
+            gameScene.time.removeAllEvents();
+        }
+        
+        if (gameScene.tweens) {
+            gameScene.tweens.killAll();
+        }
+
+        if ((gameScene as any).player) {
+            const player = (gameScene as any).player;
+            if (player.body) {
+                player.body.setVelocity(0, 0);
+            }
+        }
+
+        if (typeof (gameScene as any).getDogs === 'function') {
+            const dogs = (gameScene as any).getDogs();
+            dogs.forEach((dog: any) => {
+                if (dog) {
+                    dog.stopBark();
+                    if (dog.body) {
+                        dog.body.setVelocity(0, 0);
+                    }
+
+                    if (dog.scene && dog.scene.time) {
+                        dog.scene.time.removeAllEvents();
+                    }
+                }
+            });
+        }
+    }
+
+    private forcePlayerOutOfBox(): void {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene && typeof (gameScene as any).gameMap !== 'undefined') {
+            const gameMap = (gameScene as any).gameMap;
+            if (gameMap && typeof gameMap.getBoxes === 'function') {
+                const boxes = gameMap.getBoxes();
+                boxes.forEach((box: any) => {
+                    if (box && typeof box.forceStopHiding === 'function') {
+                        box.forceStopHiding();
+                    }
+                });
+            }
+        }
     }
 
     private showGameOverScreen(): void {
@@ -199,7 +275,6 @@ export class GameUI extends Phaser.Scene {
             'game-over'
         ).setDepth(200);
 
-        
         const homeBtn = this.add.image(
             400,
             500,
@@ -226,10 +301,10 @@ export class GameUI extends Phaser.Scene {
 
         homeBtn.on('pointerdown', () => {
             this.cleanupGameOverScreen();
+            this.stopAllDogs();
             this.game.events.emit('returnToWelcome');
         });
 
-        // Add hover effects for the image buttons
         [tryAgainBtn, homeBtn].forEach(btn => {
             btn.on('pointerover', () => {
                 this.tweens.add({
@@ -273,9 +348,113 @@ export class GameUI extends Phaser.Scene {
         this.updateLivesDisplay();
     }
 
+    private checkLivesBeforeStart(): boolean {
+        if (this.playerLives <= 0) {
+            this.showNoLivesWarning();
+            return false;
+        }
+        return true;
+    }
+
+    private showNoLivesWarning(): void {
+        const overlay = this.add.rectangle(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            this.scale.width,
+            this.scale.height,
+            0x000000,
+            0.8
+        ).setDepth(200);
+
+        const warning = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2 - 50,
+            'NO LIVES REMAINING!',
+            {
+                fontSize: '36px',
+                color: '#ff4444',
+                fontFamily: 'Arial Black',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setDepth(201);
+
+        const message = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            'Reset your lives to continue playing',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial'
+            }
+        ).setOrigin(0.5).setDepth(201);
+
+        const resetBtn = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2 + 60,
+            'RESET LIVES',
+            {
+                fontSize: '24px',
+                color: '#ffffff',
+                fontFamily: 'Arial Black',
+                backgroundColor: '#00ff00',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5).setDepth(201).setInteractive();
+
+        const homeBtn = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2 + 120,
+            'MAIN MENU',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial',
+                backgroundColor: '#333333',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5).setDepth(201).setInteractive();
+
+        resetBtn.on('pointerdown', () => {
+            overlay.destroy();
+            warning.destroy();
+            message.destroy();
+            resetBtn.destroy();
+            homeBtn.destroy();
+            this.resetLives();
+            this.game.events.emit('returnToWelcome');
+        });
+
+        homeBtn.on('pointerdown', () => {
+            overlay.destroy();
+            warning.destroy();
+            message.destroy();
+            resetBtn.destroy();
+            homeBtn.destroy();
+            this.game.events.emit('returnToWelcome');
+        });
+
+        [resetBtn, homeBtn].forEach(btn => {
+            btn.on('pointerover', () => btn.setScale(1.1));
+            btn.on('pointerout', () => btn.setScale(1));
+        });
+    }
+
     public onSceneStart(): void {
+        this.currentGameMode = this.determineGameMode();
+        
         this.time.delayedCall(10, () => {
             this.loadSavedLives();
+            
+            if (!this.checkLivesBeforeStart()) {
+                const gameScene = this.getActiveGameScene();
+                if (gameScene) {
+                    this.time.delayedCall(100, () => {
+                        gameScene.scene.pause();
+                    });
+                }
+            }
         });
 
         this.time.delayedCall(50, () => {
@@ -324,6 +503,8 @@ export class GameUI extends Phaser.Scene {
         this.game.events.off('levelReset');
         this.game.events.off('foodCollected');
         this.game.events.off('levelCompleted');
+        this.game.events.off('hideUIForStory');
+        this.game.events.off('showUIForStory');
 
         this.events.on('playerNearBox', (isNear: boolean) => {
             this.setHideButtonEnabled(isNear);
@@ -354,15 +535,48 @@ export class GameUI extends Phaser.Scene {
             this.updateFoodCounter(collected, total);
         });
 
+        this.game.events.on('hideUIForStory', () => {
+            this.hideUIElements();
+        });
+
+        this.game.events.on('showUIForStory', () => {
+            this.showUIElements();
+        });
+
         this.game.events.on('levelCompleted', () => {
             this.foodCounterText.setText("All foods collected!");
             this.foodCounterText.setColor('#00ff00');
 
             this.saveLives();
-            
+            this.forcePlayerOutOfBox();
+            this.stopAllDogs();
+            this.stopAllGameActivity();
             this.pauseGame();
-            this.showLevelCompleteScreen();
+            
+            const currentScene = this.getActiveGameScene();
+            const isLevel4 = currentScene && currentScene.scene.key === 'level4';
+            const isCustomLevel = currentScene && currentScene.scene.key === 'level-custom';
+            
+            if (isCustomLevel) {
+                this.showCustomLevelCompleteScreen();
+            } else if (isLevel4) {
+                this.showAdventureCompleteScreen();
+            } else {
+                this.showLevelCompleteScreen();
+            }
         });
+    }
+
+    private hideUIElements(): void {
+        if (this.foodCounterText) {
+            this.foodCounterText.setVisible(false);
+        }
+    }
+
+    private showUIElements(): void {
+        if (this.foodCounterText) {
+            this.foodCounterText.setVisible(true);
+        }
     }
 
     private stopOtherLevelUIs(): void {
@@ -395,8 +609,308 @@ export class GameUI extends Phaser.Scene {
         }
     }
 
-    private showLevelCompleteScreen(): void {
+    private showCustomLevelCompleteScreen(): void {
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.9);
+        overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+        overlay.setDepth(200);
 
+        const panel = this.add.graphics();
+        panel.fillStyle(0x1a1a1a, 0.95);
+        panel.lineStyle(4, 0x00ff00, 1);
+        panel.fillRoundedRect(200, 150, 600, 350, 20);
+        panel.strokeRoundedRect(200, 150, 600, 350, 20);
+        panel.setDepth(201);
+
+        const title = this.add.text(
+            this.scale.width / 2,
+            200,
+            'LEVEL COMPLETE!',
+            {
+                fontSize: '42px',
+                color: '#00ff00',
+                fontFamily: 'Arial Black',
+                stroke: '#000000',
+                strokeThickness: 6
+            }
+        ).setOrigin(0.5).setDepth(202);
+
+        const successMsg = this.add.text(
+            this.scale.width / 2,
+            270,
+            'You collected all the food!',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial'
+            }
+        ).setOrigin(0.5).setDepth(202);
+
+        const livesLabel = this.add.text(
+            this.scale.width / 2 - 80,
+            330,
+            'Lives Remaining:',
+            {
+                fontSize: '18px',
+                color: '#ffffff',
+                fontFamily: 'Arial'
+            }
+        ).setOrigin(0, 0.5).setDepth(202);
+
+        const livesValue = this.add.text(
+            this.scale.width / 2 + 80,
+            330,
+            `${this.playerLives}`,
+            {
+                fontSize: '32px',
+                color: '#00ff00',
+                fontFamily: 'Arial Black'
+            }
+        ).setOrigin(1, 0.5).setDepth(202);
+
+        const customLevelsBtn = this.add.text(
+            this.scale.width / 2 - 100,
+            420,
+            'CUSTOM LEVELS',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial Black',
+                backgroundColor: '#333333',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5).setDepth(202).setInteractive();
+
+        const replayBtn = this.add.text(
+            this.scale.width / 2 + 100,
+            420,
+            'REPLAY',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial Black',
+                backgroundColor: '#333333',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5).setDepth(202).setInteractive();
+
+        const customCompleteElements = [overlay, panel, title, successMsg, livesLabel, livesValue, customLevelsBtn, replayBtn];
+        this.data.set('customCompleteOverlay', customCompleteElements);
+
+        customLevelsBtn.on('pointerdown', () => {
+            this.cleanupCustomCompleteScreen();
+            this.stopAllDogs();
+            
+            // Get the current game scene and stop it
+            const currentScene = this.getActiveGameScene();
+            if (currentScene) {
+                currentScene.scene.stop();
+            }
+            
+            // Stop all level-specific UI scenes
+            const levelUIScenes = ['Level2UI', 'Level3UI', 'Level4UI'];
+            levelUIScenes.forEach(uiSceneKey => {
+                if (this.scene.manager.isActive(uiSceneKey)) {
+                    this.scene.stop(uiSceneKey);
+                }
+            });
+            
+            // Stop UIScene itself
+            this.scene.stop('UIScene');
+            
+            // Start custom levels scene
+            this.scene.start('custom_levels');
+        });
+
+        replayBtn.on('pointerdown', () => {
+            this.cleanupCustomCompleteScreen();
+            this.stopAllDogs();
+            this.resetCurrentLevel();
+        });
+
+        [customLevelsBtn, replayBtn].forEach(btn => {
+            btn.on('pointerover', () => {
+                btn.setBackgroundColor('#555555');
+                btn.setScale(1.1);
+            });
+
+            btn.on('pointerout', () => {
+                btn.setBackgroundColor('#333333');
+                btn.setScale(1);
+            });
+        });
+    }
+
+    private cleanupCustomCompleteScreen(): void {
+        const customCompleteOverlay = this.data.get('customCompleteOverlay');
+        if (customCompleteOverlay) {
+            customCompleteOverlay.forEach((element: Phaser.GameObjects.GameObject) => {
+                element.destroy();
+            });
+            this.data.remove('customCompleteOverlay');
+        }
+        
+        if (this.isPaused) {
+            const gameScene = this.getActiveGameScene();
+            if (gameScene) {
+                if (gameScene.physics && gameScene.physics.world) {
+                    gameScene.physics.world.resume();
+                }
+                if (gameScene.tweens) {
+                    gameScene.tweens.resumeAll();
+                }
+                if (gameScene.anims) {
+                    gameScene.anims.resumeAll();
+                }
+            }
+            this.isPaused = false;
+            this.hidePauseOverlay();
+        }
+    }
+
+    private showAdventureCompleteScreen(): void {
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.9);
+        overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+        overlay.setDepth(200);
+
+        const panel = this.add.graphics();
+        panel.fillStyle(0x1a1a1a, 0.95);
+        panel.lineStyle(4, 0xFFD700, 1);
+        panel.fillRoundedRect(200, 100, 600, 400, 20);
+        panel.strokeRoundedRect(200, 100, 600, 400, 20);
+        panel.setDepth(201);
+
+        const catSprite = this.add.sprite(
+            this.scale.width / 2,
+            this.scale.height / 2 - 20,
+            'cat'
+        )
+        .setScale(0.4)
+        .setDepth(202)
+        .play('cat_jump');
+
+        catSprite.on('animationcomplete', () => {
+            catSprite.play('cat_jump');
+        });
+
+        const title = this.add.text(
+            this.scale.width / 2,
+            150,
+            'ADVENTURE COMPLETE!',
+            {
+                fontSize: '42px',
+                color: '#FFD700',
+                fontFamily: 'Arial Black',
+                stroke: '#000000',
+                strokeThickness: 6
+            }
+        ).setOrigin(0.5).setDepth(202);
+
+        const livesLabel = this.add.text(
+            this.scale.width / 2 - 80,
+            380,
+            'Lives Remaining:',
+            {
+                fontSize: '18px',
+                color: '#ffffff',
+                fontFamily: 'Arial'
+            }
+        ).setOrigin(0, 0.5).setDepth(202);
+
+        const livesValue = this.add.text(
+            this.scale.width / 2 + 80,
+            380,
+            `${this.playerLives}`,
+            {
+                fontSize: '32px',
+                color: '#00ff00',
+                fontFamily: 'Arial Black'
+            }
+        ).setOrigin(1, 0.5).setDepth(202);
+
+        const homeBtn = this.add.text(
+            this.scale.width / 2 - 100,
+            450,
+            'MAIN MENU',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial Black',
+                backgroundColor: '#333333',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5).setDepth(202).setInteractive();
+
+        const replayBtn = this.add.text(
+            this.scale.width / 2 + 100,
+            450,
+            'REPLAY',
+            {
+                fontSize: '20px',
+                color: '#ffffff',
+                fontFamily: 'Arial Black',
+                backgroundColor: '#333333',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5).setDepth(202).setInteractive();
+
+        const adventureElements = [overlay, panel, catSprite, title, livesLabel, livesValue, homeBtn, replayBtn];
+        this.data.set('adventureOverlay', adventureElements);
+
+        homeBtn.on('pointerdown', () => {
+            this.cleanupAdventureScreen();
+            this.game.events.emit('returnToWelcome');
+        });
+
+        replayBtn.on('pointerdown', () => {
+            this.cleanupAdventureScreen();
+            this.resetCurrentLevel();
+        });
+
+        [homeBtn, replayBtn].forEach(btn => {
+            btn.on('pointerover', () => {
+                btn.setBackgroundColor('#555555');
+                btn.setScale(1.1);
+            });
+
+            btn.on('pointerout', () => {
+                btn.setBackgroundColor('#333333');
+                btn.setScale(1);
+            });
+        });
+
+        this.updateGameProgress();
+    }
+
+    private cleanupAdventureScreen(): void {
+        const adventureOverlay = this.data.get('adventureOverlay');
+        if (adventureOverlay) {
+            adventureOverlay.forEach((element: Phaser.GameObjects.GameObject) => {
+                element.destroy();
+            });
+            this.data.remove('adventureOverlay');
+        }
+        
+        if (this.isPaused) {
+            const gameScene = this.getActiveGameScene();
+            if (gameScene) {
+                if (gameScene.physics && gameScene.physics.world) {
+                    gameScene.physics.world.resume();
+                }
+                if (gameScene.tweens) {
+                    gameScene.tweens.resumeAll();
+                }
+                if (gameScene.anims) {
+                    gameScene.anims.resumeAll();
+                }
+            }
+            this.isPaused = false;
+            this.hidePauseOverlay();
+        }
+    }
+
+    private showLevelCompleteScreen(): void {
         const overlay = this.add.image(
             this.scale.width / 2, 
             this.scale.height / 2, 
@@ -415,7 +929,6 @@ export class GameUI extends Phaser.Scene {
                 fontFamily: 'Arial',
             }
         ).setOrigin(0.5).setDepth(202);
-
 
         const homeBtn = this.add.image(
             270,
@@ -446,16 +959,19 @@ export class GameUI extends Phaser.Scene {
 
         homeBtn.on('pointerdown', () => {
             this.cleanupCompleteScreen();
+            this.stopAllDogs();
             this.game.events.emit('returnToWelcome');
         });
 
         nextBtn.on('pointerdown', () => {
             this.cleanupCompleteScreen();
+            this.stopAllDogs();
             this.goToNextLevel();
         });
 
         replayBtn.on('pointerdown', () => {
             this.cleanupCompleteScreen();
+            this.stopAllDogs();
             this.resetCurrentLevel();
         });
 
@@ -575,7 +1091,7 @@ export class GameUI extends Phaser.Scene {
         const nextLevelNum = parseInt(nextLevel.replace('level', ''));
         if (nextLevelNum <= completedLevels + 1) {
             currentScene.scene.stop(sceneKey);
-            currentScene.scene.start(nextLevel);
+            currentScene.scene.start('StoryScene', { level: nextLevel });
         } else {
             this.scene.stop();
             this.scene.start('levels');
@@ -604,36 +1120,6 @@ export class GameUI extends Phaser.Scene {
             this.hideButton.setAlpha(0.5);
             this.tweens.killTweensOf(this.hideButton);
         }
-    }
-
-    private setupHelpModal() {
-        this.help.on('pointerdown', () => {
-            const overlay = this.add.rectangle(
-                this.scale.width / 2, 
-                this.scale.height / 2, 
-                this.scale.width, 
-                this.scale.height, 
-                0x000000, 
-                0.7
-            ).setDepth(150);
-
-            const helpModal = this.add.image(500, 300, 'movement_modal')
-                .setDepth(151);
-
-            const closeBtn = this.add.image(800, 130, 'btn-close')
-                .setDepth(201)
-                .setScale(0.5)
-                .setInteractive();
-                
-            this.uiElements.push(helpModal, closeBtn);
-
-            closeBtn.on('pointerdown', () => {
-                helpModal.destroy();
-                closeBtn.destroy();
-                overlay.destroy();
-                this.uiElements = this.uiElements.filter(e => e !== helpModal && e !== closeBtn);
-            });
-        });
     }
 
     private setupUIButtons(assetKeys: string[]) {
@@ -681,6 +1167,7 @@ export class GameUI extends Phaser.Scene {
     private handleButtonAction(key: string) {
         switch (key) {
             case 'btn-home':
+                this.stopAllDogs();
                 this.game.events.emit('returnToWelcome');
                 break;
             case 'btn-settings':
@@ -688,6 +1175,7 @@ export class GameUI extends Phaser.Scene {
                 this.scene.launch('settings');
                 break;
             case 'btn-reset':
+                this.stopAllDogs();
                 this.resetCurrentLevel();
                 break;
             case 'btn-pause':
@@ -772,6 +1260,7 @@ export class GameUI extends Phaser.Scene {
             .setInteractive();
 
         this.data.set('pauseOverlay', [overlay, pausePanel, resumeBtn, settingsBtn, mainMenuBtn]);
+        
         resumeBtn.on('pointerdown', () => {
             this.resumeGame();
         });
@@ -782,6 +1271,7 @@ export class GameUI extends Phaser.Scene {
 
         mainMenuBtn.on('pointerdown', () => {
             this.resumeGame();
+            this.stopAllDogs();
             this.game.events.emit('returnToWelcome');
         });
 
@@ -810,6 +1300,8 @@ export class GameUI extends Phaser.Scene {
             scene => scene.scene.key !== 'UIScene' && 
                     scene.scene.key !== 'welcome' && 
                     scene.scene.key !== 'settings' &&
+                    scene.scene.key !== 'StoryScene' &&
+                    !scene.scene.key.includes('UI') &&
                     scene.scene.isActive()
         );
         
@@ -828,6 +1320,8 @@ export class GameUI extends Phaser.Scene {
 
             this.cleanupCompleteScreen();
             this.cleanupGameOverScreen();
+            this.cleanupAdventureScreen();
+            this.cleanupCustomCompleteScreen();
             
             currentScene.events.emit('beforeSceneRestart');
             currentScene.sound.stopAll();
@@ -869,10 +1363,8 @@ export class GameUI extends Phaser.Scene {
         if (gameScene && (gameScene as any).getItemSystem) {
             const itemSystem = (gameScene as any).getItemSystem();
             const totalFoods = itemSystem.getFoods().length;
-
             return totalFoods;
         } 
-
         return 0;
     }
 

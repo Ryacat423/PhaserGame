@@ -15,26 +15,16 @@ export class LevelCustom extends BaseLevel {
     }
 
     init(data: any): void {
-        console.log('Custom level init with data:', data);
-        
-        // Parse the config from various sources
         if (data && data.map && data.mechanics && data.spawnables) {
-            // Data is the config itself (direct pass from scene.start)
             this.customConfig = data;
-            console.log('✓ Using config from scene data (direct)');
         } else if (data && data.config) {
-            // Data is wrapped in a config property
             this.customConfig = data.config;
-            console.log('✓ Using config from scene data (wrapped)');
         } else {
-            // Try localStorage as fallback
             const savedConfig = localStorage.getItem('customLevelConfig');
             if (savedConfig) {
                 try {
                     this.customConfig = JSON.parse(savedConfig);
-                    console.log('✓ Using config from localStorage');
                 } catch (e) {
-                    console.error('Failed to parse custom level config:', e);
                     this.customConfig = this.getDefaultConfig();
                 }
             } else {
@@ -43,11 +33,9 @@ export class LevelCustom extends BaseLevel {
             }
         }
 
-        // Extract ALL active mechanics
         this.activeMechanicsTypes = Object.keys(this.customConfig.mechanics)
             .filter(key => this.customConfig.mechanics[key] && key !== 'none');
-        
-        // Set primary mechanic (for backwards compatibility and audio theme)
+
         this.primaryMechanicType = this.activeMechanicsTypes.length > 0 
             ? this.activeMechanicsTypes[0] 
             : 'none';
@@ -125,18 +113,14 @@ export class LevelCustom extends BaseLevel {
             uiScenes.push(...config.uiScenes);
         });
         
-        console.log('🎨 UI Scenes to launch:', uiScenes);
         return uiScenes;
     }
 
     protected override createLevelSpecificElements(): void {
         if (this.activeMechanicsTypes.length === 0) {
-            console.log('ℹ No special mechanics active');
             return;
         }
-        
-        console.log('🎮 Creating mechanics:', this.activeMechanicsTypes);
-        
+          
         this.activeMechanicsTypes.forEach(mechanicType => {
             try {
                 const mechanic = Mechanics.createMechanics(
@@ -152,7 +136,6 @@ export class LevelCustom extends BaseLevel {
                         type: mechanicType,
                         instance: mechanic
                     });
-                    console.log(`✓ Created ${mechanicType} mechanic`);
                 } else {
                     console.warn(`⚠ Failed to create ${mechanicType} mechanic`);
                 }

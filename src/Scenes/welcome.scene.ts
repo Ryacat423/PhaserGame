@@ -22,11 +22,6 @@ export class WelcomeScene extends Phaser.Scene {
 
         this.load.image('title', 'assets/scene/welcome/game_title.png');
         this.load.image('dog_house', 'assets/scene/welcome/dog_house.png');
-
-        this.load.spritesheet('cat_idle', 'assets/sprites/cat_idle.png', {
-            frameWidth: 125,
-            frameHeight: 150
-        });
     }
 
     create(): void {
@@ -36,16 +31,9 @@ export class WelcomeScene extends Phaser.Scene {
         this.uiManager.playDogSleep(315, 380, 0.2, 10);
 
         this.createUI();
-        this.createAnimations();
         this.catIdleSprite();
-
-        
     }
 
-    // init(): void {
-    //     localStorage.clear()
-    // }
-    
     createUI(): void {
         this.add.image(0,0, 'welcome-bg')
             .setOrigin(0, 0)
@@ -105,6 +93,8 @@ export class WelcomeScene extends Phaser.Scene {
             });
         });
     
+        this.createTooltip(this.help, "Character Information");
+
         this.setupButtonHover(this.start, false);
         this.setupButtonHover(this.tutorial, false);
         this.setupButtonHover(this.help, true);
@@ -130,26 +120,34 @@ export class WelcomeScene extends Phaser.Scene {
         });
     }
 
-    createAnimations(): void {
-        if(!this.anims.exists('idle')){
-            this.anims.create({
-                key: 'idle',
-                frames: this.anims.generateFrameNumbers('cat_idle', {
-                    frames: [1, 1, 1, 2, 2, 3, 3, 3]
-                }),
-                frameRate: 12,
-                repeat: -1
-            });
-    
-            this.anims.create({
-                key: 'blink',
-                frames: this.anims.generateFrameNumbers('cat_idle', {
-                    frames: [4, 5, 6, 7, 8, 5, 4]
-                }),
-                frameRate: 12,
-                repeat: 0
-            });
-        }
+    createTooltip(target: Phaser.GameObjects.Image, text: string): void {
+        const tooltipBg = this.add.rectangle(0, 0, 220, 40, 0xadd8e6, 0.9)
+            .setOrigin(0.5)
+            .setStrokeStyle(2, 0xffffff)
+            .setVisible(false)
+            .setDepth(5);
+
+        (tooltipBg as any).radius = 25;
+
+        const tooltipText = this.add.text(0, 0, text, {
+            fontSize: '16px',
+            color: '#000',
+            fontStyle: 'bold',
+            align: 'center',
+        })
+        .setOrigin(0.5)
+        .setVisible(false)
+        .setDepth(6);
+
+        target.on('pointerover', () => {
+            tooltipBg.setPosition(target.x - 160, target.y).setVisible(true);
+            tooltipText.setPosition(target.x - 160, target.y).setVisible(true);
+        });
+
+        target.on('pointerout', () => {
+            tooltipBg.setVisible(false);
+            tooltipText.setVisible(false);
+        });
     }
 
     catIdleSprite(): void {

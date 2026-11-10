@@ -28,19 +28,15 @@ export class Level4UI extends Phaser.Scene {
         const level3UIActive = this.scene.manager.isActive('Level3UI');
         
         if (level2UIActive && level3UIActive) {
-            // Both snow and night active - position below both
             this.baseY = 130;
         } else if (level2UIActive || level3UIActive) {
-            // One other mechanic active - position below it
             this.baseY = 90;
         } else {
-            // Only storm active
             this.baseY = 60;
         }
     }
 
     private setupStormUI(): void {
-        // Storm intensity indicator
         this.add.text(20, this.baseY, 'STORM INTENSITY:', {
             fontSize: '14px',
             color: '#ffffff',
@@ -49,7 +45,6 @@ export class Level4UI extends Phaser.Scene {
             strokeThickness: 1
         }).setDepth(102).setScrollFactor(0);
 
-        // Lightning strike counter
         this.lightningCounter = this.add.text(20, this.baseY + 20, `Lightning Strikes: ${this.lightningStrikes}`, {
             fontSize: '12px',
             color: '#ffff88',
@@ -58,7 +53,6 @@ export class Level4UI extends Phaser.Scene {
             strokeThickness: 1
         }).setDepth(102).setScrollFactor(0);
 
-        // Next strike timer
         this.nextStrikeTimer = this.add.text(20, this.baseY + 35, `Next Strike: ${this.timeToNextStrike}s`, {
             fontSize: '12px',
             color: '#88ffff',
@@ -76,19 +70,16 @@ export class Level4UI extends Phaser.Scene {
         const barWidth = 100;
         const barHeight = 12;
 
-        // Background
         const bg = this.add.graphics();
         bg.fillStyle(0x333333, 0.8);
         bg.fillRoundedRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, 2);
         bg.setDepth(102).setScrollFactor(0);
 
-        // Storm intensity fill
         const fill = this.add.graphics();
         fill.fillStyle(0xff6600, 0.9);
         fill.fillRoundedRect(barX, barY, barWidth * (this.stormIntensity / 5), barHeight, 1);
         fill.setDepth(103).setScrollFactor(0);
 
-        // Intensity level text
         this.add.text(barX + barWidth + 10, barY - 2, `Level ${this.stormIntensity}`, {
             fontSize: '12px',
             color: '#ff6600',
@@ -99,17 +90,14 @@ export class Level4UI extends Phaser.Scene {
     }
 
     private setupEventListeners(): void {
-        // Listen for lightning warnings
         this.events.on('lightningWarning', () => {
             this.showLightningWarning();
         });
 
-        // Listen for lightning strikes
         this.events.on('lightningStrike', () => {
             this.onLightningStrike();
         });
 
-        // Reset events
         const resetStorm = () => {
             if (this.scene.isActive('Level4UI')) {
                 this.resetStormTracking();
@@ -135,7 +123,6 @@ export class Level4UI extends Phaser.Scene {
             if (this.nextStrikeTimer) {
                 this.nextStrikeTimer.setText(`Next Strike: ${this.timeToNextStrike}s`);
                 
-                // Change color as strike approaches
                 if (this.timeToNextStrike <= 2) {
                     this.nextStrikeTimer.setColor('#ff4444');
                 } else if (this.timeToNextStrike <= 4) {
@@ -145,7 +132,6 @@ export class Level4UI extends Phaser.Scene {
                 }
             }
         } else {
-            // Reset timer for next strike
             this.timeToNextStrike = 8;
         }
     }
@@ -189,7 +175,6 @@ export class Level4UI extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Auto-hide warning after 2 seconds
         this.time.delayedCall(2000, () => {
             this.hideWarning();
         });
@@ -231,22 +216,17 @@ export class Level4UI extends Phaser.Scene {
         if (this.lightningCounter) {
             this.lightningCounter.setText(`Lightning Strikes: ${this.lightningStrikes}`);
         }
-
-        // Increase storm intensity every 3 strikes
         if (this.lightningStrikes % 3 === 0 && this.stormIntensity < 5) {
             this.stormIntensity++;
             this.updateStormIntensity();
         }
 
-        // Reset strike timer
         this.timeToNextStrike = 8;
-        
-        // Hide warning if active
+
         this.hideWarning();
     }
 
     private updateStormIntensity(): void {
-        // Create flash effect for intensity increase
         const flash = this.add.rectangle(
             this.scale.width / 2,
             this.scale.height / 2,
@@ -263,7 +243,6 @@ export class Level4UI extends Phaser.Scene {
             onComplete: () => flash.destroy()
         });
 
-        // Show intensity increase message
         const intensityMsg = this.add.text(
             this.scale.width / 2,
             this.scale.height / 2,

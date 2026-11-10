@@ -184,6 +184,7 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     private cleanupBeforeRestart(): void {
+        this.stopAllDogBarking();
         this.gameMap?.getBoxes()?.forEach(box => {
             if (typeof box.forceStopHiding === 'function') {
                 box.forceStopHiding();
@@ -202,6 +203,7 @@ export abstract class BaseLevel extends Phaser.Scene {
     }
 
     protected cleanupBeforeExit(): void {
+        this.stopAllDogBarking();
         if (this.gameTheme?.isPlaying) {
             this.gameTheme.stop();
         }
@@ -265,6 +267,14 @@ export abstract class BaseLevel extends Phaser.Scene {
 
     public getDogs(): Dog[] {
         return this.dogs;
+    }
+
+    protected stopAllDogBarking(): void {
+        this.dogs.forEach(dog => {
+            if (dog && typeof dog.stopBark === 'function') {
+                dog.stopBark();
+            }
+        });
     }
     
     public destroyDogs(): void {
